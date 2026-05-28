@@ -1,4 +1,4 @@
-const CACHE_NAME = 'samyak-cache-v2';
+const CACHE_NAME = 'samyak-cache-v9';
 const ASSETS = [
   './',
   './index.html',

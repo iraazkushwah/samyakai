@@ -421,315 +421,43 @@ body.theme-vintage-oasis, body.theme-oasis-compact-v2 {
     --heading-color: #8a4b2d;
 }
 
-/* Super Compact spacing overrides when any compact theme is active */
-body.theme-minimal-compact .section-heading-bar,
-body.theme-maroon-compact .section-heading-bar,
-body.theme-navy-compact .section-heading-bar,
-body.theme-emerald-compact .section-heading-bar,
-body.theme-sakura-compact .section-heading-bar,
-body.theme-nordic-compact .section-heading-bar,
-body.theme-cyber-compact .section-heading-bar,
-body.theme-crimson-compact .section-heading-bar,
-body.theme-vintage-compact .section-heading-bar,
-body.theme-lavender-compact .section-heading-bar,
-body.theme-espresso-compact .section-heading-bar,
-body.theme-mono-compact .section-heading-bar,
-body.theme-print-navy-compact .section-heading-bar,
-body.theme-print-teal-compact .section-heading-bar,
-body.theme-print-burgundy-compact .section-heading-bar,
-body.theme-synth-compact .section-heading-bar,
-body.theme-origami-compact .section-heading-bar,
-body.theme-durbar-compact .section-heading-bar,
-body.theme-empire-compact .section-heading-bar,
-body.theme-velvet-compact .section-heading-bar,
-body.theme-zen-compact .section-heading-bar,
-body.theme-royal-compact-v2 .section-heading-bar,
-body.theme-kyoto-compact-ink .section-heading-bar,
-body.theme-athenian-compact-v2 .section-heading-bar,
-body.theme-autumn-compact-v2 .section-heading-bar,
-body.theme-maharaja-compact-v2 .section-heading-bar,
-body.theme-victorian-compact-v2 .section-heading-bar,
-body.theme-neo-gothic-compact .section-heading-bar,
-body.theme-sapphire-compact-v2 .section-heading-bar,
-body.theme-jade-compact-v2 .section-heading-bar,
-body.theme-oasis-compact-v2 .section-heading-bar,
-body.theme-surya-compact .section-heading-bar,
-body.theme-madhu-compact .section-heading-bar,
-body.theme-agni-compact .section-heading-bar,
-body.theme-chandan-compact .section-heading-bar {
+/* Super Compact spacing overrides when compact mode is active */
+body.compact-mode .section-heading-bar {
     padding: 3px 10px !important;
     margin: 3px 0 !important;
     font-size: calc(var(--custom-section-size) - 1.5px) !important;
 }
 
-body.theme-minimal-compact .topic-container,
-body.theme-maroon-compact .topic-container,
-body.theme-navy-compact .topic-container,
-body.theme-emerald-compact .topic-container,
-body.theme-sakura-compact .topic-container,
-body.theme-nordic-compact .topic-container,
-body.theme-cyber-compact .topic-container,
-body.theme-crimson-compact .topic-container,
-body.theme-vintage-compact .topic-container,
-body.theme-lavender-compact .topic-container,
-body.theme-espresso-compact .topic-container,
-body.theme-mono-compact .topic-container,
-body.theme-print-navy-compact .topic-container,
-body.theme-print-teal-compact .topic-container,
-body.theme-print-burgundy-compact .topic-container,
-body.theme-synth-compact .topic-container,
-body.theme-origami-compact .topic-container,
-body.theme-durbar-compact .topic-container,
-body.theme-empire-compact .topic-container,
-body.theme-velvet-compact .topic-container,
-body.theme-zen-compact .topic-container,
-body.theme-royal-compact-v2 .topic-container,
-body.theme-kyoto-compact-ink .topic-container,
-body.theme-athenian-compact-v2 .topic-container,
-body.theme-autumn-compact-v2 .topic-container,
-body.theme-maharaja-compact-v2 .topic-container,
-body.theme-victorian-compact-v2 .topic-container,
-body.theme-neo-gothic-compact .topic-container,
-body.theme-sapphire-compact-v2 .topic-container,
-body.theme-jade-compact-v2 .topic-container,
-body.theme-oasis-compact-v2 .topic-container,
-body.theme-surya-compact .topic-container,
-body.theme-madhu-compact .topic-container,
-body.theme-agni-compact .topic-container,
-body.theme-chandan-compact .topic-container {
+body.compact-mode .topic-container {
     margin-top: 2px !important;
     margin-bottom: 1px !important;
 }
 
-body.theme-minimal-compact .topic-title,
-body.theme-maroon-compact .topic-title,
-body.theme-navy-compact .topic-title,
-body.theme-emerald-compact .topic-title,
-body.theme-sakura-compact .topic-title,
-body.theme-nordic-compact .topic-title,
-body.theme-cyber-compact .topic-title,
-body.theme-crimson-compact .topic-title,
-body.theme-vintage-compact .topic-title,
-body.theme-lavender-compact .topic-title,
-body.theme-espresso-compact .topic-title,
-body.theme-mono-compact .topic-title,
-body.theme-print-navy-compact .topic-title,
-body.theme-print-teal-compact .topic-title,
-body.theme-print-burgundy-compact .topic-title,
-body.theme-synth-compact .topic-title,
-body.theme-origami-compact .topic-title,
-body.theme-durbar-compact .topic-title,
-body.theme-empire-compact .topic-title,
-body.theme-velvet-compact .topic-title,
-body.theme-zen-compact .topic-title,
-body.theme-royal-compact-v2 .topic-title,
-body.theme-kyoto-compact-ink .topic-title,
-body.theme-athenian-compact-v2 .topic-title,
-body.theme-autumn-compact-v2 .topic-title,
-body.theme-maharaja-compact-v2 .topic-title,
-body.theme-victorian-compact-v2 .topic-title,
-body.theme-neo-gothic-compact .topic-title,
-body.theme-sapphire-compact-v2 .topic-title,
-body.theme-jade-compact-v2 .topic-title,
-body.theme-oasis-compact-v2 .topic-title,
-body.theme-surya-compact .topic-title,
-body.theme-madhu-compact .topic-title,
-body.theme-agni-compact .topic-title,
-body.theme-chandan-compact .topic-title {
+body.compact-mode .topic-title {
     font-size: calc(var(--custom-topic-size) - 1px) !important;
     padding-bottom: 1px !important;
 }
 
-body.theme-minimal-compact .premium-box,
-body.theme-maroon-compact .premium-box,
-body.theme-navy-compact .premium-box,
-body.theme-emerald-compact .premium-box,
-body.theme-sakura-compact .premium-box,
-body.theme-nordic-compact .premium-box,
-body.theme-cyber-compact .premium-box,
-body.theme-crimson-compact .premium-box,
-body.theme-vintage-compact .premium-box,
-body.theme-lavender-compact .premium-box,
-body.theme-espresso-compact .premium-box,
-body.theme-mono-compact .premium-box,
-body.theme-print-navy-compact .premium-box,
-body.theme-print-teal-compact .premium-box,
-body.theme-print-burgundy-compact .premium-box,
-body.theme-synth-compact .premium-box,
-body.theme-origami-compact .premium-box,
-body.theme-durbar-compact .premium-box,
-body.theme-empire-compact .premium-box,
-body.theme-velvet-compact .premium-box,
-body.theme-zen-compact .premium-box,
-body.theme-royal-compact-v2 .premium-box,
-body.theme-kyoto-compact-ink .premium-box,
-body.theme-athenian-compact-v2 .premium-box,
-body.theme-autumn-compact-v2 .premium-box,
-body.theme-maharaja-compact-v2 .premium-box,
-body.theme-victorian-compact-v2 .premium-box,
-body.theme-neo-gothic-compact .premium-box,
-body.theme-sapphire-compact-v2 .premium-box,
-body.theme-jade-compact-v2 .premium-box,
-body.theme-oasis-compact-v2 .premium-box,
-body.theme-surya-compact .premium-box,
-body.theme-madhu-compact .premium-box,
-body.theme-agni-compact .premium-box,
-body.theme-chandan-compact .premium-box {
+body.compact-mode .premium-box {
     margin: 3px 0 !important;
     padding: 6px 12px !important;
 }
 
-body.theme-minimal-compact .highlight-box,
-body.theme-maroon-compact .highlight-box,
-body.theme-navy-compact .highlight-box,
-body.theme-emerald-compact .highlight-box,
-body.theme-sakura-compact .highlight-box,
-body.theme-nordic-compact .highlight-box,
-body.theme-cyber-compact .highlight-box,
-body.theme-crimson-compact .highlight-box,
-body.theme-vintage-compact .highlight-box,
-body.theme-lavender-compact .highlight-box,
-body.theme-espresso-compact .highlight-box,
-body.theme-mono-compact .highlight-box,
-body.theme-print-navy-compact .highlight-box,
-body.theme-print-teal-compact .highlight-box,
-body.theme-print-burgundy-compact .highlight-box,
-body.theme-synth-compact .highlight-box,
-body.theme-origami-compact .highlight-box,
-body.theme-durbar-compact .highlight-box,
-body.theme-empire-compact .highlight-box,
-body.theme-velvet-compact .highlight-box,
-body.theme-zen-compact .highlight-box,
-body.theme-royal-compact-v2 .highlight-box,
-body.theme-kyoto-compact-ink .highlight-box,
-body.theme-athenian-compact-v2 .highlight-box,
-body.theme-autumn-compact-v2 .highlight-box,
-body.theme-maharaja-compact-v2 .highlight-box,
-body.theme-victorian-compact-v2 .highlight-box,
-body.theme-neo-gothic-compact .highlight-box,
-body.theme-sapphire-compact-v2 .highlight-box,
-body.theme-jade-compact-v2 .highlight-box,
-body.theme-oasis-compact-v2 .highlight-box,
-body.theme-surya-compact .highlight-box,
-body.theme-madhu-compact .highlight-box,
-body.theme-agni-compact .highlight-box,
-body.theme-chandan-compact .highlight-box {
+body.compact-mode .highlight-box {
     margin: 2px 0 !important;
     padding: 4px 8px !important;
 }
 
-body.theme-minimal-compact p.body-text,
-body.theme-maroon-compact p.body-text,
-body.theme-navy-compact p.body-text,
-body.theme-emerald-compact p.body-text,
-body.theme-sakura-compact p.body-text,
-body.theme-nordic-compact p.body-text,
-body.theme-cyber-compact p.body-text,
-body.theme-crimson-compact p.body-text,
-body.theme-vintage-compact p.body-text,
-body.theme-lavender-compact p.body-text,
-body.theme-espresso-compact p.body-text,
-body.theme-mono-compact p.body-text,
-body.theme-print-navy-compact p.body-text,
-body.theme-print-teal-compact p.body-text,
-body.theme-print-burgundy-compact p.body-text,
-body.theme-synth-compact p.body-text,
-body.theme-origami-compact p.body-text,
-body.theme-durbar-compact p.body-text,
-body.theme-empire-compact p.body-text,
-body.theme-velvet-compact p.body-text,
-body.theme-zen-compact p.body-text,
-body.theme-royal-compact-v2 p.body-text,
-body.theme-kyoto-compact-ink p.body-text,
-body.theme-athenian-compact-v2 p.body-text,
-body.theme-autumn-compact-v2 p.body-text,
-body.theme-maharaja-compact-v2 p.body-text,
-body.theme-victorian-compact-v2 p.body-text,
-body.theme-neo-gothic-compact p.body-text,
-body.theme-sapphire-compact-v2 p.body-text,
-body.theme-jade-compact-v2 p.body-text,
-body.theme-oasis-compact-v2 p.body-text,
-body.theme-surya-compact p.body-text,
-body.theme-madhu-compact p.body-text,
-body.theme-agni-compact p.body-text,
-body.theme-chandan-compact p.body-text {
+body.compact-mode p.body-text {
     margin-bottom: 2px !important;
     line-height: 1.3 !important;
 }
 
-body.theme-minimal-compact .bullet-list,
-body.theme-maroon-compact .bullet-list,
-body.theme-navy-compact .bullet-list,
-body.theme-emerald-compact .bullet-list,
-body.theme-sakura-compact .bullet-list,
-body.theme-nordic-compact .bullet-list,
-body.theme-cyber-compact .bullet-list,
-body.theme-crimson-compact .bullet-list,
-body.theme-vintage-compact .bullet-list,
-body.theme-lavender-compact .bullet-list,
-body.theme-espresso-compact .bullet-list,
-body.theme-mono-compact .bullet-list,
-body.theme-print-navy-compact .bullet-list,
-body.theme-print-teal-compact .bullet-list,
-body.theme-print-burgundy-compact .bullet-list,
-body.theme-synth-compact .bullet-list,
-body.theme-origami-compact .bullet-list,
-body.theme-durbar-compact .bullet-list,
-body.theme-empire-compact .bullet-list,
-body.theme-velvet-compact .bullet-list,
-body.theme-zen-compact .bullet-list,
-body.theme-royal-compact-v2 .bullet-list,
-body.theme-kyoto-compact-ink .bullet-list,
-body.theme-athenian-compact-v2 .bullet-list,
-body.theme-autumn-compact-v2 .bullet-list,
-body.theme-maharaja-compact-v2 .bullet-list,
-body.theme-victorian-compact-v2 .bullet-list,
-body.theme-neo-gothic-compact .bullet-list,
-body.theme-sapphire-compact-v2 .bullet-list,
-body.theme-jade-compact-v2 .bullet-list,
-body.theme-oasis-compact-v2 .bullet-list,
-body.theme-surya-compact .bullet-list,
-body.theme-madhu-compact .bullet-list,
-body.theme-agni-compact .bullet-list,
-body.theme-chandan-compact .bullet-list {
+body.compact-mode .bullet-list {
     gap: 2px !important;
 }
 
-body.theme-minimal-compact .bullet-item,
-body.theme-maroon-compact .bullet-item,
-body.theme-navy-compact .bullet-item,
-body.theme-emerald-compact .bullet-item,
-body.theme-sakura-compact .bullet-item,
-body.theme-nordic-compact .bullet-item,
-body.theme-cyber-compact .bullet-item,
-body.theme-crimson-compact .bullet-item,
-body.theme-vintage-compact .bullet-item,
-body.theme-lavender-compact .bullet-item,
-body.theme-espresso-compact .bullet-item,
-body.theme-mono-compact .bullet-item,
-body.theme-print-navy-compact .bullet-item,
-body.theme-print-teal-compact .bullet-item,
-body.theme-print-burgundy-compact .bullet-item,
-body.theme-synth-compact .bullet-item,
-body.theme-origami-compact .bullet-item,
-body.theme-durbar-compact .bullet-item,
-body.theme-empire-compact .bullet-item,
-body.theme-velvet-compact .bullet-item,
-body.theme-zen-compact .bullet-item,
-body.theme-royal-compact-v2 .bullet-item,
-body.theme-kyoto-compact-ink .bullet-item,
-body.theme-athenian-compact-v2 .bullet-item,
-body.theme-autumn-compact-v2 .bullet-item,
-body.theme-maharaja-compact-v2 .bullet-item,
-body.theme-victorian-compact-v2 .bullet-item,
-body.theme-neo-gothic-compact .bullet-item,
-body.theme-sapphire-compact-v2 .bullet-item,
-body.theme-jade-compact-v2 .bullet-item,
-body.theme-oasis-compact-v2 .bullet-item,
-body.theme-surya-compact .bullet-item,
-body.theme-madhu-compact .bullet-item,
-body.theme-agni-compact .bullet-item,
-body.theme-chandan-compact .bullet-item {
+body.compact-mode .bullet-item {
     line-height: 1.3 !important;
 }
 
@@ -768,6 +496,21 @@ body {
     overflow: hidden;
     height: 100vh;
     width: 100vw;
+}
+
+sup, sub {
+    font-size: 70%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sup {
+    top: -0.5em;
+}
+
+sub {
+    bottom: -0.25em;
 }
 
 /* 3. SPLIT-PANEL DASHBOARD */
@@ -1313,6 +1056,7 @@ body {
 
 .editor-toolbar.collapsed {
     max-height: 0;
+    min-height: 0 !important;
     padding-top: 0 !important;
     padding-bottom: 0 !important;
     margin-top: 0 !important;
@@ -2254,6 +1998,23 @@ a.footer-social-link:hover {
     display: flex;
     justify-content: var(--custom-topic-alignment); /* Dynamic alignment (left/center/right) */
     width: 100%;
+}
+
+/* Auto-collapsing empty lines adjacent to topic containers to maintain a neat layout */
+.empty-line:has(+ .topic-container) {
+    height: 0px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    line-height: 0 !important;
+    display: none !important;
+}
+
+.topic-container + .empty-line {
+    height: 0px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    line-height: 0 !important;
+    display: none !important;
 }
 
 .topic-title {
@@ -8949,6 +8710,90 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
     border-color: var(--ui-accent, #c5a059);
     background: rgba(197, 160, 89, 0.03);
 }
+
+/* Premium Chapter Header Banner */
+.chapter-header {
+    column-span: all;
+    display: flex;
+    align-items: center;
+    border-top: 1.5px solid var(--secondary-color, #c5a353);
+    border-bottom: 1.5px solid var(--secondary-color, #c5a353);
+    margin: 8px 0 16px 0;
+    padding: 6px 0;
+    width: 100%;
+}
+
+.chapter-number-wrapper {
+    position: relative;
+    width: calc(var(--custom-chapter-num-size, 30px) * 2.33);
+    height: calc(var(--custom-chapter-num-size, 30px) * 1.73);
+    margin-right: 16px;
+    flex-shrink: 0;
+}
+
+.chapter-number-bg-accent {
+    position: absolute;
+    top: 0;
+    left: 4px;
+    width: calc(var(--custom-chapter-num-size, 30px) * 2.2);
+    height: calc(var(--custom-chapter-num-size, 30px) * 1.73);
+    background-color: var(--accent-color, #1d6ea5);
+    clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%);
+}
+
+.chapter-number-bg-main {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(var(--custom-chapter-num-size, 30px) * 2.2);
+    height: calc(var(--custom-chapter-num-size, 30px) * 1.73);
+    background-color: var(--primary-color, #850f0f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-right: 6px;
+    clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%);
+}
+
+.chapter-number-val {
+    color: #ffffff;
+    font-size: var(--custom-chapter-num-size, 30px);
+    font-weight: 800;
+    font-family: var(--font-heading);
+    line-height: 1;
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.15);
+}
+
+.chapter-title-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    flex-grow: 1;
+    padding-right: calc(var(--custom-chapter-num-size, 30px) * 2.33); /* Dynamic offset to center title perfectly */
+}
+
+.chapter-main-title {
+    color: var(--primary-color, #850f0f);
+    font-size: var(--custom-chapter-title-size, 20px);
+    font-weight: 800;
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+    font-family: var(--font-heading);
+}
+
+.chapter-sub-title {
+    color: var(--text-color, #000000);
+    opacity: 0.8;
+    font-size: var(--custom-chapter-subtitle-size, 15px);
+    font-weight: 600;
+    margin: 2px 0 0 0;
+    padding: 0;
+    line-height: 1.2;
+    font-family: var(--font-heading);
+}
+
 
 
 

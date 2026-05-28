@@ -77,6 +77,8 @@ Your task is to analyze the provided page or document image/PDF and convert it i
    - Maintain the line sequence, bullet points, tabular layouts, indentation, and paragraph boundaries perfectly.
    - Use appropriate heading syntax: '#' for main document headers, '##' or '###' for section titles.
    - DO NOT USE horizontal pagebreak symbols, section divider lines, or horizontal rules (e.g., \`---\`, \`----\`, or multiple consecutive dashes on a line or anywhere in the text) as these cause pagebreak errors in the user's destination copy application. Keep the text flowing as one continuous, uninterrupted stream of readable paragraphs and lists matching the source sequence exactly. No divider lines of any kind.
+   - IMPORTANT: Avoid inserting hard line breaks (\\n) in the middle of a paragraph or bullet point. Every single bullet point, list item, or paragraph must be output as a single, continuous line in the markdown text, even if it is physically wrapped across multiple lines in the input image. This ensures that the document flow remains intact and the layout parser does not treat mid-sentence breaks as new elements or paragraphs.
+   - Avoid double bullet formatting. Do not output lines starting with multiple consecutive bullet symbols (e.g. "- •", "• •", or "* •"). Use only a single markdown bullet character at the start of a list item.
 
 4. **Illegible Words / Bad Handwriting Handling**:
    - If some handwritten words are entirely illegible, fuzzy, or cut-off, mark them inline with: \`==⚠️ High Alert: [illegible word]==\` (or if the surrounding text is Hindi, use: \`==⚠️ High Alert: [अस्पष्ट शब्द]==\`). Add these instances to the 'alerts' array with appropriate context.
@@ -144,6 +146,67 @@ Please format your response strictly as valid JSON matching the specified respon
       parsedOCRResult.markdown = parsedOCRResult.markdown.replace(/^[ \t]*-{3,}[ \t]*$/gm, "\n");
       // 2. Replaces any remaining consecutive hyphens (3 or more) anywhere in the text with empty string or single spaces so they never segment or break documents
       parsedOCRResult.markdown = parsedOCRResult.markdown.replace(/---+/g, " ");
+
+      // 3. Join bullet points and paragraphs that were split across multiple lines
+      const lines = parsedOCRResult.markdown.split("\n");
+      const joinedLines: string[] = [];
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i];
+        
+        // Clean double/triple bullets at the start of the line (e.g. "• • ", "- • ", "• - ")
+        line = line.replace(/^(\s*)([•\-\*\u2022\u25CF\u25AA\u25AB]\s*)+/, (match, spaces) => {
+          const trimmed = match.trim();
+          const firstBullet = trimmed.charAt(0);
+          return spaces + firstBullet + " ";
+        });
+
+        const trimmedCurrent = line.trim();
+        if (!trimmedCurrent) {
+          joinedLines.push(line);
+          continue;
+        }
+
+        const isStartOfBox = trimmedCurrent.startsWith("[box");
+        const isEndOfBox = trimmedCurrent.startsWith("[/box]");
+        const isTable = trimmedCurrent.startsWith("|");
+        const isComment = trimmedCurrent.startsWith("<!--");
+        const isHtml = trimmedCurrent.startsWith("<");
+        const isHeading = trimmedCurrent.startsWith("#");
+        const isQuote = trimmedCurrent.startsWith(">");
+        const isPageBreak = trimmedCurrent === "[pagebreak]" || trimmedCurrent === "[columnbreak]" || trimmedCurrent === "[colbreak]" || trimmedCurrent === "[thankyou]";
+
+        const canHaveContinuation = !isStartOfBox && !isEndOfBox && !isTable && !isComment && !isHtml && !isHeading && !isQuote && !isPageBreak;
+
+        if (canHaveContinuation) {
+          while (i + 1 < lines.length) {
+            const nextLine = lines[i + 1];
+            const trimmedNext = nextLine.trim();
+            if (!trimmedNext) {
+              break;
+            }
+
+            const isNextHeading = trimmedNext.startsWith("#");
+            const isNextBullet = trimmedNext.startsWith("•") || trimmedNext.startsWith("-") || trimmedNext.startsWith("*") || /^[🔶🔷🔸🔹♦️💎]/u.test(trimmedNext) || /^\(\d+\)/.test(trimmedNext) || /^\d+\./.test(trimmedNext);
+            const isNextQuote = trimmedNext.startsWith(">");
+            const isNextBox = trimmedNext.startsWith("[box") || trimmedNext.startsWith("[/box]");
+            const isNextPageBreak = trimmedNext === "[pagebreak]" || trimmedNext === "[columnbreak]" || trimmedNext === "[colbreak]" || trimmedNext === "[thankyou]";
+            const isNextTable = trimmedNext.startsWith("|");
+            const isNextComment = trimmedNext.startsWith("<!--");
+            const isNextHtml = trimmedNext.startsWith("<");
+
+            const isNextNewBlock = isNextHeading || isNextBullet || isNextQuote || isNextBox || isNextPageBreak || isNextTable || isNextComment || isNextHtml;
+            if (isNextNewBlock) {
+              break;
+            }
+
+            const separator = line.endsWith(" ") ? "" : " ";
+            line = line + separator + trimmedNext;
+            i++;
+          }
+        }
+        joinedLines.push(line);
+      }
+      parsedOCRResult.markdown = joinedLines.join("\n");
     }
 
     return res.json(parsedOCRResult);

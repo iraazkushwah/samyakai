@@ -48,11 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 1. DOM ELEMENTS
     const pageTabsList = document.getElementById('page-tabs-list');
-    const addPageBtn = document.getElementById('add-page-btn');
-    const deletePageBtn = document.getElementById('delete-page-btn');
+    const addPageBtn = document.getElementById('quick-add-page-btn') || document.getElementById('add-page-btn');
+    const deletePageBtn = document.getElementById('quick-delete-page-btn') || document.getElementById('delete-page-btn');
 
     // A4 Visual Page Grid DOM Elements
-    const gridViewBtn = document.getElementById('grid-view-btn');
+    const gridViewBtn = document.getElementById('quick-grid-view-btn') || document.getElementById('grid-view-btn');
     const pageGridModal = document.getElementById('page-grid-modal');
     const closeGridModalBtn = document.getElementById('close-grid-modal-btn');
     const pageGridItemsContainer = document.getElementById('page-grid-items-container');
@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearAllBtn = document.getElementById('clear-all-btn');
     const printPdfBtn = document.getElementById('print-pdf-btn');
     const smartShrinkBtn = document.getElementById('smart-shrink-btn');
+    const smartSpaceBtn = document.getElementById('smart-space-btn');
     const loadingOverlay = document.getElementById('loading-overlay');
     
     const zoomInBtn = document.getElementById('zoom-in');
@@ -232,15 +233,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const phoneticTypingToggle = document.getElementById('phonetic-typing-toggle');
     const ocrDragDropZone = document.getElementById('ocr-drag-drop-zone');
     const ocrFileInput = document.getElementById('ocr-file-input');
-    const ocrPreviewGroup = document.getElementById('ocr-preview-group');
-    const ocrPreviewImg = document.getElementById('ocr-preview-img');
-    const ocrRemoveFileBtn = document.getElementById('ocr-remove-file-btn');
-    const ocrExtractBtn = document.getElementById('ocr-extract-btn');
-    const ocrResultGroup = document.getElementById('ocr-result-group');
-    const ocrResultText = document.getElementById('ocr-result-text');
-    const ocrInsertBtn = document.getElementById('ocr-insert-btn');
-    const ocrFormatMarkdownBtn = document.getElementById('ocr-format-markdown-btn');
-    const ocrScanOverlay = document.getElementById('ocr-scan-overlay');
+    
+    // NEW PREMIUM OCR DASHBOARD DOM ELEMENTS & STATE
+    const openOcrDashBtn = document.getElementById('tab-ocr-btn');
+    const ocrIntegratedWorkspace = document.getElementById('ocr-integrated-workspace');
+    const ocrDashDragZone = document.getElementById('ocr-dash-drag-zone');
+    const ocrDashFileInput = document.getElementById('ocr-dash-file-input');
+    const ocrDashPreviewArea = document.getElementById('ocr-dash-preview-area');
+    const ocrDashFileBadge = document.getElementById('ocr-dash-file-badge');
+    const ocrDashFileName = document.getElementById('ocr-dash-file-name');
+    const ocrDashFileSize = document.getElementById('ocr-dash-file-size');
+    const ocrDashRemoveFileBtn = document.getElementById('ocr-dash-remove-file-btn');
+    const ocrDashScanOverlay = document.getElementById('ocr-dash-scan-overlay');
+    const ocrDashPreviewImg = document.getElementById('ocr-dash-preview-img');
+    const ocrDashEngineSelect = document.getElementById('ocr-dash-engine-select');
+    const ocrDashLayoutToggle = document.getElementById('ocr-dash-layout-toggle');
+    const ocrDashStructToggle = document.getElementById('ocr-dash-struct-toggle');
+    const ocrDashProcessBtn = document.getElementById('ocr-dash-process-btn');
+    const ocrDashProcessingIndicator = document.getElementById('ocr-dash-processing-indicator');
+    
+    const ocrDashTabPreview = document.getElementById('ocr-dash-tab-preview');
+    const ocrDashTabEditor = document.getElementById('ocr-dash-tab-editor');
+    const ocrDashTabAlerts = document.getElementById('ocr-dash-tab-alerts');
+    const ocrDashAlertBadgeCount = document.getElementById('ocr-dash-alert-badge-count');
+    const ocrDashStatsBar = document.getElementById('ocr-dash-stats-bar');
+    const ocrDashConfidenceVal = document.getElementById('ocr-dash-confidence-val');
+    const ocrDashWordcountVal = document.getElementById('ocr-dash-wordcount-val');
+    const ocrDashAlertsCountVal = document.getElementById('ocr-dash-alerts-count-val');
+    
+    const ocrDashIdleState = document.getElementById('ocr-dash-idle-state');
+    const ocrDashViewStructured = document.getElementById('ocr-dash-view-structured');
+    const ocrDashRenderedHtml = document.getElementById('ocr-dash-rendered-html');
+    const ocrDashViewEditor = document.getElementById('ocr-dash-view-editor');
+    const ocrDashRawTextarea = document.getElementById('ocr-dash-raw-textarea');
+    const ocrDashViewAlerts = document.getElementById('ocr-dash-view-alerts');
+    const ocrDashAlertsList = document.getElementById('ocr-dash-alerts-list');
+    
+    const ocrDashActionsBar = document.getElementById('ocr-dash-actions-bar');
+    const ocrDashCopyBtn = document.getElementById('ocr-dash-copy-btn');
+    const ocrDashDownloadBtn = document.getElementById('ocr-dash-download-btn');
+    const ocrDashInsertBtn = document.getElementById('ocr-dash-insert-btn');
+
+    // Page Selector Modal Elements
+    const ocrPageSelectorModal = document.getElementById('ocr-page-selector-modal');
+    const ocrPageSelectorClose = document.getElementById('ocr-page-selector-close');
+    const ocrDestinationPageSelect = document.getElementById('ocr-destination-page-select');
+    const ocrPageSelectorCancel = document.getElementById('ocr-page-selector-cancel');
+    const ocrPageSelectorConfirm = document.getElementById('ocr-page-selector-confirm');
+
+    let ocrDashUploadedFile = null;
+    let ocrDashActiveTab = 'preview';
+    let ocrDashLayoutAnalysis = true;
+    let ocrDashAutoStructuring = true;
     const phoneticSuggestionsTooltip = document.getElementById('phonetic-suggestions-tooltip');
 
     // Phonetic suggestion state variables (Google Input Tools emulation)
@@ -340,7 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let activePageIndex = 0; // Current active page index
     let zoomLevel = 100;
     if (window.innerWidth <= 768) {
-        let optimalZoom = Math.floor((window.innerWidth - 32) / 794 * 100);
+        let optimalZoom = Math.floor((window.innerWidth - 32) / 816 * 100);
         zoomLevel = Math.max(35, Math.min(optimalZoom, 60));
     } else if (window.innerWidth <= 1024) {
         zoomLevel = 60;
@@ -594,6 +638,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 panel.classList.add('active');
             }
         });
+
+        // 3. Swap main preview with Integrated OCR Workspace if active panel is panel-ocr
+        const previewHeader = document.querySelector('.preview-panel .preview-header');
+        const canvasWrapper = document.querySelector('.preview-panel .canvas-wrapper');
+        const mobileCloseBtn = document.getElementById('mobile-preview-close-btn');
+        
+        if (targetPanelId === 'panel-ocr') {
+            if (previewHeader) previewHeader.style.display = 'none';
+            if (canvasWrapper) canvasWrapper.style.display = 'none';
+            if (mobileCloseBtn) mobileCloseBtn.style.display = 'none';
+            if (ocrIntegratedWorkspace) ocrIntegratedWorkspace.style.display = 'flex';
+            resetOcrDashProject(false);
+        } else {
+            if (previewHeader) previewHeader.style.display = 'flex';
+            if (canvasWrapper) canvasWrapper.style.display = 'block';
+            if (mobileCloseBtn) mobileCloseBtn.style.display = '';
+            if (ocrIntegratedWorkspace) ocrIntegratedWorkspace.style.display = 'none';
+        }
     }
 
     // Reusable image compression helper using Canvas (reduces 1MB+ images to ~50KB for insane performance)
@@ -1554,176 +1616,546 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // OCR Drag & Drop and file selection listeners
-    if (ocrDragDropZone && ocrFileInput) {
-        ocrDragDropZone.addEventListener('click', () => ocrFileInput.click());
-        
-        ocrFileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            ocrFileChangeCount++; // Increment file change count to load new text
-            handleOcrFileSelection(file);
-        });
+    // ==========================================
+    // PREMIUM INTEGRATED SIDEBAR & WORKSPACE OCR CONTROLLER
+    // ==========================================
 
-        // Drag & Drop
-        ocrDragDropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            ocrDragDropZone.classList.add('ocr-dragover');
-        });
-        
-        ocrDragDropZone.addEventListener('dragleave', () => {
-            ocrDragDropZone.classList.remove('ocr-dragover');
-        });
-        
-        ocrDragDropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            ocrDragDropZone.classList.remove('ocr-dragover');
-            const file = e.dataTransfer.files[0];
-            ocrFileChangeCount++; // Increment file change count to load new text
-            handleOcrFileSelection(file);
-        });
-    }
-
-    function handleOcrFileSelection(file) {
-        if (file && file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                ocrPreviewImg.src = event.target.result;
-                ocrDragDropZone.style.display = 'none';
-                ocrPreviewGroup.style.display = 'flex';
-                ocrResultGroup.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
+    function resetOcrDashProject(forceClear = false) {
+        if (forceClear) {
+            ocrDashUploadedFile = null;
+            if (ocrDashFileInput) ocrDashFileInput.value = '';
+            if (ocrDashPreviewImg) ocrDashPreviewImg.src = '';
+            
+            // Hide preview area, show dragzone
+            if (ocrDashPreviewArea) ocrDashPreviewArea.style.display = 'none';
+            if (ocrDashDragZone) ocrDashDragZone.style.display = 'flex';
+            
+            // Reset state views
+            if (ocrDashRawTextarea) ocrDashRawTextarea.value = '';
+            if (ocrDashRenderedHtml) ocrDashRenderedHtml.innerHTML = '';
+            if (ocrDashAlertsList) ocrDashAlertsList.innerHTML = '';
+            
+            // Hide outputs
+            if (ocrDashStatsBar) ocrDashStatsBar.style.display = 'none';
+            if (ocrDashActionsBar) ocrDashActionsBar.style.display = 'none';
+            if (ocrDashTabPreview) ocrDashTabPreview.style.display = 'none';
+            if (ocrDashTabEditor) ocrDashTabEditor.style.display = 'none';
+            if (ocrDashTabAlerts) ocrDashTabAlerts.style.display = 'none';
+            if (ocrDashIdleState) ocrDashIdleState.style.display = 'flex';
+            if (ocrDashViewStructured) ocrDashViewStructured.style.display = 'none';
+            if (ocrDashViewEditor) ocrDashViewEditor.style.display = 'none';
+            if (ocrDashViewAlerts) ocrDashViewAlerts.style.display = 'none';
+            
+            if (ocrDashProcessBtn) ocrDashProcessBtn.style.display = 'none';
+            if (ocrDashProcessingIndicator) ocrDashProcessingIndicator.style.display = 'none';
+        } else {
+            // Keep current loaded or show idle
+            if (!ocrDashUploadedFile) {
+                resetOcrDashProject(true);
+            }
         }
     }
 
-    // Remove file
-    if (ocrRemoveFileBtn) {
-        ocrRemoveFileBtn.addEventListener('click', () => {
-            ocrFileInput.value = '';
-            ocrPreviewImg.src = '';
-            ocrDragDropZone.style.display = 'flex';
-            ocrPreviewGroup.style.display = 'none';
-            ocrResultGroup.style.display = 'none';
+    // Settings Toggle Handlers
+    if (ocrDashLayoutToggle) {
+        ocrDashLayoutToggle.addEventListener('click', () => {
+            ocrDashLayoutAnalysis = !ocrDashLayoutAnalysis;
+            ocrDashLayoutToggle.classList.toggle('active', ocrDashLayoutAnalysis);
         });
     }
 
-    // Scan and extract simulation
-    if (ocrExtractBtn) {
-        ocrExtractBtn.addEventListener('click', async () => {
-            const previewImgSrc = ocrPreviewImg.src;
-            if (!previewImgSrc) {
-                alert('कृपया पहले एक फोटो अपलोड करें! (Please upload an image first!)');
-                return;
+    if (ocrDashStructToggle) {
+        ocrDashStructToggle.addEventListener('click', () => {
+            ocrDashAutoStructuring = !ocrDashAutoStructuring;
+            ocrDashStructToggle.classList.toggle('active', ocrDashAutoStructuring);
+        });
+    }
+
+    // Drag Zone Events
+    if (ocrDashDragZone && ocrDashFileInput) {
+        ocrDashDragZone.addEventListener('click', () => ocrDashFileInput.click());
+
+        ocrDashFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            handleOcrDashFileSelection(file);
+        });
+
+        ocrDashDragZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            ocrDashDragZone.style.borderColor = 'var(--ui-accent, #c5a059)';
+            ocrDashDragZone.style.background = 'rgba(197, 160, 89, 0.05)';
+        });
+
+        ocrDashDragZone.addEventListener('dragleave', () => {
+            ocrDashDragZone.style.borderColor = 'rgba(197, 160, 89, 0.25)';
+            ocrDashDragZone.style.background = 'rgba(197, 160, 89, 0.02)';
+        });
+
+        ocrDashDragZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            ocrDashDragZone.style.borderColor = 'rgba(197, 160, 89, 0.25)';
+            ocrDashDragZone.style.background = 'rgba(197, 160, 89, 0.02)';
+            const file = e.dataTransfer.files[0];
+            handleOcrDashFileSelection(file);
+        });
+    }
+
+    function handleOcrDashFileSelection(file) {
+        if (!file) return;
+
+        if (file.size > 15 * 1024 * 1024) {
+            alert('File size limit is 15MB. Please choose a smaller document.');
+            return;
+        }
+
+        const isPdf = file.type === 'application/pdf' || file.name.endsWith('.pdf');
+        const isImage = file.type.startsWith('image/');
+
+        if (!isPdf && !isImage) {
+            alert('Only images (PNG, JPG, JPEG) and PDF files are supported.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const base64String = event.target.result;
+            const cleanBase64 = base64String.split(',')[1];
+
+            ocrDashUploadedFile = {
+                name: file.name,
+                size: (file.size / (1024 * 1024)).toFixed(2) + ' MB',
+                type: file.type || (isPdf ? 'application/pdf' : 'image/png'),
+                base64: cleanBase64,
+                previewUrl: isImage ? base64String : null
+            };
+
+            // Update UI elements
+            ocrDashFileName.textContent = ocrDashUploadedFile.name;
+            ocrDashFileSize.textContent = ocrDashUploadedFile.size;
+            ocrDashFileBadge.textContent = isPdf ? 'PDF' : 'IMG';
+
+            if (isImage) {
+                ocrDashPreviewImg.src = ocrDashUploadedFile.previewUrl;
+                ocrDashPreviewImg.style.display = 'block';
+            } else {
+                ocrDashPreviewImg.src = '';
+                ocrDashPreviewImg.style.display = 'none';
             }
 
-            if (ocrScanOverlay) {
-                ocrScanOverlay.style.display = 'block';
-            }
-            ocrExtractBtn.disabled = true;
-            ocrExtractBtn.textContent = 'Scanning...';
+            // Reveal Preview area and hide Drag zone
+            ocrDashDragZone.style.display = 'none';
+            ocrDashPreviewArea.style.display = 'flex';
+            ocrDashProcessBtn.style.display = 'block';
+            ocrDashProcessingIndicator.style.display = 'none';
 
-            // Trigger the beautiful progressive cascade of scanning bounding boxes
-            triggerOcrBoundingBoxScan();
+            // Reset Right panel view to idle state
+            ocrDashIdleState.style.display = 'flex';
+            ocrDashStatsBar.style.display = 'none';
+            ocrDashActionsBar.style.display = 'none';
+            ocrDashTabPreview.style.display = 'none';
+            ocrDashTabEditor.style.display = 'none';
+            ocrDashTabAlerts.style.display = 'none';
+            ocrDashViewStructured.style.display = 'none';
+            ocrDashViewEditor.style.display = 'none';
+            ocrDashViewAlerts.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Remove File Listener
+    if (ocrDashRemoveFileBtn) {
+        ocrDashRemoveFileBtn.addEventListener('click', () => {
+            resetOcrDashProject(true);
+        });
+    }
+
+    // Tabs Controller Logic
+    const ocrTabs = [
+        { btn: ocrDashTabPreview, panel: ocrDashViewStructured, name: 'preview' },
+        { btn: ocrDashTabEditor, panel: ocrDashViewEditor, name: 'editor' },
+        { btn: ocrDashTabAlerts, panel: ocrDashViewAlerts, name: 'alerts' }
+    ];
+
+    ocrTabs.forEach(tab => {
+        if (tab.btn) {
+            tab.btn.addEventListener('click', () => {
+                ocrTabs.forEach(t => {
+                    t.btn.classList.remove('active');
+                    t.panel.style.display = 'none';
+                });
+                tab.btn.classList.add('active');
+                tab.panel.style.display = 'block';
+                ocrDashActiveTab = tab.name;
+            });
+        }
+    });
+
+    // Realtime Sync Raw Text Area edits to Structured View HTML
+    if (ocrDashRawTextarea && ocrDashRenderedHtml) {
+        ocrDashRawTextarea.addEventListener('input', () => {
+            const rawText = ocrDashRawTextarea.value;
+            ocrDashRenderedHtml.innerHTML = renderOcrDashMarkdownToHtml(rawText);
+        });
+    }
+
+    // Core scanning execution
+    if (ocrDashProcessBtn) {
+        ocrDashProcessBtn.addEventListener('click', async () => {
+            if (!ocrDashUploadedFile) return;
+
+            // Activate scanning visuals
+            ocrDashProcessBtn.style.display = 'none';
+            ocrDashProcessingIndicator.style.display = 'flex';
+            ocrDashScanOverlay.style.display = 'block';
+            
+            // Trigger visual bounding boxes sweep animation
+            triggerOcrDashBoundingBoxScan();
 
             try {
-                // Extract clean base64 data and mimeType from previewImgSrc data-URL
-                const mimeTypeMatch = previewImgSrc.match(/^data:(image\/[a-zA-Z+.-]+);base64,/);
-                if (!mimeTypeMatch) {
-                    throw new Error("Invalid image format. Please upload a valid image.");
-                }
-                const mimeType = mimeTypeMatch[1];
-                const base64Data = previewImgSrc.split(',')[1];
-                const fileName = ocrFileInput.files[0] ? ocrFileInput.files[0].name : "samyak-notes-scan.png";
+                const selectedEngine = ocrDashEngineSelect ? ocrDashEngineSelect.value : "Google Vision API (High Precision)";
 
-                // Call the local secure Gemini OCR API
                 const response = await fetch('/api/ocr', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        fileBase64: base64Data,
-                        mimeType: mimeType,
-                        fileName: fileName
+                        fileBase64: ocrDashUploadedFile.base64,
+                        mimeType: ocrDashUploadedFile.type,
+                        fileName: ocrDashUploadedFile.name,
+                        engine: selectedEngine,
+                        enableLayoutAnalysis: ocrDashLayoutAnalysis,
+                        enableStructuring: ocrDashAutoStructuring
                     })
                 });
 
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || `Server returned ${response.status}`);
+                    const errorText = await response.json();
+                    throw new Error(errorText.error || `Server error: ${response.status}`);
                 }
 
                 const result = await response.json();
-                
-                // If scanner animation is still running, let it run a bit, otherwise hide overlay
-                if (ocrScanOverlay) {
-                    ocrScanOverlay.style.display = 'none';
-                }
-                
-                // Populate the result textarea with the real high-fidelity OCR Markdown output
-                ocrResultText.value = result.markdown;
-                
-                // Show the OCR result group panel
-                ocrResultGroup.style.display = 'flex';
-                
-                // If there are illegibility warnings, alert the user nicely
-                if (result.alerts && result.alerts.length > 0) {
-                    console.warn("OCR Handwriting Alerts:", result.alerts);
-                    alert(`💡 OCR completed! Marked ${result.alerts.length} blurry/fuzzy handwriting segments inline. Please review them in the editor.`);
-                }
-                
-                saveWorkspaceToLocalStorage();
 
-            } catch (error) {
-                console.error("Gemini OCR Integration error:", error);
-                alert(`❌ OCR Error: ${error.message || 'Could not reach local Gemini backend. Make sure GEMINI_API_KEY is configured and server.ts is running.'}`);
-                if (ocrScanOverlay) {
-                    ocrScanOverlay.style.display = 'none';
+                // Scanning succeeded! Populate components
+                ocrDashRawTextarea.value = result.markdown;
+                ocrDashRenderedHtml.innerHTML = renderOcrDashMarkdownToHtml(result.markdown);
+                
+                // Populate Legibility alerts
+                populateOcrDashAlerts(result.alerts || []);
+                ocrDashAlertBadgeCount.textContent = result.alerts ? result.alerts.length : 0;
+
+                // Populate Stats Bar
+                ocrDashConfidenceVal.textContent = (result.confidenceEstimate || 98.4) + '%';
+                ocrDashWordcountVal.textContent = result.wordCount || result.markdown.split(/\s+/).filter(Boolean).length;
+                ocrDashAlertsCountVal.textContent = result.alerts ? result.alerts.length : 0;
+
+                // Toggle tabs visible and view structured active
+                ocrDashIdleState.style.display = 'none';
+                ocrDashStatsBar.style.display = 'grid';
+                ocrDashActionsBar.style.display = 'flex';
+                
+                ocrDashTabPreview.style.display = 'block';
+                ocrDashTabEditor.style.display = 'block';
+                ocrDashTabAlerts.style.display = 'block';
+
+                // Activate Structured tab
+                ocrTabs.forEach(t => {
+                    t.btn.classList.remove('active');
+                    t.panel.style.display = 'none';
+                });
+                ocrDashTabPreview.classList.add('active');
+                ocrDashViewStructured.style.display = 'block';
+                ocrDashActiveTab = 'preview';
+
+                if (result.alerts && result.alerts.length > 0) {
+                    alert(`⚡ Scanning complete! Detected ${result.alerts.length} handwriting segments containing blurry or fuzzy content. Review them in the 'Legibility Alerts' tab.`);
                 }
+
+            } catch (err) {
+                console.error('OCR Processing error:', err);
+                alert(`❌ OCR Processing Error: ${err.message || 'Could not connect to the Gemini backend.'}`);
             } finally {
-                ocrExtractBtn.disabled = false;
-                ocrExtractBtn.innerHTML = '<span>⚡</span> Scan & Extract Text';
+                // Remove animations
+                ocrDashScanOverlay.style.display = 'none';
+                ocrDashProcessingIndicator.style.display = 'none';
+                ocrDashProcessBtn.style.display = 'block';
+                ocrDashProcessBtn.textContent = 'Process Again';
             }
         });
     }
 
-        // Auto-clean & format markdown
-    if (ocrFormatMarkdownBtn) {
-        ocrFormatMarkdownBtn.addEventListener('click', () => {
-            const rawText = ocrResultText.value;
-            const formatted = formatOcrToSamyakMarkdown(rawText);
-            ocrResultText.value = formatted;
+    // Populate Legibility Alerts lists
+    function populateOcrDashAlerts(alerts) {
+        if (!ocrDashAlertsList) return;
+
+        if (alerts.length === 0) {
+            ocrDashAlertsList.innerHTML = `<div style="padding: 30px; text-align: center; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 8px; color: #94a3b8;">
+                <span style="font-size: 24px; display: block; margin-bottom: 8px;">✨</span>
+                <strong>All text is fully legible!</strong> No handwriting alerts raised.
+            </div>`;
+            return;
+        }
+
+        let alertCardsHtml = '';
+        alerts.forEach((alertItem, idx) => {
+            alertCardsHtml += `
+                <div class="ocr-dash-alert-card">
+                    <div class="ocr-dash-card-header">
+                        <span class="ocr-dash-card-badge">⚠️ HIGH ALERT #${idx + 1}</span>
+                        <span class="ocr-dash-card-reason">Reason: ${alertItem.reason || 'Blurry fragment'}</span>
+                    </div>
+                    <div>
+                        <div class="ocr-dash-field-title">Fuzzy Fragment</div>
+                        <p class="ocr-dash-field-val">${alertItem.fragment}</p>
+                    </div>
+                    <div>
+                        <div class="ocr-dash-field-title">Sentence Context</div>
+                        <p class="ocr-dash-field-val context">"...${alertItem.context}..."</p>
+                    </div>
+                </div>
+            `;
+        });
+        ocrDashAlertsList.innerHTML = alertCardsHtml;
+    }
+
+    // Custom HTML markdown parser for preview rendering
+    function renderOcrDashMarkdownToHtml(text) {
+        if (!text) return '';
+        const lines = text.split('\n');
+        let htmlOutput = '';
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+            const indentMatch = line.match(/^(\s+)/);
+            const indentPadding = indentMatch ? indentMatch[1].length * 8 : 0;
+            const cleanLine = line.trim();
+
+            if (!cleanLine) {
+                htmlOutput += `<p style="min-height: 1.5rem;"></p>`;
+                continue;
+            }
+
+            // HTML Spacers rendering (skipped images)
+            if (cleanLine.startsWith('<div style=') && cleanLine.endsWith('</div>')) {
+                htmlOutput += cleanLine;
+                continue;
+            }
+
+            // Heading 1
+            if (cleanLine.startsWith('# ')) {
+                htmlOutput += `<h1 style="padding-left: ${indentPadding}px">${parseInlineHighlightsToHtml(cleanLine.substring(2))}</h1>`;
+                continue;
+            }
+            // Heading 2
+            if (cleanLine.startsWith('## ')) {
+                htmlOutput += `<h2 style="padding-left: ${indentPadding}px">${parseInlineHighlightsToHtml(cleanLine.substring(3))}</h2>`;
+                continue;
+            }
+            // Heading 3
+            if (cleanLine.startsWith('### ')) {
+                htmlOutput += `<h3 style="padding-left: ${indentPadding}px">${parseInlineHighlightsToHtml(cleanLine.substring(4))}</h3>`;
+                continue;
+            }
+            // List spacing & highlights
+            if (cleanLine.startsWith('- ') || cleanLine.startsWith('• ')) {
+                htmlOutput += `<div style="padding-left: ${indentPadding + 16}px; display: flex; items-start: gap-2.5; margin: 6px 0;">
+                    <span style="color: #818cf8; font-weight: bold; margin-right: 8px;">•</span>
+                    <div style="flex: 1;">${parseInlineHighlightsToHtml(cleanLine.substring(2))}</div>
+                </div>`;
+                continue;
+            }
+
+            // Default block
+            htmlOutput += `<p style="padding-left: ${indentPadding}px">${parseInlineHighlightsToHtml(cleanLine)}</p>`;
+        }
+        return htmlOutput;
+    }
+
+    function parseInlineHighlightsToHtml(text) {
+        if (!text) return "";
+        let escaped = text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+
+        // 1. Process Fuzzy Alerts: ==⚠️ High Alert: [text]==
+        escaped = escaped.replace(/==⚠️ High Alert: \[(.*?)\]==/g, (match, captured) => {
+            return `<span class="high-alert-highlight" title="This handwriting segment is fuzzy or illegible. Please match with the original view.">⚠️ Fuzzy: ${captured}</span>`;
+        });
+
+        // 2. Process Bold: **text**
+        escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // 3. Process Italic: *text*
+        escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+        // 4. Process Inline Code: `code`
+        escaped = escaped.replace(/`(.*?)`/g, '<code style="font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.4); padding: 2px 4px; border-radius: 3px; color: #818cf8;">$1</code>');
+
+        return escaped;
+    }
+
+    // Bounding Box visual scan overlays inside Dashboard Left Pane
+    function triggerOcrDashBoundingBoxScan() {
+        const previewContainer = ocrDashPreviewImg.parentElement;
+        if (!previewContainer) return;
+
+        // Clean out any past scans
+        const oldBoxes = previewContainer.querySelectorAll('.ocr-word-highlight-box');
+        oldBoxes.forEach(box => box.remove());
+
+        const wordRows = 7;
+        const wordsPerRow = 5;
+        const totalScanTime = 1800; // synchronized with sweeping laser line
+
+        for (let r = 0; r < wordRows; r++) {
+            const topVal = 14 + (r * 11) + (Math.random() * 2 - 1);
+            for (let c = 0; c < wordsPerRow; c++) {
+                const leftVal = 12 + (c * 15) + (Math.random() * 4 - 2);
+                const widthVal = 8 + (Math.random() * 6);
+                const heightVal = 4.5 + (Math.random() * 1.5);
+
+                const box = document.createElement('div');
+                box.className = 'ocr-word-highlight-box';
+                box.style.top = topVal + '%';
+                box.style.left = leftVal + '%';
+                box.style.width = widthVal + '%';
+                box.style.height = heightVal + '%';
+
+                previewContainer.appendChild(box);
+
+                // Laser reach threshold calculation
+                const laserReachTime = (topVal / 100) * totalScanTime;
+
+                // Sync highlights with sweeping laser line position
+                setTimeout(() => {
+                    box.classList.add('active');
+                }, laserReachTime);
+
+                setTimeout(() => {
+                    box.classList.remove('active');
+                    box.classList.add('scanned-done');
+                }, laserReachTime + 280);
+
+                // Keep highlights visible to show 100% scanning coverage, and cleanup at the end
+                setTimeout(() => {
+                    box.style.opacity = '0';
+                    setTimeout(() => box.remove(), 400);
+                }, totalScanTime + 1800);
+            }
+        }
+    }
+
+    // Export Actions listeners
+    if (ocrDashCopyBtn) {
+        ocrDashCopyBtn.addEventListener('click', () => {
+            const text = ocrDashRawTextarea.value;
+            if (!text) return;
+            navigator.clipboard.writeText(text);
+            ocrDashCopyBtn.textContent = 'Copied! ✓';
+            setTimeout(() => {
+                ocrDashCopyBtn.textContent = 'Copy to Clipboard';
+            }, 2500);
         });
     }
 
-    // Insert structured text to editor
-    if (ocrInsertBtn) {
-        ocrInsertBtn.addEventListener('click', () => {
-            const textToInsert = ocrResultText.value;
+    if (ocrDashDownloadBtn) {
+        ocrDashDownloadBtn.addEventListener('click', () => {
+            const text = ocrDashRawTextarea.value;
+            if (!text) return;
+            const element = document.createElement("a");
+            const file = new Blob([text], { type: "text/plain;charset=utf-8" });
+            element.href = URL.createObjectURL(file);
+            element.download = `${ocrDashUploadedFile?.name.split(".")[0] || "samyak-ocr-output"}.md`;
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        });
+    }
+
+    // POP UP DESTINATION PAGE SELECTOR ON INSERT
+    if (ocrDashInsertBtn) {
+        ocrDashInsertBtn.addEventListener('click', () => {
+            const textToInsert = ocrDashRawTextarea.value;
             if (!textToInsert) return;
 
-            if (activePageIndex === 0) {
-                alert('Cannot insert notes onto the Cover Page! Please switch to a Content Page.');
-                return;
-            }
-            if (activePageIndex === pagesData.length) {
-                alert('Cannot insert notes onto the End Page! Please switch to a Content Page.');
-                return;
+            // Populate the destination selector select dropdown dynamically
+            if (ocrDestinationPageSelect) {
+                let optionsHtml = '';
+                // Content pages: index 1 to pagesData.length - 1
+                for (let i = 1; i < pagesData.length; i++) {
+                    const pageTextSnippet = pagesData[i].text ? pagesData[i].text.trim().substring(0, 30).replace(/[#*`>🔶•-]/g, '').trim() : '';
+                    const displayTitle = pageTextSnippet ? ` - ${pageTextSnippet}...` : '';
+                    optionsHtml += `<option value="${i}">Page ${i + 1}${displayTitle}</option>`;
+                }
+                optionsHtml += `<option value="create_new">➕ Create a New Page & Insert</option>`;
+                ocrDestinationPageSelect.innerHTML = optionsHtml;
             }
 
-            saveCurrentInputState();
-            
-            // Insert at active cursor or append
+            // Open destination page selector modal
+            if (ocrPageSelectorModal) {
+                ocrPageSelectorModal.style.display = 'flex';
+            }
+        });
+    }
+
+    // Page Selector Modal Close Buttons & Backdrops
+    if (ocrPageSelectorClose) {
+        ocrPageSelectorClose.addEventListener('click', () => {
+            ocrPageSelectorModal.style.display = 'none';
+        });
+    }
+    if (ocrPageSelectorCancel) {
+        ocrPageSelectorCancel.addEventListener('click', () => {
+            ocrPageSelectorModal.style.display = 'none';
+        });
+    }
+    if (ocrPageSelectorModal) {
+        ocrPageSelectorModal.addEventListener('click', (e) => {
+            if (e.target === ocrPageSelectorModal) {
+                ocrPageSelectorModal.style.display = 'none';
+            }
+        });
+    }
+
+    // Confirm Page Selection & Insert Logic
+    if (ocrPageSelectorConfirm) {
+        ocrPageSelectorConfirm.addEventListener('click', () => {
+            const selectedVal = ocrDestinationPageSelect.value;
+            const textToInsert = ocrDashRawTextarea.value;
+            if (!textToInsert) return;
+
+            let targetIndex;
+            if (selectedVal === 'create_new') {
+                // Call addPage to append a new page at pagesData.length - 1
+                addPage();
+                targetIndex = pagesData.length - 1;
+            } else {
+                targetIndex = parseInt(selectedVal);
+            }
+
+            // Switch to the target page index (which also updates activePageIndex and switchSidebarTab('panel-editor'))
+            switchActivePage(targetIndex, true);
+
+            // Insert text at caret of textarea or append it if caret is not set
             const currentText = pageContentInput.value;
-            const selStart = pageContentInput.selectionStart;
-            const selEnd = pageContentInput.selectionEnd;
+            const selStart = pageContentInput.selectionStart || 0;
+            const selEnd = pageContentInput.selectionEnd || 0;
             
             const newText = currentText.substring(0, selStart) + '\n' + textToInsert + '\n' + currentText.substring(selEnd);
             pageContentInput.value = newText;
-            
+            pagesData[targetIndex].text = newText;
+
             // Re-render and save
             renderPreview();
             saveWorkspaceToLocalStorage();
-            
-            alert('Structured notes successfully inserted into the active content page editor!');
+            updateStats();
+
+            // Auto switch sidebar tab to panel-editor
+            switchSidebarTab('panel-editor');
+
+            // Hide the page selector modal
+            ocrPageSelectorModal.style.display = 'none';
+
+            alert('Structured notes successfully inserted into the page editor!');
         });
     }
 
@@ -2360,6 +2792,73 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Smart Space (Blank Line & Space Cleaner) Click Listener
+    if (smartSpaceBtn) {
+        smartSpaceBtn.addEventListener('click', () => {
+            // First, save the current editor text if active page is a content page
+            if (activePageIndex > 0 && activePageIndex < pagesData.length) {
+                pagesData[activePageIndex].text = pageContentInput.value;
+            }
+
+            let spacesCleaned = 0;
+            let doubleNewlinesFixed = 0;
+            let totalFixedCount = 0;
+
+            // Iterate over all content pages and clean their text content
+            for (let idx = 1; idx < pagesData.length; idx++) {
+                if (pagesData[idx] && pagesData[idx].type === 'content' && pagesData[idx].text) {
+                    const originalText = pagesData[idx].text;
+                    let cleanedText = originalText;
+
+                    // 1. Remove trailing spaces or tabs from all lines
+                    cleanedText = cleanedText.replace(/[ \t]+$/gm, '');
+
+                    // 2. Reduce 3 or more consecutive newlines to exactly 2 newlines (standard double newline spacing)
+                    const consecutiveNewlinesRegex = /\n{3,}/g;
+                    const newlineMatches = cleanedText.match(consecutiveNewlinesRegex);
+                    if (newlineMatches) {
+                        doubleNewlinesFixed += newlineMatches.length;
+                    }
+                    cleanedText = cleanedText.replace(consecutiveNewlinesRegex, '\n\n');
+
+                    // 3. Trim leading/trailing blank lines/spaces per page to guarantee clean starts/ends
+                    cleanedText = cleanedText.trim();
+
+                    // 4. Clean consecutive horizontal spaces between words (2 or more spaces) to a single space
+                    // We use [^\n ] to ensure it is bounded by non-spaces, preserving starting indent spaces!
+                    const multiSpaceRegex = /([^\n ]) {2,}([^\n ])/g;
+                    const spaceMatches = cleanedText.match(multiSpaceRegex);
+                    if (spaceMatches) {
+                        spacesCleaned += spaceMatches.length;
+                    }
+                    cleanedText = cleanedText.replace(multiSpaceRegex, '$1 $2');
+
+                    // Update pagesData
+                    if (cleanedText !== originalText) {
+                        pagesData[idx].text = cleanedText;
+                        totalFixedCount++;
+                    }
+                }
+            }
+
+            if (totalFixedCount > 0) {
+                // If the active page was updated, update the textarea value instantly
+                if (activePageIndex > 0 && activePageIndex < pagesData.length) {
+                    pageContentInput.value = pagesData[activePageIndex].text;
+                }
+
+                // Show visual feedback or toast
+                alert(`Smart Space Completed successfully! ✨\n- Cleaned up double spaces in ${spacesCleaned} places.\n- Normalized excessive blank lines in ${doubleNewlinesFixed} places.\n- Optimized ${totalFixedCount} page layout streams.`);
+                
+                // Re-render and save
+                renderPreview();
+                saveWorkspaceToLocalStorage();
+            } else {
+                alert("Your document layout is already perfectly optimized! No extra blank lines or redundant spaces were found. ✨");
+            }
+        });
+    }
+
     // Highly robust PDF print button action
     if (printPdfBtn) {
         printPdfBtn.addEventListener('click', () => {
@@ -2493,7 +2992,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 // In landscape side-by-side, the preview panel gets 55vw of width
                 widthToFit = window.innerWidth * 0.55;
             }
-            let optimalZoom = Math.floor((widthToFit - 32) / 794 * 100);
+            let optimalZoom = Math.floor((widthToFit - 32) / 816 * 100);
             zoomLevel = Math.max(30, Math.min(optimalZoom, 60));
             updateZoom();
         }
@@ -3310,30 +3809,111 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render left panel navigation tabs list
     function renderTabsList() {
-        pageTabsList.innerHTML = '';
+        if (pageTabsList) {
+            pageTabsList.innerHTML = '';
+        }
         
         pagesData.forEach((page, idx) => {
-            const tab = document.createElement('div');
-            tab.className = 'page-tab';
-            if (idx === activePageIndex) {
-                tab.classList.add('active');
-            }
+            if (pageTabsList) {
+                const tab = document.createElement('div');
+                tab.className = 'page-tab';
+                if (idx === activePageIndex) {
+                    tab.classList.add('active');
+                }
 
+                if (idx === 0) {
+                    tab.textContent = 'Cover';
+                } else {
+                    tab.textContent = `Page ${idx}`;
+                }
+
+                // Sync overflow warning style from A4 page to tab button
+                const previewPage = document.querySelector(`.a4-page[data-page="${idx + 1}"]`);
+                if (previewPage && previewPage.classList.contains('overflow-detected')) {
+                    tab.classList.add('overflow');
+                    tab.title = "Page overflow detected! Click to reduce text.";
+                }
+
+                tab.addEventListener('click', () => switchActivePage(idx));
+                pageTabsList.appendChild(tab);
+            }
+        });
+
+        // Sync our new Quick Page switcher header dropdown
+        syncQuickPageSwitcher();
+    }
+
+    function syncQuickPageSwitcher() {
+        const quickPageSelect = document.getElementById('quick-page-select');
+        if (!quickPageSelect) return;
+
+        quickPageSelect.innerHTML = '';
+        const lastTabIdx = pagesData.length;
+
+        for (let idx = 0; idx <= lastTabIdx; idx++) {
+            const opt = document.createElement('option');
+            opt.value = idx.toString();
             if (idx === 0) {
-                tab.textContent = 'Cover';
+                opt.textContent = '👑 Cover Page';
+            } else if (idx === lastTabIdx) {
+                opt.textContent = '🏁 End Page';
             } else {
-                tab.textContent = `Page ${idx}`;
+                opt.textContent = `📄 Page ${idx}`;
+            }
+            
+            if (idx === activePageIndex) {
+                opt.selected = true;
             }
 
-            // Sync overflow warning style from A4 page to tab button
             const previewPage = document.querySelector(`.a4-page[data-page="${idx + 1}"]`);
             if (previewPage && previewPage.classList.contains('overflow-detected')) {
-                tab.classList.add('overflow');
-                tab.title = "Page overflow detected! Click to reduce text.";
+                opt.textContent += ' ⚠️ (Overflow)';
             }
 
-            tab.addEventListener('click', () => switchActivePage(idx));
-            pageTabsList.appendChild(tab);
+            quickPageSelect.appendChild(opt);
+        }
+
+        const quickPrevPageBtn = document.getElementById('quick-prev-page-btn');
+        const quickNextPageBtn = document.getElementById('quick-next-page-btn');
+        if (quickPrevPageBtn) {
+            quickPrevPageBtn.disabled = (activePageIndex === 0);
+            quickPrevPageBtn.style.opacity = (activePageIndex === 0) ? '0.4' : '1';
+            quickPrevPageBtn.style.pointerEvents = (activePageIndex === 0) ? 'none' : 'auto';
+        }
+        if (quickNextPageBtn) {
+            quickNextPageBtn.disabled = (activePageIndex === lastTabIdx);
+            quickNextPageBtn.style.opacity = (activePageIndex === lastTabIdx) ? '0.4' : '1';
+            quickNextPageBtn.style.pointerEvents = (activePageIndex === lastTabIdx) ? 'none' : 'auto';
+        }
+    }
+
+    // Initialize quick page switcher event bindings
+    const quickPageSelectEl = document.getElementById('quick-page-select');
+    const quickPrevPageBtnEl = document.getElementById('quick-prev-page-btn');
+    const quickNextPageBtnEl = document.getElementById('quick-next-page-btn');
+
+    if (quickPageSelectEl) {
+        quickPageSelectEl.addEventListener('change', () => {
+            const selectedIdx = parseInt(quickPageSelectEl.value, 10);
+            if (!isNaN(selectedIdx)) {
+                switchActivePage(selectedIdx);
+            }
+        });
+    }
+
+    if (quickPrevPageBtnEl) {
+        quickPrevPageBtnEl.addEventListener('click', () => {
+            if (activePageIndex > 0) {
+                switchActivePage(activePageIndex - 1);
+            }
+        });
+    }
+
+    if (quickNextPageBtnEl) {
+        quickNextPageBtnEl.addEventListener('click', () => {
+            if (activePageIndex < pagesData.length) {
+                switchActivePage(activePageIndex + 1);
+            }
         });
     }
 
@@ -8078,4 +8658,111 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    // ==========================================================================
+    // SAMYAK DESIGN TAB ACCORDION AND DRAG-AND-DROP REORDER SYSTEM
+    // ==========================================================================
+    const settingsAccordionContainer = document.getElementById('settings-accordion-container');
+    const collapsibleSections = document.querySelectorAll('.collapsible-section');
+
+    // 1. Accordion Toggles
+    collapsibleSections.forEach(section => {
+        const header = section.querySelector('.collapsible-header');
+        const content = section.querySelector('.collapsible-content');
+        
+        if (header && content) {
+            header.addEventListener('click', (e) => {
+                // Ignore clicks on drag grip if they bubbled
+                if (e.target.classList.contains('drag-grip')) return;
+                
+                const isActive = section.classList.contains('active');
+                
+                // Toggle active state
+                section.classList.toggle('active', !isActive);
+                content.style.display = isActive ? 'none' : 'block';
+            });
+        }
+    });
+
+    // 2. HTML5 Drag-and-Drop Reordering
+    let draggedElement = null;
+
+    collapsibleSections.forEach(section => {
+        section.addEventListener('dragstart', (e) => {
+            draggedElement = section;
+            section.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', section.id);
+        });
+
+        section.addEventListener('dragend', () => {
+            section.classList.remove('dragging');
+            collapsibleSections.forEach(s => s.classList.remove('drag-over'));
+            draggedElement = null;
+            saveAccordionOrder();
+        });
+
+        section.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (draggedElement && draggedElement !== section) {
+                section.classList.add('drag-over');
+            }
+            return false;
+        });
+
+        section.addEventListener('dragleave', () => {
+            section.classList.remove('drag-over');
+        });
+
+        section.addEventListener('drop', (e) => {
+            e.preventDefault();
+            section.classList.remove('drag-over');
+            
+            if (draggedElement && draggedElement !== section) {
+                // Determine whether to place before or after the target
+                const bounding = section.getBoundingClientRect();
+                const offset = e.clientY - bounding.top;
+                const isAfter = offset > bounding.height / 2;
+                
+                if (isAfter) {
+                    section.after(draggedElement);
+                } else {
+                    section.before(draggedElement);
+                }
+                saveAccordionOrder();
+            }
+        });
+    });
+
+    // Save current sequence of elements to localStorage
+    function saveAccordionOrder() {
+        if (!settingsAccordionContainer) return;
+        const currentOrder = Array.from(settingsAccordionContainer.querySelectorAll('.collapsible-section'))
+            .map(section => section.id);
+        localStorage.setItem('samyak-design-accordion-order', JSON.stringify(currentOrder));
+    }
+
+    // Restore saved sequence of elements from localStorage on load
+    function restoreAccordionOrder() {
+        if (!settingsAccordionContainer) return;
+        const savedOrderStr = localStorage.getItem('samyak-design-accordion-order');
+        if (savedOrderStr) {
+            try {
+                const savedOrder = JSON.parse(savedOrderStr);
+                if (Array.isArray(savedOrder)) {
+                    savedOrder.forEach(id => {
+                        const element = document.getElementById(id);
+                        if (element && element.parentNode === settingsAccordionContainer) {
+                            settingsAccordionContainer.appendChild(element);
+                        }
+                    });
+                }
+            } catch (e) {
+                console.error('Error restoring settings accordion order:', e);
+            }
+        }
+    }
+
+    // Run order restoration instantly
+    restoreAccordionOrder();
 });

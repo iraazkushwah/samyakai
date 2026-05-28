@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // New Features DOM Elements
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const toggleToolbarBtn = document.getElementById('toggle-toolbar-btn');
     const importProjectBtn = document.getElementById('import-project-btn');
     const exportProjectBtn = document.getElementById('export-project-btn');
     const importProjectFile = document.getElementById('import-project-file');
@@ -2878,11 +2879,46 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 
+    // Toggle Toolbar Button Listener
+    if (toggleToolbarBtn) {
+        toggleToolbarBtn.addEventListener('click', () => {
+            const toolbar = document.querySelector('.editor-toolbar');
+            const editorZone = document.getElementById('content-editor-zone');
+            if (toolbar && editorZone) {
+                toolbar.classList.toggle('collapsed');
+                editorZone.classList.toggle('toolbar-collapsed');
+                
+                const isCollapsed = toolbar.classList.contains('collapsed');
+                toggleToolbarBtn.setAttribute('title', isCollapsed ? 'Show Toolbar (Ctrl+/)' : 'Hide Toolbar (Ctrl+/)');
+                
+                // Save preference in localStorage
+                localStorage.setItem('samyak-toolbar-collapsed', isCollapsed ? 'true' : 'false');
+            }
+        });
+
+        // Load saved toolbar collapse state
+        const savedToolbarState = localStorage.getItem('samyak-toolbar-collapsed');
+        if (savedToolbarState === 'true') {
+            const toolbar = document.querySelector('.editor-toolbar');
+            const editorZone = document.getElementById('content-editor-zone');
+            if (toolbar && editorZone) {
+                toolbar.classList.add('collapsed');
+                editorZone.classList.add('toolbar-collapsed');
+                toggleToolbarBtn.setAttribute('title', 'Show Toolbar (Ctrl+/)');
+            }
+        }
+    }
+
     window.addEventListener('keydown', (e) => {
         // Intercept Ctrl+P for print
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
             e.preventDefault();
             printPdfBtn.click();
+        }
+        // Intercept Ctrl+/ for toggling toolbar
+        if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+            e.preventDefault();
+            if (toggleToolbarBtn) toggleToolbarBtn.click();
         }
     });
 

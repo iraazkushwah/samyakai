@@ -68,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageLayoutSelect = document.getElementById('page-layout-select');
     const applyLayoutAllBtn = document.getElementById('apply-layout-all-btn');
     const compactSpacingToggle = document.getElementById('compact-spacing-toggle');
-    const coverTOCToggle = document.getElementById('cover-toc-toggle');
     const pageTemplateSelect = document.getElementById('page-template-select');
     const btnSearchToggle = document.getElementById('btn-search-toggle');
     const searchReplacePanel = document.getElementById('search-replace-panel');
@@ -160,8 +159,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Dynamic Toolbar Layout Configurations & Sanitization
     const defaultToolbarLayout = {
-        main: ['btn-section', 'btn-topic', 'btn-bullet', 'btn-note', 'highlight-green-btn', 'highlight-pink-btn', 'btn-factbox', 'box-style-select'],
-        tray: ['btn-pagebreak', 'btn-columnbreak', 'btn-chapter', 'insert-image-btn', 'insert-table-btn', 'btn-search-toggle', 'btn-help-shortcuts']
+        main: ['btn-section', 'btn-chapter', 'btn-topic', 'btn-bullet', 'btn-note'],
+        tray: ['btn-pagebreak', 'insert-table-btn', 'btn-search-toggle', 'btn-help-shortcuts']
     };
 
     let currentToolbarLayout = { ...defaultToolbarLayout };
@@ -437,9 +436,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Premium Custom Design State (4th Control Section)
     let customDesignSettings = {
         compactMode: false,
-        chapterNumSize: '30',
-        chapterTitleSize: '20',
-        chapterSubSize: '15',
+        chapterNumSize: '20',
+        chapterTitleSize: '22',
+        chapterSubtitleSize: '14',
         // Headings spacing & alignment
         topicMarginTop: '12px',
         topicMarginBottom: '4px',
@@ -2352,15 +2351,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Cover TOC Toggle binding
-    if (coverTOCToggle) {
-        coverTOCToggle.addEventListener('change', () => {
-            customDesignSettings.showCoverTOC = coverTOCToggle.checked;
-            renderPreview();
-            saveWorkspaceToLocalStorage();
-        });
-    }
-
     // Page Template binding
     if (pageTemplateSelect) {
         pageTemplateSelect.addEventListener('change', () => {
@@ -2523,11 +2513,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Apply states
                         pagesData = state.pagesData;
-                        pagesData.forEach(page => {
-                            if (page.type === 'content' && page.text) {
-                                page.text = cleanDuplicatedTableHeaders(page.text);
-                            }
-                        });
                         lastPageData = state.lastPageData || { title: 'THANK YOU', subtitle: 'Samyak', tagline: 'कोचिंग नहीं क्रांति' };
                         activePageIndex = state.activePageIndex || 0;
                         contentFontSize = state.contentFontSize || 13.5;
@@ -2535,15 +2520,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         customDesignSettings = state.customDesignSettings || customDesignSettings;
                         if (customDesignSettings.compactMode === undefined) {
                             customDesignSettings.compactMode = false;
-                        }
-                        if (customDesignSettings.chapterNumSize === undefined) {
-                            customDesignSettings.chapterNumSize = '30';
-                        }
-                        if (customDesignSettings.chapterTitleSize === undefined) {
-                            customDesignSettings.chapterTitleSize = '20';
-                        }
-                        if (customDesignSettings.chapterSubSize === undefined) {
-                            customDesignSettings.chapterSubSize = '15';
                         }
                         socialSettings = state.socialSettings || { telegramText: '@samyak', youtubeText: 'Samyak Coaching' };
                         if (socialSettings.fontSize === undefined) socialSettings.fontSize = 11;
@@ -3251,12 +3227,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     btn.setAttribute('data-orig-title', btn.getAttribute('title') || '');
                     btn.setAttribute('title', inMain ? 'Move to Tray (ट्रे में डालें)' : 'Move to Toolbar (टूलबार में निकालें)');
                 });
-                
-                if (boxStyleSelect) {
-                    boxStyleSelect.setAttribute('data-orig-title', boxStyleSelect.getAttribute('title') || '');
-                    const inMain = currentToolbarLayout.main.includes('box-style-select');
-                    boxStyleSelect.setAttribute('title', inMain ? 'Move to Tray (ट्रे में डालें)' : 'Move to Toolbar (टूलबार में निकालें)');
-                }
             } else {
                 toolbar.classList.remove('customize-mode');
                 toolbarCustomizeTrigger.classList.remove('active');
@@ -3276,11 +3246,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const orig = btn.getAttribute('data-orig-title');
                     if (orig !== null && orig !== undefined) btn.setAttribute('title', orig);
                 });
-                
-                if (boxStyleSelect) {
-                    const orig = boxStyleSelect.getAttribute('data-orig-title');
-                    if (orig !== null && orig !== undefined) boxStyleSelect.setAttribute('title', orig);
-                }
             }
         });
     }
@@ -3309,67 +3274,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Box style select dropdown handler
-    const boxStyleSelect = document.getElementById('box-style-select');
-    if (boxStyleSelect) {
-        // Prevent opening dropdown and move it in customize mode
-        boxStyleSelect.addEventListener('mousedown', (e) => {
-            if (isCustomizeMode) {
-                e.preventDefault();
-                e.stopPropagation();
-                
-                const btnId = 'box-style-select';
-                const inMainIndex = currentToolbarLayout.main.indexOf(btnId);
-                const inTrayIndex = currentToolbarLayout.tray.indexOf(btnId);
-                
-                if (inMainIndex > -1) {
-                    currentToolbarLayout.main.splice(inMainIndex, 1);
-                    currentToolbarLayout.tray.push(btnId);
-                } else if (inTrayIndex > -1) {
-                    currentToolbarLayout.tray.splice(inTrayIndex, 1);
-                    currentToolbarLayout.main.push(btnId);
-                }
-                
-                localStorage.setItem('samyak-toolbar-layout-v1', JSON.stringify(currentToolbarLayout));
-                renderToolbarLayout();
-                
-                // Update title tooltip dynamically
-                const inMain = currentToolbarLayout.main.includes(btnId);
-                boxStyleSelect.setAttribute('title', inMain ? 'Move to Tray (ट्रे में डालें)' : 'Move to Toolbar (टूलबार में निकालें)');
-            }
-        });
 
-        boxStyleSelect.addEventListener('change', () => {
-            if (isCustomizeMode) {
-                boxStyleSelect.value = "";
-                return;
-            }
-            const selectedStyle = boxStyleSelect.value;
-            if (selectedStyle && activePageIndex > 0) {
-                let prefix = `[${selectedStyle}]\n`;
-                let suffix = '\n[/box]';
-                
-                // UPSC Premium Note-Taking Templates
-                if (selectedStyle === 'box-upsc-mains') {
-                    prefix = `[box-upsc-mains]\n**प्रश्न (Mains Question):** \n- **परिचय (Introduction):** \n- **मुख्य भाग (Core Arguments):** \n  - **पक्ष में तर्क (Arguments For):** \n    1. \n    2. \n  - **विपक्ष में तर्क (Arguments Against):** \n    1. \n    2. \n- **निष्कर्ष/आगे की राह (Conclusion / Way Forward):** \n`;
-                } else if (selectedStyle === 'box-upsc-editorial') {
-                    prefix = `[box-upsc-editorial]\n**संपादकीय मत (Editorial Opinion):** \n"यहाँ समिति (e.g. 2nd ARC, Sarkaria Commission), राष्ट्रीय रिपोर्ट, या विशेषज्ञ का मत दर्ज करें।"\n— (स्रोत/नाम)\n`;
-                } else if (selectedStyle === 'box-upsc-syllabus') {
-                    prefix = `[box-upsc-syllabus]\n🎯 **GS PAPER:** GS-III | **TOPIC:** Inclusive Growth, Agricultural Reforms & Food Security\n`;
-                } else if (selectedStyle === 'box-upsc-marginal') {
-                    prefix = `[box-upsc-marginal]\n💡 **महत्वपूर्ण अवधारणा (Key Concept):**\n- \n`;
-                }
-                
-                insertWrappedAtCursor(pageContentInput, prefix, suffix);
-                pagesData[activePageIndex].text = pageContentInput.value;
-                renderPreview();
-                updateStats();
-                saveWorkspaceToLocalStorage();
-            }
-            // Reset to show default "Box" placeholder option
-            boxStyleSelect.value = "";
-        });
-    }
 
 
 
@@ -3473,7 +3378,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--custom-section-size', `${e.target.value}px`);
         saveWorkspaceToLocalStorage();
     });
+    designSectionAlign.addEventListener('change', (e) => {
+        customDesignSettings.sectionAlignment = e.target.value;
+        applyCustomDesignSettingsToDOM();
+        saveWorkspaceToLocalStorage();
+    });
 
+    // Group 1.5: Chapter Heading Size Sliders
     if (designChapterNumSize) {
         designChapterNumSize.addEventListener('input', (e) => {
             customDesignSettings.chapterNumSize = e.target.value;
@@ -3492,17 +3403,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (designChapterSubtitleSize) {
         designChapterSubtitleSize.addEventListener('input', (e) => {
-            customDesignSettings.chapterSubSize = e.target.value;
+            customDesignSettings.chapterSubtitleSize = e.target.value;
             if (designChapterSubtitleSizeVal) designChapterSubtitleSizeVal.textContent = `${e.target.value}px`;
             document.documentElement.style.setProperty('--custom-chapter-subtitle-size', `${e.target.value}px`);
             saveWorkspaceToLocalStorage();
         });
     }
-    designSectionAlign.addEventListener('change', (e) => {
-        customDesignSettings.sectionAlignment = e.target.value;
-        applyCustomDesignSettingsToDOM();
-        saveWorkspaceToLocalStorage();
-    });
 
     if (designSectionShape) {
         designSectionShape.addEventListener('change', (e) => {
@@ -3652,31 +3558,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // Group 3.6: End Star Divider Customizer
-    designEndStarSymbol.addEventListener('change', (e) => {
-        customDesignSettings.endStarSymbol = e.target.value;
-        renderPreview();
-        saveWorkspaceToLocalStorage();
-    });
-    designEndStarColor.addEventListener('input', (e) => {
-        customDesignSettings.endStarColor = e.target.value;
-        document.documentElement.style.setProperty('--custom-end-star-color', e.target.value);
-        const r = parseInt(e.target.value.substring(1, 3), 16);
-        const g = parseInt(e.target.value.substring(3, 5), 16);
-        const b = parseInt(e.target.value.substring(5, 7), 16);
-        document.documentElement.style.setProperty('--custom-end-star-shadow', `rgba(${r}, ${g}, ${b}, 0.35)`);
-        saveWorkspaceToLocalStorage();
-    });
-    designEndStarSize.addEventListener('input', (e) => {
-        customDesignSettings.endStarSize = e.target.value;
-        designEndStarSizeVal.textContent = `${e.target.value}px`;
-        document.documentElement.style.setProperty('--custom-end-star-size', `${e.target.value}px`);
-        saveWorkspaceToLocalStorage();
-    });
-    designEndStarPulse.addEventListener('change', (e) => {
-        customDesignSettings.endStarPulse = e.target.checked;
-        document.documentElement.style.setProperty('--custom-end-star-animation', e.target.checked ? 'pulseStar 3s ease-in-out infinite' : 'none');
-        saveWorkspaceToLocalStorage();
-    });
+    if (designEndStarSymbol) {
+        designEndStarSymbol.addEventListener('change', (e) => {
+            customDesignSettings.endStarSymbol = e.target.value;
+            renderPreview();
+            saveWorkspaceToLocalStorage();
+        });
+    }
+    if (designEndStarColor) {
+        designEndStarColor.addEventListener('input', (e) => {
+            customDesignSettings.endStarColor = e.target.value;
+            document.documentElement.style.setProperty('--custom-end-star-color', e.target.value);
+            const r = parseInt(e.target.value.substring(1, 3), 16);
+            const g = parseInt(e.target.value.substring(3, 5), 16);
+            const b = parseInt(e.target.value.substring(5, 7), 16);
+            document.documentElement.style.setProperty('--custom-end-star-shadow', `rgba(${r}, ${g}, ${b}, 0.35)`);
+            saveWorkspaceToLocalStorage();
+        });
+    }
+    if (designEndStarSize) {
+        designEndStarSize.addEventListener('input', (e) => {
+            customDesignSettings.endStarSize = e.target.value;
+            if (designEndStarSizeVal) designEndStarSizeVal.textContent = `${e.target.value}px`;
+            document.documentElement.style.setProperty('--custom-end-star-size', `${e.target.value}px`);
+            saveWorkspaceToLocalStorage();
+        });
+    }
+    if (designEndStarPulse) {
+        designEndStarPulse.addEventListener('change', (e) => {
+            customDesignSettings.endStarPulse = e.target.checked;
+            document.documentElement.style.setProperty('--custom-end-star-animation', e.target.checked ? 'pulseStar 3s ease-in-out infinite' : 'none');
+            saveWorkspaceToLocalStorage();
+        });
+    }
 
     // Group 4: Pagination (Requires live re-render for layout prefix/positioning changes)
     designPageNumColor.addEventListener('input', (e) => {
@@ -3702,35 +3616,39 @@ document.addEventListener('DOMContentLoaded', () => {
         debouncedRenderAndSave();
     });
 
-    headerLogoFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                const rawBase64 = event.target.result;
-                // Header logos are rendered very small, so 400px is incredibly sharp yet ultra lightweight
-                compressImage(rawBase64, 400, (compressedBase64) => {
-                    customDesignSettings.headerLogoSrc = compressedBase64;
-                    headerLogoPreview.src = compressedBase64;
-                    headerLogoPreviewGroup.style.display = 'block';
-                    cachedMaxContentHeight = null; // Clear height cache
-                    renderPreview();
-                    saveWorkspaceToLocalStorage();
-                });
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    if (headerLogoFileInput) {
+        headerLogoFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const rawBase64 = event.target.result;
+                    // Header logos are rendered very small, so 400px is incredibly sharp yet ultra lightweight
+                    compressImage(rawBase64, 400, (compressedBase64) => {
+                        customDesignSettings.headerLogoSrc = compressedBase64;
+                        if (headerLogoPreview) headerLogoPreview.src = compressedBase64;
+                        if (headerLogoPreviewGroup) headerLogoPreviewGroup.style.display = 'block';
+                        cachedMaxContentHeight = null; // Clear height cache
+                        renderPreview();
+                        saveWorkspaceToLocalStorage();
+                    });
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
 
-    removeHeaderLogoBtn.addEventListener('click', () => {
-        customDesignSettings.headerLogoSrc = '';
-        headerLogoFileInput.value = '';
-        headerLogoPreview.src = '';
-        headerLogoPreviewGroup.style.display = 'none';
-        cachedMaxContentHeight = null; // Clear height cache
-        renderPreview();
-        saveWorkspaceToLocalStorage();
-    });
+    if (removeHeaderLogoBtn) {
+        removeHeaderLogoBtn.addEventListener('click', () => {
+            customDesignSettings.headerLogoSrc = '';
+            if (headerLogoFileInput) headerLogoFileInput.value = '';
+            if (headerLogoPreview) headerLogoPreview.src = '';
+            if (headerLogoPreviewGroup) headerLogoPreviewGroup.style.display = 'none';
+            cachedMaxContentHeight = null; // Clear height cache
+            renderPreview();
+            saveWorkspaceToLocalStorage();
+        });
+    }
 
     // Sync design control panel fields with current active theme colors
     function syncDesignControlsWithTheme() {
@@ -3757,7 +3675,7 @@ document.addEventListener('DOMContentLoaded', () => {
         designInnerBorder.value = secondary;
         designCornerColor.value = secondary;
         designDividerColor.value = secondary;
-        designEndStarColor.value = secondary;
+        if (designEndStarColor) designEndStarColor.value = secondary;
         designPageNumColor.value = primary;
 
         customDesignSettings.pageNumColor = primary;
@@ -5108,66 +5026,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return formattedLines.join('\n');
     }
 
-    function cleanDuplicatedTableHeaders(text) {
-        if (!text) return text;
-        const lines = text.split('\n');
-        const cleanedLines = [];
-        let activeTableHeader = null;
-        let activeTableSeparator = null;
-
-        for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            const trimmed = line.trim();
-
-            const isTableLine = trimmed.startsWith('|') && trimmed.endsWith('|') && trimmed.length > 2;
-
-            if (isTableLine) {
-                const isSeparator = trimmed.replace(/[^|:\-]/g, '').trim() === trimmed && trimmed.includes('-');
-                
-                if (isSeparator) {
-                    if (cleanedLines.length > 0) {
-                        const prevLine = cleanedLines[cleanedLines.length - 1].trim();
-                        if (activeTableHeader && prevLine === activeTableHeader && activeTableSeparator !== null) {
-                            cleanedLines.pop();
-                            continue;
-                        }
-                        if (activeTableSeparator === null) {
-                            activeTableSeparator = trimmed;
-                        }
-                    }
-                } else {
-                    if (activeTableHeader === null) {
-                        activeTableHeader = trimmed;
-                        activeTableSeparator = null;
-                    } else if (trimmed === activeTableHeader) {
-                        let nextIsSeparator = false;
-                        if (i + 1 < lines.length) {
-                            const nextTrimmed = lines[i + 1].trim();
-                            if (nextTrimmed.startsWith('|') && nextTrimmed.endsWith('|')) {
-                                nextIsSeparator = nextTrimmed.replace(/[^|:\-]/g, '').trim() === nextTrimmed && nextTrimmed.includes('-');
-                            }
-                        }
-                        if (nextIsSeparator) {
-                            i++;
-                            continue;
-                        }
-                    }
-                }
-            } else {
-                activeTableHeader = null;
-                activeTableSeparator = null;
-            }
-
-            cleanedLines.push(line);
-        }
-        return cleanedLines.join('\n');
-    }
-
     // 5. PARSER & HTML BUILDER
     function preProcessText(text) {
         if (!text) return '';
-        text = cleanDuplicatedTableHeaders(text);
         
+        // Normalize newlines by removing carriage returns, and strip invisible characters/BOMs
         let formatted = text.replace(/\r/g, '').replace(/[\u200B\uFEFF\u200C\u200D\u200E\u200F]/g, '');
         
         // 1. Insert newlines before any diamond emojis unless preceded by '#' (markdown headings)
@@ -5306,6 +5169,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
+            // Match '[chapter <number>] <title> | <subtitle>'
+            const chapterMatch = trimmed.match(/^\[chapter(?:\s+(\d+))?\]\s*([^|]*?)(?:\s*\|\s*(.*))?$/i);
+            if (chapterMatch) {
+                blocks.push({
+                    type: 'chapter-header',
+                    chapterNum: chapterMatch[1] || null,
+                    mainTitle: chapterMatch[2].trim(),
+                    subTitle: chapterMatch[3] ? chapterMatch[3].trim() : null,
+                    markdown: line,
+                    startLine: start,
+                    endLine: i
+                });
+                continue;
+            }
+
             // Match 'space [1-50]' (optional brackets, count defaults to 1, capped at 50)
             const spaceMatch = trimmed.match(/^\[?(space|spce)(?:\s+(\d+))?\]?$/i);
             if (spaceMatch) {
@@ -5388,21 +5266,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     type: 'table',
                     config: null,
                     markdown: tableLines.join('\n'),
-                    startLine: start,
-                    endLine: i
-                });
-                continue;
-            }
-
-            // Chapter Banner/Header detector: [chapter 1] Title | Subtitle (number is optional)
-            const chapterMatch = trimmed.match(/^\[chapter(?:\s+(\d+))?\]\s*([^|]+)(?:\|\s*(.+))?$/i);
-            if (chapterMatch) {
-                blocks.push({
-                    type: 'chapter-header',
-                    number: chapterMatch[1] || '',
-                    title: chapterMatch[2].trim(),
-                    subtitle: chapterMatch[3] ? chapterMatch[3].trim() : '',
-                    markdown: line,
                     startLine: start,
                     endLine: i
                 });
@@ -5583,6 +5446,53 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBlockToNode(block) {
         const line = block.markdown.trim();
         
+        if (block.type === 'chapter-header') {
+            const chapterHeader = document.createElement('div');
+            chapterHeader.className = 'chapter-header';
+            
+            const titleGroup = document.createElement('div');
+            titleGroup.className = 'chapter-title-group';
+            
+            if (block.chapterNum) {
+                const numberWrapper = document.createElement('div');
+                numberWrapper.className = 'chapter-number-wrapper';
+                
+                const accentBg = document.createElement('div');
+                accentBg.className = 'chapter-num-accent-bg';
+                
+                const mainBg = document.createElement('div');
+                mainBg.className = 'chapter-num-main-bg';
+                
+                const numSpan = document.createElement('span');
+                numSpan.className = 'chapter-num-text';
+                numSpan.textContent = block.chapterNum;
+                
+                numberWrapper.appendChild(accentBg);
+                numberWrapper.appendChild(mainBg);
+                numberWrapper.appendChild(numSpan);
+                
+                chapterHeader.appendChild(numberWrapper);
+                titleGroup.style.paddingRight = '70px'; // Offset for center alignment
+            } else {
+                titleGroup.style.paddingRight = '0px';
+            }
+            
+            const mainTitle = document.createElement('h2');
+            mainTitle.className = 'chapter-main-title';
+            mainTitle.innerHTML = parseInlineHighlightsToHtml(block.mainTitle);
+            titleGroup.appendChild(mainTitle);
+            
+            if (block.subTitle) {
+                const subTitle = document.createElement('h3');
+                subTitle.className = 'chapter-sub-title';
+                subTitle.innerHTML = parseInlineHighlightsToHtml(block.subTitle);
+                titleGroup.appendChild(subTitle);
+            }
+            
+            chapterHeader.appendChild(titleGroup);
+            return chapterHeader;
+        }
+
         if (block.type === 'box-container') {
             const containerEl = document.createElement('div');
             containerEl.className = `premium-box ${block.boxType || 'box'}`;
@@ -5703,54 +5613,6 @@ document.addEventListener('DOMContentLoaded', () => {
             box.appendChild(title);
             box.appendChild(content);
             return box;
-        }
-
-        if (block.type === 'chapter-header') {
-            const headerEl = document.createElement('div');
-            headerEl.className = 'chapter-header';
-
-            const titleGroup = document.createElement('div');
-            titleGroup.className = 'chapter-title-group';
-
-            if (block.number) {
-                const numWrapper = document.createElement('div');
-                numWrapper.className = 'chapter-number-wrapper';
-
-                const accentBg = document.createElement('div');
-                accentBg.className = 'chapter-number-bg-accent';
-
-                const mainBg = document.createElement('div');
-                mainBg.className = 'chapter-number-bg-main';
-
-                const numVal = document.createElement('span');
-                numVal.className = 'chapter-number-val';
-                numVal.textContent = block.number;
-
-                mainBg.appendChild(numVal);
-                numWrapper.appendChild(accentBg);
-                numWrapper.appendChild(mainBg);
-
-                headerEl.appendChild(numWrapper);
-                titleGroup.style.paddingRight = '70px'; // Offset for centering when number box is present
-            } else {
-                titleGroup.style.paddingRight = '0'; // Center perfectly without offset when no number box is present
-            }
-
-            const mainTitle = document.createElement('h2');
-            mainTitle.className = 'chapter-main-title';
-            mainTitle.textContent = block.title;
-
-            titleGroup.appendChild(mainTitle);
-
-            if (block.subtitle) {
-                const subTitle = document.createElement('h3');
-                subTitle.className = 'chapter-sub-title';
-                subTitle.textContent = block.subtitle;
-                titleGroup.appendChild(subTitle);
-            }
-
-            headerEl.appendChild(titleGroup);
-            return headerEl;
         }
 
         // 1. SECTION BAR RENDER
@@ -6157,6 +6019,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             case 'section':
                 return 55; // 18px font size + padding/margin
+            case 'chapter-header':
+                return 85; // 22px font size + ribbon wrapper + margins
             case 'topic':
                 return 45; // 15px font size + padding/margin
             case 'empty':
@@ -6222,14 +6086,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         MAX_CONTENT_HEIGHT = cachedMaxContentHeight || 910;
-
-        function getBlockMarkdownForSave(block) {
-            if (block.type === 'table' && block.excludeHeadersFromMarkdown) {
-                const lines = block.markdown.split('\n');
-                return lines.slice(2).join('\n');
-            }
-            return block.markdown;
-        }
 
         // Clear canvas
         pagesContainer.innerHTML = '';
@@ -6446,7 +6302,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
 
                             // Save current page
-                            currentPageMarkdownLines.push(getBlockMarkdownForSave(block));
+                            currentPageMarkdownLines.push(block.markdown);
                             pageContentMarkdownArray.push(currentPageMarkdownLines.join('\n'));
                             currentPageMarkdownLines = [];
 
@@ -6462,8 +6318,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             blocks.splice(i + 1, 0, {
                                 type: block.type,
                                 markdown: remainingMarkdown,
-                                id: block.id,
-                                excludeHeadersFromMarkdown: true
+                                id: block.id
                             });
 
                             splitSuccess = true;
@@ -6534,7 +6389,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Only push to currentPageMarkdownLines if we didn't already push and clear it in splitSuccess
             if (currentPageStruct.contentElement.contains(node) || (activeBulletListElement && activeBulletListElement.contains(node))) {
-                currentPageMarkdownLines.push(getBlockMarkdownForSave(block));
+                currentPageMarkdownLines.push(block.markdown);
             }
         }
 
@@ -6706,9 +6561,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const tocPlaceholder = document.createElement('div');
         tocPlaceholder.id = 'toc-placeholder';
         tocPlaceholder.className = 'toc-container';
-        if (customDesignSettings.showCoverTOC === false) {
-            tocPlaceholder.style.display = 'none';
-        }
 
         if (emblemEl) {
             coverContent.appendChild(emblemEl);
@@ -7183,7 +7035,29 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // Instantly sync custom design panel values to match the theme color properties!
             if (isManualChange) {
+                // Clear manual color overrides so the newly selected theme's defaults take full control
+                delete customDesignSettings.sectionBg;
+                delete customDesignSettings.sectionAccent;
+                delete customDesignSettings.sectionText;
+                delete customDesignSettings.topicText;
+                delete customDesignSettings.topicBorder;
+                delete customDesignSettings.innerBorderColor;
+                delete customDesignSettings.cornerColor;
+                delete customDesignSettings.dividerColor;
+                delete customDesignSettings.endStarColor;
+                delete customDesignSettings.pageNumColor;
+
+                // Set layout presets for Lokbandhu JAIPUR
+                if (themeName === 'lokbandhu-jaipur') {
+                    customDesignSettings.topicIcon = 'pushpin';
+                    customDesignSettings.bulletStyle = 'classic';
+                    customDesignSettings.sectionShape = 'rectangle';
+                    customDesignSettings.sectionAlignment = 'center';
+                    customDesignSettings.topicAlignment = 'flex-start';
+                }
+
                 syncDesignControlsWithTheme();
+                applyCustomDesignSettingsToDOM();
             }
         }
     }
@@ -7264,15 +7138,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.body.classList.toggle('compact-mode', !!customDesignSettings.compactMode);
 
-        if (coverTOCToggle) {
-            coverTOCToggle.checked = customDesignSettings.showCoverTOC !== false;
-        }
-
-        // Apply chapter banner sizing custom variables
-        document.documentElement.style.setProperty('--custom-chapter-num-size', `${customDesignSettings.chapterNumSize || 30}px`);
-        document.documentElement.style.setProperty('--custom-chapter-title-size', `${customDesignSettings.chapterTitleSize || 20}px`);
-        document.documentElement.style.setProperty('--custom-chapter-subtitle-size', `${customDesignSettings.chapterSubSize || 15}px`);
-
         // Dynamically fetch computed theme colors to act as fallbacks instead of hardcoding Maroon/Gold/Blue
         const styles = getComputedStyle(document.body);
         const primary = styles.getPropertyValue('--primary-color').trim() || '#850f0f';
@@ -7280,6 +7145,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const accent = styles.getPropertyValue('--accent-color').trim() || '#1d6ea5';
 
         document.documentElement.style.setProperty('--custom-header-font-size', `${customDesignSettings.pageNumSize || 15}px`);
+        
+        document.documentElement.style.setProperty('--custom-chapter-num-size', `${customDesignSettings.chapterNumSize || 20}px`);
+        document.documentElement.style.setProperty('--custom-chapter-title-size', `${customDesignSettings.chapterTitleSize || 22}px`);
+        document.documentElement.style.setProperty('--custom-chapter-subtitle-size', `${customDesignSettings.chapterSubtitleSize || 14}px`);
         // Direct CSS properties update
         document.documentElement.style.setProperty('--custom-section-bg', customDesignSettings.sectionBg || primary);
         document.documentElement.style.setProperty('--custom-section-border-left', customDesignSettings.sectionAccent || accent);
@@ -7360,16 +7229,16 @@ document.addEventListener('DOMContentLoaded', () => {
         designSectionAlign.value = secAlign;
 
         if (designChapterNumSize) {
-            designChapterNumSize.value = customDesignSettings.chapterNumSize || '30';
-            if (designChapterNumSizeVal) designChapterNumSizeVal.textContent = `${designChapterNumSize.value}px`;
+            designChapterNumSize.value = customDesignSettings.chapterNumSize || '20';
+            if (designChapterNumSizeVal) designChapterNumSizeVal.textContent = `${customDesignSettings.chapterNumSize || 20}px`;
         }
         if (designChapterTitleSize) {
-            designChapterTitleSize.value = customDesignSettings.chapterTitleSize || '20';
-            if (designChapterTitleSizeVal) designChapterTitleSizeVal.textContent = `${designChapterTitleSize.value}px`;
+            designChapterTitleSize.value = customDesignSettings.chapterTitleSize || '22';
+            if (designChapterTitleSizeVal) designChapterTitleSizeVal.textContent = `${customDesignSettings.chapterTitleSize || 22}px`;
         }
         if (designChapterSubtitleSize) {
-            designChapterSubtitleSize.value = customDesignSettings.chapterSubSize || '15';
-            if (designChapterSubtitleSizeVal) designChapterSubtitleSizeVal.textContent = `${designChapterSubtitleSize.value}px`;
+            designChapterSubtitleSize.value = customDesignSettings.chapterSubtitleSize || '14';
+            if (designChapterSubtitleSizeVal) designChapterSubtitleSizeVal.textContent = `${customDesignSettings.chapterSubtitleSize || 14}px`;
         }
 
         designTopicText.value = customDesignSettings.topicText || accent;
@@ -7397,11 +7266,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         // Sync end star divider UI inputs
-        designEndStarSymbol.value = customDesignSettings.endStarSymbol || '✦';
-        designEndStarColor.value = customDesignSettings.endStarColor || secondary;
-        designEndStarSize.value = customDesignSettings.endStarSize || '18';
-        designEndStarSizeVal.textContent = `${customDesignSettings.endStarSize || 18}px`;
-        designEndStarPulse.checked = (customDesignSettings.endStarPulse !== false);
+        if (designEndStarSymbol) designEndStarSymbol.value = customDesignSettings.endStarSymbol || '✦';
+        if (designEndStarColor) designEndStarColor.value = customDesignSettings.endStarColor || secondary;
+        if (designEndStarSize) designEndStarSize.value = customDesignSettings.endStarSize || '18';
+        if (designEndStarSizeVal) designEndStarSizeVal.textContent = `${customDesignSettings.endStarSize || 18}px`;
+        if (designEndStarPulse) designEndStarPulse.checked = (customDesignSettings.endStarPulse !== false);
 
         designPageNumColor.value = customDesignSettings.pageNumColor || primary;
         designPageNumPlace.value = customDesignSettings.pageNumPlacement || 'bottom-center';
@@ -7437,12 +7306,14 @@ document.addEventListener('DOMContentLoaded', () => {
             designBulletStyle.value = customDesignSettings.bulletStyle || 'classic';
         }
 
-        if (customDesignSettings.headerLogoSrc) {
-            headerLogoPreview.src = customDesignSettings.headerLogoSrc;
-            headerLogoPreviewGroup.style.display = 'block';
-        } else {
-            headerLogoPreview.src = '';
-            headerLogoPreviewGroup.style.display = 'none';
+        if (headerLogoPreview && headerLogoPreviewGroup) {
+            if (customDesignSettings.headerLogoSrc) {
+                headerLogoPreview.src = customDesignSettings.headerLogoSrc;
+                headerLogoPreviewGroup.style.display = 'block';
+            } else {
+                headerLogoPreview.src = '';
+                headerLogoPreviewGroup.style.display = 'none';
+            }
         }
     }
 
@@ -7458,11 +7329,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             try {
                 pagesData = state.pagesData || [];
-                pagesData.forEach(page => {
-                    if (page.type === 'content' && page.text) {
-                        page.text = cleanDuplicatedTableHeaders(page.text);
-                    }
-                });
                 lastPageData = state.lastPageData || { title: 'THANK YOU', subtitle: 'Samyak', tagline: 'कोचिंग नहीं क्रांति' };
                 activePageIndex = state.activePageIndex || 0;
                 contentFontSize = state.contentFontSize || 13.5;
@@ -7470,18 +7336,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 customDesignSettings = state.customDesignSettings || customDesignSettings;
                 if (customDesignSettings.compactMode === undefined) {
                     customDesignSettings.compactMode = false;
-                }
-                if (customDesignSettings.showCoverTOC === undefined) {
-                    customDesignSettings.showCoverTOC = true;
-                }
-                if (customDesignSettings.chapterNumSize === undefined) {
-                    customDesignSettings.chapterNumSize = '30';
-                }
-                if (customDesignSettings.chapterTitleSize === undefined) {
-                    customDesignSettings.chapterTitleSize = '20';
-                }
-                if (customDesignSettings.chapterSubSize === undefined) {
-                    customDesignSettings.chapterSubSize = '15';
                 }
                 if (customDesignSettings.sectionAlignment === undefined) {
                     customDesignSettings.sectionAlignment = 'left';
@@ -7974,6 +7828,25 @@ document.addEventListener('DOMContentLoaded', () => {
             designSectionShape.value = 'rectangle';
         }
 
+        customDesignSettings.chapterNumSize = '20';
+        customDesignSettings.chapterTitleSize = '22';
+        customDesignSettings.chapterSubtitleSize = '14';
+        document.documentElement.style.setProperty('--custom-chapter-num-size', '20px');
+        document.documentElement.style.setProperty('--custom-chapter-title-size', '22px');
+        document.documentElement.style.setProperty('--custom-chapter-subtitle-size', '14px');
+        if (designChapterNumSize) {
+            designChapterNumSize.value = '20';
+            if (designChapterNumSizeVal) designChapterNumSizeVal.textContent = '20px';
+        }
+        if (designChapterTitleSize) {
+            designChapterTitleSize.value = '22';
+            if (designChapterTitleSizeVal) designChapterTitleSizeVal.textContent = '22px';
+        }
+        if (designChapterSubtitleSize) {
+            designChapterSubtitleSize.value = '14';
+            if (designChapterSubtitleSizeVal) designChapterSubtitleSizeVal.textContent = '14px';
+        }
+
         designTopicSize.value = '15';
         designTopicSizeVal.textContent = '15px';
         document.documentElement.style.setProperty('--custom-topic-size', '15px');
@@ -7998,25 +7871,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (designBulletStyle) {
             designBulletStyle.value = 'classic';
         }
-
-        customDesignSettings.chapterNumSize = '30';
-        customDesignSettings.chapterTitleSize = '20';
-        customDesignSettings.chapterSubSize = '15';
-        if (designChapterNumSize) {
-            designChapterNumSize.value = '30';
-            if (designChapterNumSizeVal) designChapterNumSizeVal.textContent = '30px';
-        }
-        if (designChapterTitleSize) {
-            designChapterTitleSize.value = '20';
-            if (designChapterTitleSizeVal) designChapterTitleSizeVal.textContent = '20px';
-        }
-        if (designChapterSubtitleSize) {
-            designChapterSubtitleSize.value = '15';
-            if (designChapterSubtitleSizeVal) designChapterSubtitleSizeVal.textContent = '15px';
-        }
-        document.documentElement.style.setProperty('--custom-chapter-num-size', '30px');
-        document.documentElement.style.setProperty('--custom-chapter-title-size', '20px');
-        document.documentElement.style.setProperty('--custom-chapter-subtitle-size', '15px');
 
         designBorderThick.value = '0';
         designBorderThickVal.textContent = '0px';
@@ -8050,17 +7904,16 @@ document.addEventListener('DOMContentLoaded', () => {
         customDesignSettings.endStarColor = '';
         customDesignSettings.endStarSize = '18';
         customDesignSettings.endStarPulse = true;
-        designEndStarSymbol.value = '✦';
-        designEndStarColor.value = '#c5a353';
-        designEndStarSize.value = '18';
-        designEndStarSizeVal.textContent = '18px';
-        designEndStarPulse.checked = true;
+        if (designEndStarSymbol) designEndStarSymbol.value = '✦';
+        if (designEndStarColor) designEndStarColor.value = '#c5a353';
+        if (designEndStarSize) designEndStarSize.value = '18';
+        if (designEndStarSizeVal) designEndStarSizeVal.textContent = '18px';
+        if (designEndStarPulse) designEndStarPulse.checked = true;
         document.documentElement.style.setProperty('--custom-end-star-color', 'var(--secondary-color)');
         document.documentElement.style.setProperty('--custom-end-star-size', '18px');
         document.documentElement.style.setProperty('--custom-end-star-animation', 'pulseStar 3s ease-in-out infinite');
         document.documentElement.style.setProperty('--custom-end-star-shadow', 'rgba(197, 162, 83, 0.35)');
 
-        customDesignSettings.showCoverTOC = true;
         customDesignSettings.headerLogoSrc = '';
         if (headerLogoFileInput) headerLogoFileInput.value = '';
         if (headerLogoPreview) headerLogoPreview.src = '';
@@ -8498,53 +8351,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // All defined themes with their respective preview colors (Primary, Secondary, Accent)
         const themes = [
             { value: 'maroon-gold', name: 'Samyak Maroon & Gold', category: 'classic', colors: ['#850f0f', '#c5a353', '#1d6ea5'] },
-            { value: 'royal-navy', name: 'Royal Navy & Gold', category: 'classic', colors: ['#0e2743', '#c49429', '#be2e2e'] },
-            { value: 'emerald-cream', name: 'Emerald Forest & Cream', category: 'classic', colors: ['#083c2a', '#b77a20', '#2b6cb0'] },
             { value: 'midnight-gold', name: 'Midnight Slate & Gold', category: 'classic', colors: ['#151b26', '#c99324', '#2b8c8a'] },
-            { value: 'minimal-compact', name: 'Samyak Minimal', category: 'classic', colors: ['#1e293b', '#94a3b8', '#6366f1'] },
-            { value: 'sakura-plum', name: '🌸 Sakura Blossom & Plum', category: 'classic', colors: ['#5c1d3b', '#f472b6', '#be185d'] },
-            { value: 'nordic-rust', name: '🌲 Nordic Forest & Warm Rust', category: 'classic', colors: ['#064e3b', '#c2410c', '#b45309'] },
-            { value: 'cyber-teal', name: '⚡ Cyber Midnight & Glowing Cyan', category: 'classic', colors: ['#0f172a', '#06b6d4', '#3b82f6'] },
-            { value: 'crimson-luxury', name: '🍷 Crimson Premium & Platinum', category: 'classic', colors: ['#991b1b', '#4b5563', '#dc2626'] },
-            { value: 'vintage-bronze', name: '🏺 Antique Amber & Rich Bronze', category: 'classic', colors: ['#451a03', '#d97706', '#b45309'] },
-            { value: 'lavender-dusk', name: '🔮 Lavender Dusk & Royal Indigo', category: 'classic', colors: ['#1e1b4b', '#a78bfa', '#6d28d9'] },
-            { value: 'sand-espresso', name: '☕ Golden Sand & Rich Espresso', category: 'classic', colors: ['#271a15', '#c5a880', '#8a5e38'] },
-
-            { value: 'mono-classic', name: '🖨️ Mono High Contrast (Ink-Saver)', category: 'print', colors: ['#111111', '#6b7280', '#000000'] },
-            { value: 'print-navy', name: '🖨️ Elegant Print Navy (Ink-Saver)', category: 'print', colors: ['#0f172a', '#64748b', '#1e3a8a'] },
-            { value: 'print-teal', name: '🖨️ Professional Print Teal (Ink-Saver)', category: 'print', colors: ['#115e59', '#4b5563', '#0f766e'] },
-            { value: 'print-burgundy', name: '🖨️ Deep Print Burgundy (Ink-Saver)', category: 'print', colors: ['#581c25', '#881337', '#701a2c'] },
-
-            { value: 'cyber-synth', name: '🔮 Morphing Cyber Synthwave', category: 'morphing', colors: ['#0c0721', '#ff007f', '#00f0ff'] },
-            { value: 'origami-slate', name: '📐 Morphing Modern Origami', category: 'morphing', colors: ['#1e293b', '#94a3b8', '#0f766e'] },
             { value: 'royal-durbar', name: '👑 Lokbandhu Official', category: 'morphing', colors: ['#7a3109', '#de790f', '#b85d08'] },
             { value: 'emerald-empire', name: '🔱 Morphing Emerald Empire', category: 'morphing', colors: ['#064e3b', '#d97706', '#059669'] },
-            { value: 'gothic-velvet', name: '🏰 Morphing Gothic Velvet', category: 'morphing', colors: ['#2e1065', '#b45309', '#db2777'] },
-            { value: 'kyoto-zen', name: '⛩️ Morphing Kyoto Zen', category: 'morphing', colors: ['#991b1b', '#fbcfe8', '#4b5563'] },
-
-            // 10 Brand New Ultra-Premium Shape-Shifting Themes
             { value: 'lokbandhu-surya', name: '🌅 Lokbandhu Surya Sandhya', category: 'ultra-premium', colors: ['#8c1d1d', '#f59e0b', '#c2410c'] },
-            { value: 'lokbandhu-madhu', name: '🍯 Lokbandhu Madhu-Keshara', category: 'ultra-premium', colors: ['#78350f', '#f97316', '#eab308'] },
-            { value: 'lokbandhu-agni', name: '🔥 Lokbandhu Agni-Tejas', category: 'ultra-premium', colors: ['#3b160b', '#ea580c', '#d97706'] },
-            { value: 'lokbandhu-chandan', name: '🪵 Lokbandhu Chandan-Kastha', category: 'ultra-premium', colors: ['#5c3a21', '#c29b53', '#855a30'] },
             { value: 'gothic-royal', name: '🏰 Gothic Royal Black', category: 'ultra-premium', colors: ['#4a0e17', '#b8860b', '#1a1a1a'] },
             { value: 'kyoto-ink', name: '⛩️ Zen Kyoto & Ink', category: 'ultra-premium', colors: ['#111111', '#b22222', '#cda557'] },
-            { value: 'athenian-gold', name: '🏛️ Athenian Temple Gold', category: 'ultra-premium', colors: ['#0b2240', '#c5a059', '#4a5d3e'] },
-            { value: 'autumn-vintage', name: '🍁 Warm Autumn Vintage', category: 'ultra-premium', colors: ['#5c2e16', '#d48227', '#1a4329'] },
             { value: 'maharaja-gold', name: '👑 Maharaja Palace Gold', category: 'ultra-premium', colors: ['#800020', '#e6a100', '#008080'] },
-            { value: 'victorian-prestige', name: '⚜️ Baroque Victorian Prestige', category: 'ultra-premium', colors: ['#004743', '#a3761a', '#8b1e3f'] },
-            { value: 'neo-gothic', name: '⚡ Neo-Gothic Obsidian', category: 'ultra-premium', colors: ['#1a1a1a', '#e8a838', '#ab4b3c'] },
-            { value: 'royal-sapphire', name: '💎 Royal Sapphire Luxury', category: 'ultra-premium', colors: ['#0f2b5c', '#d4af37', '#5c6b73'] },
-            { value: 'jade-emperor', name: '🐉 Imperial Jade Emperor', category: 'ultra-premium', colors: ['#0c3d2e', '#d4af37', '#5a8f7b'] },
-            { value: 'vintage-oasis', name: '🌴 Sun-Drenched Vintage Oasis', category: 'ultra-premium', colors: ['#8a4b2d', '#c9a25d', '#3a5f43'] },
-            { value: 'diamond-column', name: '💎 Diamond Column Premium', category: 'ultra-premium', colors: ['#0f172a', '#3b82f6', '#64748b'] },
-            { value: 'theme-raaz', name: '🔥 RAAZ Ultimate Premium', category: 'ultra-premium', colors: ['#0a0a0a', '#d4af37', '#800020'] },
-            // Coaching Brand Presets as First-Class Themes
-            { value: 'coaching-samyak', name: '🏫 Coaching: Samyak Maroon & Gold', category: 'classic', colors: ['#850f0f', '#c5a353', '#ffffff'] },
-            { value: 'coaching-springboard', name: '🏫 Coaching: Springboard Navy', category: 'classic', colors: ['#1d6ea5', '#a0a0a0', '#ffffff'] },
             { value: 'coaching-utkarsh', name: '🏫 Coaching: Utkarsh Green', category: 'classic', colors: ['#0d7a5f', '#f47c20', '#ffffff'] },
-            { value: 'coaching-vision', name: '🏫 Coaching: Vision IAS Gray', category: 'classic', colors: ['#2b2d42', '#8d99ae', '#ffffff'] },
-            { value: 'coaching-drishti', name: '🏫 Coaching: Drishti IAS Saffron', category: 'classic', colors: ['#b83a14', '#d4af37', '#ffffff'] }
+            { value: 'lokbandhu-jaipur', name: '🏯 Lokbandhu JAIPUR', category: 'ultra-premium', colors: ['#c2410c', '#9a3412', '#ea580c'] }
         ];
 
         // Load pinned themes from localStorage

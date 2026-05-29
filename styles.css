@@ -53,6 +53,10 @@
     --custom-section-border-right: none;
     --custom-section-border-radius: 0 4px 4px 0;
     
+    --custom-chapter-num-size: 20px;
+    --custom-chapter-title-size: 22px;
+    --custom-chapter-subtitle-size: 14px;
+    
     --custom-topic-size: calc(var(--content-font-size) + 1.5px);
     --custom-topic-text: var(--accent-color);
     --custom-topic-border-style: dashed;
@@ -80,6 +84,13 @@
 }
 
 /* Theme overrides */
+body.theme-lokbandhu-jaipur {
+    --primary-color: #c2410c;
+    --secondary-color: #9a3412;
+    --accent-color: #ea580c;
+    --heading-color: #c2410c;
+}
+
 body.theme-royal-navy {
     --primary-color: #0e2743;
     --secondary-color: #c49429;
@@ -3638,6 +3649,37 @@ body.light-mode .search-replace-panel {
 
 
 /* Shape-morphing Heading System */
+
+/* LOKBANDHU JAIPUR THEME OVERRIDES */
+body.theme-lokbandhu-jaipur .section-heading-bar {
+    background-color: var(--custom-section-bg) !important;
+    background: var(--custom-section-bg) !important;
+    color: #ffffff !important; /* Locked to pure white for print quality as requested */
+    border: none !important;
+    border-radius: 0px !important; /* Flat rectangle (no rounded corners) */
+    text-align: center !important;
+    margin: 12px auto !important;
+    display: block !important;
+    width: 100% !important; /* Flat banner spanning full width */
+    padding: 8px 15px !important;
+    box-shadow: none !important;
+    align-self: stretch !important;
+}
+body.theme-lokbandhu-jaipur .topic-container {
+    justify-content: flex-start !important; /* Topic heading starting from left */
+}
+body.theme-lokbandhu-jaipur .topic-title {
+    color: var(--custom-topic-text) !important;
+    border-bottom: 2px solid var(--custom-topic-border-color) !important; /* Bottom line */
+    border-left: none !important;
+    border-right: none !important;
+    border-top: none !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    width: max-content !important;
+    justify-content: flex-start !important;
+    margin: 8px 0 !important;
+}
 
 /* ROYAL NAVY THEME OVERRIDES */
 body.theme-royal-navy .section-heading-bar {
@@ -8711,89 +8753,93 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
     background: rgba(197, 160, 89, 0.03);
 }
 
-/* Premium Chapter Header Banner */
+/* ==========================================================================
+   SAMYAK - PREMIUM CHAPTER HEADING STYLES
+   ========================================================================== */
 .chapter-header {
-    column-span: all;
     display: flex;
     align-items: center;
     border-top: 1.5px solid var(--secondary-color, #c5a353);
     border-bottom: 1.5px solid var(--secondary-color, #c5a353);
-    margin: 8px 0 16px 0;
-    padding: 6px 0;
+    padding: 12px 0;
+    margin: 20px 0;
+    position: relative;
     width: 100%;
+    box-sizing: border-box;
+    column-span: all;
+    -webkit-column-span: all;
 }
 
 .chapter-number-wrapper {
     position: relative;
-    width: calc(var(--custom-chapter-num-size, 30px) * 2.33);
-    height: calc(var(--custom-chapter-num-size, 30px) * 1.73);
-    margin-right: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 50px;
+    margin-right: 15px;
     flex-shrink: 0;
 }
 
-.chapter-number-bg-accent {
-    position: absolute;
-    top: 0;
-    left: 4px;
-    width: calc(var(--custom-chapter-num-size, 30px) * 2.2);
-    height: calc(var(--custom-chapter-num-size, 30px) * 1.73);
-    background-color: var(--accent-color, #1d6ea5);
-    clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%);
-}
-
-.chapter-number-bg-main {
+.chapter-num-main-bg, .chapter-num-accent-bg {
     position: absolute;
     top: 0;
     left: 0;
-    width: calc(var(--custom-chapter-num-size, 30px) * 2.2);
-    height: calc(var(--custom-chapter-num-size, 30px) * 1.73);
-    background-color: var(--primary-color, #850f0f);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding-right: 6px;
+    width: 100%;
+    height: 100%;
     clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%);
+    -webkit-clip-path: polygon(0% 0%, 82% 0%, 100% 50%, 82% 100%, 0% 100%);
 }
 
-.chapter-number-val {
-    color: #ffffff;
-    font-size: var(--custom-chapter-num-size, 30px);
+.chapter-num-accent-bg {
+    background-color: var(--accent-color, #1d6ea5);
+    top: 3px;
+    left: 3px;
+    z-index: 1;
+}
+
+.chapter-num-main-bg {
+    background-color: var(--secondary-color, #c5a353);
+    z-index: 2;
+}
+
+.chapter-num-text {
+    position: relative;
+    z-index: 3;
     font-weight: 800;
-    font-family: var(--font-heading);
-    line-height: 1;
-    text-shadow: 1px 2px 4px rgba(0,0,0,0.15);
+    color: #ffffff;
+    font-size: var(--custom-chapter-num-size, 20px);
+    font-family: var(--font-heading, 'Poppins', sans-serif);
 }
 
 .chapter-title-group {
+    flex: 1;
+    text-align: center;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center;
-    flex-grow: 1;
-    padding-right: calc(var(--custom-chapter-num-size, 30px) * 2.33); /* Dynamic offset to center title perfectly */
+    padding-right: 70px; /* Offset chapter number box width for perfect page centering */
 }
 
 .chapter-main-title {
-    color: var(--primary-color, #850f0f);
-    font-size: var(--custom-chapter-title-size, 20px);
-    font-weight: 800;
     margin: 0;
     padding: 0;
+    font-weight: 700;
+    font-size: var(--custom-chapter-title-size, 22px);
+    color: var(--heading-color, #000000);
+    font-family: var(--font-heading, 'Poppins', sans-serif);
     line-height: 1.2;
-    font-family: var(--font-heading);
 }
 
 .chapter-sub-title {
-    color: var(--text-color, #000000);
-    opacity: 0.8;
-    font-size: var(--custom-chapter-subtitle-size, 15px);
-    font-weight: 600;
-    margin: 2px 0 0 0;
+    margin: 4px 0 0 0;
     padding: 0;
+    font-weight: 600;
+    font-size: var(--custom-chapter-subtitle-size, 14px);
+    color: var(--secondary-color, #c5a353);
+    font-family: var(--font-heading, 'Poppins', sans-serif);
     line-height: 1.2;
-    font-family: var(--font-heading);
 }
-
 
 
 

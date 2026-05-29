@@ -31,8 +31,7 @@ Handwritten page ko dekhkar niche diye gaye Rules aur Format ke mutabik text ext
    ```
 
 4. **Bullet Points / Details**:
-   - Har detailed point ke aage bullet symbol `•` lagayein.
-   - **Bullet Validation & Merging (CRITICAL)**: Bullet symbol `•` sirf ek complete aur logically complete sentence/point ke start me hi lagana hai. Chhote isolated words, numbers, ya headings ke fragments ke aage bullet nahi lagana hai. Agar koi sentence physical line breaks ki wajah se split ho gaya hai, toh pure sentence ko merge karke ek hi single bullet point ke roop me return karein. Sentence ki continuation lines ke aage alag se bullet na lagayein.
+   Har detailed point ke aage bullet symbol `•` lagayein:
    ```markdown
    • प्रधानमंत्री फसल बीमा योजना के तहत पॉलिसी जारी करने में राजस्थान देश में प्रथम स्थान पर।
    • प्रधानमंत्री फसल बीमा योजना के तहत राजस्थान में देश में सबसे ज्यादा 2 करोड़ 19 लाख पॉलिसी जारी की गई।
@@ -87,4 +86,8 @@ subtitle: राजस्थान समसामयिकी : 1-10 मई
 - **Accuracy**: Handwritten text me jo exact shabdkosh aur numbers hain, unhe 100% correct extract karein.
 - **Auto-clean**: Agar handwritten text me kuch line repeats hain ya clear nahi hain, to unhe meaningful sentences me convert karein.
 - **Language**: Text Devanagari Hindi me hi hona chahiye, lekin important English abbreviations (jaise UPDATE, NFC, JKK) ko English capital letters me hi rakhein.
+- **Bullet Point Validation & Merging**:
+  1. **बुलेट पॉइंट लगाने का कड़ा नियम**: बुलेट सिंबल (•) केवल और केवल एक पूर्ण, व्याकरण रूप से पूरे (Grammatically Complete) वाक्य या विचार के शुरुआत में ही लगाया जाना चाहिए।
+  2. **फालतू बुलेट पर रोक**: किसी भी छोटे टूटे हुए शब्द, किसी अकेले नंबर, पेज हेडर के हिस्से, या वाक्य के टूटे हुए छोटे टुकड़े (Fragments) के आगे बुलेट सिंबल (•) बिल्कुल नहीं लगना चाहिए।
+  3. **वाक्य मिलाना (Merging Broken Lines)**: यदि इमेज में कोई एक ही वाक्य भौतिक रूप से मुड़ने या टूटने (Physical Line Break) के कारण दो या तीन लाइनों में लिखा हुआ है, तो उन सभी लाइनों को आपस में जोड़कर एक पूरा वाक्य बनाओ और केवल शुरुआत में एक बुलेट सिंबल लगाओ। वाक्य के टूटे हुए अगले भाग (Continuation Lines) के आगे फिर से नया बुलेट नहीं लगना चाहिए।
 - **No extra commentary**: Apne output me sirf upar diya gaya Markdown text hi return karein, koi extra greeting ya explanation na likhein.

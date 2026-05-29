@@ -2,12 +2,7 @@ const CACHE_NAME = 'samyak-cache-v9';
 const ASSETS = [
   './',
   './index.html',
-  './js/db.js',
-  './js/state.js',
-  './js/utils.js',
-  './js/parser.js',
-  './js/preview.js',
-  './js/main.js',
+  './app.js',
   './styles.css',
   './luka.png',
   './raaz_profile.png',

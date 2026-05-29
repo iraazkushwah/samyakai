@@ -1822,6 +1822,52 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Helper to pause execution
+    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    // Helper to extract pages from PDF as base64 JPEG images using PDF.js
+    async function extractPagesFromPdf(pdfBase64) {
+        if (!window.pdfjsLib) {
+            throw new Error("PDF.js library failed to load. Please check your internet connection.");
+        }
+        const pdfjsLib = window.pdfjsLib;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        const binaryStr = atob(pdfBase64);
+        const len = binaryStr.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryStr.charCodeAt(i);
+        }
+
+        const loadingTask = pdfjsLib.getDocument({ data: bytes });
+        const pdf = await loadingTask.promise;
+        const pages = [];
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            // Render at scale 2.0 to ensure Devanagari text script details are crisp for OCR
+            const viewport = page.getViewport({ scale: 2.0 });
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            await page.render({ canvasContext: context, viewport: viewport }).promise;
+
+            const base64Image = canvas.toDataURL('image/jpeg', 0.85);
+            const cleanBase64 = base64Image.split(',')[1];
+
+            pages.push({
+                pageNum: pageNum,
+                base64: cleanBase64,
+                mimeType: 'image/jpeg'
+            });
+        }
+        return pages;
+    }
+
     // Core scanning execution
     if (ocrDashProcessBtn) {
         ocrDashProcessBtn.addEventListener('click', async () => {
@@ -1837,26 +1883,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const selectedEngine = ocrDashEngineSelect ? ocrDashEngineSelect.value : "Google Vision API (High Precision)";
+                const isPdf = ocrDashUploadedFile.type === 'application/pdf' || ocrDashUploadedFile.name.endsWith('.pdf');
+                
+                let result;
 
-                const response = await fetch('/api/ocr', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fileBase64: ocrDashUploadedFile.base64,
-                        mimeType: ocrDashUploadedFile.type,
-                        fileName: ocrDashUploadedFile.name,
-                        engine: selectedEngine,
-                        enableLayoutAnalysis: ocrDashLayoutAnalysis,
-                        enableStructuring: ocrDashAutoStructuring
-                    })
-                });
+                if (isPdf) {
+                    const strongEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('strong') : null;
+                    const spanEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('span:not(.ocr-dash-spinner)') : null;
 
-                if (!response.ok) {
-                    const errorText = await response.json();
-                    throw new Error(errorText.error || `Server error: ${response.status}`);
+                    if (strongEl) strongEl.textContent = "Parsing PDF...";
+                    if (spanEl) spanEl.textContent = "Extracting pages as high-resolution images...";
+
+                    const pages = await extractPagesFromPdf(ocrDashUploadedFile.base64);
+                    const totalPages = pages.length;
+
+                    if (strongEl) strongEl.textContent = "Scanning content...";
+
+                    const results = [];
+                    for (let i = 0; i < totalPages; i++) {
+                        const page = pages[i];
+                        if (spanEl) spanEl.textContent = `Processing page ${page.pageNum} of ${totalPages}...`;
+
+                        const response = await fetch('/api/ocr', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                fileBase64: page.base64,
+                                mimeType: page.mimeType,
+                                fileName: `${ocrDashUploadedFile.name.split('.')[0]}_page_${page.pageNum}.jpg`,
+                                engine: selectedEngine,
+                                enableLayoutAnalysis: ocrDashLayoutAnalysis,
+                                enableStructuring: ocrDashAutoStructuring
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorText = await response.json();
+                            throw new Error(errorText.error || `Server error on page ${page.pageNum}: ${response.status}`);
+                        }
+
+                        const pageResult = await response.json();
+                        results.push(pageResult);
+
+                        if (i < totalPages - 1) {
+                            if (spanEl) spanEl.textContent = `Waiting 2s before next page (Rate limit protection)...`;
+                            await delay(2000);
+                        }
+                    }
+
+                    // Smart-merge outputs
+                    const mergedMarkdown = results.map(r => r.markdown).join("\n\n[pagebreak]\n\n");
+                    const avgConfidence = Math.round(results.reduce((sum, r) => sum + (r.confidenceEstimate || 98.4), 0) / totalPages);
+                    const totalWords = results.reduce((sum, r) => sum + (r.wordCount || r.markdown.split(/\s+/).filter(Boolean).length), 0);
+                    
+                    const combinedAlerts = [];
+                    results.forEach((r, idx) => {
+                        if (r.alerts) {
+                            r.alerts.forEach(alert => {
+                                combinedAlerts.push({
+                                    ...alert,
+                                    reason: `${alert.reason} (Page ${idx + 1})`
+                                });
+                            });
+                        }
+                    });
+
+                    result = {
+                        markdown: mergedMarkdown,
+                        confidenceEstimate: avgConfidence,
+                        wordCount: totalWords,
+                        alerts: combinedAlerts
+                    };
+
+                } else {
+                    // Standard single image processing
+                    const response = await fetch('/api/ocr', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            fileBase64: ocrDashUploadedFile.base64,
+                            mimeType: ocrDashUploadedFile.type,
+                            fileName: ocrDashUploadedFile.name,
+                            engine: selectedEngine,
+                            enableLayoutAnalysis: ocrDashLayoutAnalysis,
+                            enableStructuring: ocrDashAutoStructuring
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.json();
+                        throw new Error(errorText.error || `Server error: ${response.status}`);
+                    }
+
+                    result = await response.json();
                 }
-
-                const result = await response.json();
 
                 // Scanning succeeded! Populate components
                 ocrDashRawTextarea.value = result.markdown;
@@ -1902,6 +2022,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 ocrDashProcessingIndicator.style.display = 'none';
                 ocrDashProcessBtn.style.display = 'block';
                 ocrDashProcessBtn.textContent = 'Process Again';
+
+                // Reset visual indicator texts for subsequent scanning tasks
+                const strongEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('strong') : null;
+                const spanEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('span:not(.ocr-dash-spinner)') : null;
+                if (strongEl) strongEl.textContent = "Scanning content...";
+                if (spanEl) spanEl.textContent = "Running Gemini layout recognition";
             }
         });
     }

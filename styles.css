@@ -68,6 +68,7 @@
     
     --custom-inner-border-thickness: 0px;
     --custom-inner-border-color: var(--secondary-color);
+    --custom-inner-border-style: solid;
     
     --custom-corner-size: 10px;
     --custom-corner-color: var(--secondary-color);
@@ -1684,7 +1685,7 @@ body.light-mode .header-stats {
     bottom: var(--custom-page-margin-y, 6mm);
     left: var(--custom-page-margin-x, 8mm);
     right: var(--custom-page-margin-x, 8mm);
-    border: var(--custom-inner-border-thickness) solid var(--custom-inner-border-color); /* Dynamically customized inner border */
+    border: var(--custom-inner-border-thickness) var(--custom-inner-border-style, solid) var(--custom-inner-border-color); /* Dynamically customized inner border */
     padding: var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm) var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm); /* Core internal margins */
     box-sizing: border-box;
     display: flex;
@@ -1748,6 +1749,11 @@ body.light-mode .header-stats {
     padding-bottom: 4px;
     margin-bottom: 12px;
     z-index: 102;
+}
+
+/* Hide running headers on pages that contain a main chapter heading */
+.a4-page:has(.chapter-header) .page-header {
+    display: none !important;
 }
 
 .header-left {
@@ -2620,7 +2626,7 @@ strong {
         bottom: var(--custom-page-margin-y, 6mm) !important;
         left: var(--custom-page-margin-x, 8mm) !important;
         right: var(--custom-page-margin-x, 8mm) !important;
-        border: var(--custom-inner-border-thickness) solid var(--custom-inner-border-color) !important;
+        border: var(--custom-inner-border-thickness) var(--custom-inner-border-style, solid) var(--custom-inner-border-color) !important;
         padding: var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm) var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm) !important;
         box-sizing: border-box !important;
         display: flex !important;
@@ -3362,9 +3368,31 @@ body.light-mode .search-replace-panel {
     display: block !important; /* Override flex layout so column-count works! */
     column-count: 2;
     column-gap: 20px;
-    column-rule: var(--custom-divider-thickness) var(--custom-divider-style) var(--custom-divider-color);
+    column-rule: none !important; /* Disable native column-rule to use robust absolute divider */
     height: 100%;
     column-fill: auto;
+    position: relative; /* Anchor absolute vertical line */
+}
+
+.page-content.layout-two-column::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    border-left: var(--custom-divider-thickness, 1.5px) var(--custom-divider-style, dashed) var(--custom-divider-color, #c5a353);
+    pointer-events: none; /* Do not intercept pointer clicks */
+    z-index: 10;
+}
+
+.page-content.layout-two-column:has(> .chapter-header:first-child)::after {
+    top: 95px;
+}
+
+.page-content.layout-two-column:has(> .chapter-header:first-child .chapter-sub-title)::after {
+    top: 115px;
 }
 
 .page-content.layout-two-column > * {
@@ -5500,85 +5528,6 @@ body.theme-diamond-column-compact .topic-title {
     padding-bottom: 4px !important;
     width: 100% !important;
     justify-content: flex-start !important;
-}
-/* 12. RAAZ Ultimate Premium - Shape Shifting */
-body.theme-raaz, body.theme-raaz-compact {
-    --primary-color: #0a0a0a;
-    --secondary-color: #d4af37;
-    --accent-color: #800020;
-    --page-bg: #fdfbf7;
-    font-family: 'Martel', serif !important;
-}
-
-/* Bullet item overrides */
-body.theme-raaz .bullet-item::before,
-body.theme-raaz-compact .bullet-item::before {
-    content: "??" !important;
-    font-size: 14px !important;
-    color: var(--secondary-color) !important;
-    top: 1px !important;
-    left: 0px !important;
-    text-shadow: 0 0 5px rgba(212, 175, 55, 0.5) !important;
-}
-
-/* Topic diamond overrides */
-body.theme-raaz .topic-title span.diamond,
-body.theme-raaz-compact .topic-title span.diamond {
-    font-size: 0 !important;
-}
-body.theme-raaz .topic-title span.diamond::before,
-body.theme-raaz-compact .topic-title span.diamond::before {
-    content: "??" !important;
-    font-size: 16px !important;
-    filter: drop-shadow(0 0 2px rgba(212, 175, 55, 0.8)) !important;
-}
-
-/* Shape-shifting Animation */
-@keyframes raazShapeShift {
-    0% { border-radius: 8px 30px 8px 30px; box-shadow: 0 4px 15px rgba(128, 0, 32, 0.3); background-position: 0% 50%; }
-    50% { border-radius: 30px 8px 30px 8px; box-shadow: 0 8px 25px rgba(212, 175, 55, 0.6); background-position: 100% 50%; }
-    100% { border-radius: 8px 30px 8px 30px; box-shadow: 0 4px 15px rgba(128, 0, 32, 0.3); background-position: 0% 50%; }
-}
-
-/* Ultra premium Section Heading */
-body.theme-raaz .section-heading-bar,
-body.theme-raaz-compact .section-heading-bar {
-    background: linear-gradient(270deg, #0a0a0a, #1a1a1a, #800020, #0a0a0a) !important;
-    background-size: 300% 300% !important;
-    color: #d4af37 !important;
-    border: 2px solid #d4af37 !important;
-    padding: 10px 35px !important;
-    display: block !important;
-    width: max-content !important;
-    margin: 15px auto !important;
-    text-align: center !important;
-    font-family: 'Yatra One', cursive !important;
-    font-size: 26px !important;
-    letter-spacing: 2px !important;
-    text-transform: uppercase !important;
-    animation: raazShapeShift 6s ease-in-out infinite !important;
-}
-
-/* Topic Title Override */
-body.theme-raaz .topic-title,
-body.theme-raaz-compact .topic-title {
-    color: #d4af37 !important;
-    background: #0a0a0a !important;
-    border: 1px solid #800020 !important;
-    border-left: 6px solid #d4af37 !important;
-    padding: 6px 15px !important;
-    border-radius: 4px 12px 12px 4px !important;
-    font-family: 'Yatra One', cursive !important;
-    font-size: 18px !important;
-    box-shadow: 2px 2px 8px rgba(0,0,0,0.2) !important;
-}
-
-/* Base Body Font Override */
-body.theme-raaz .page-content p.body-text,
-body.theme-raaz-compact .page-content p.body-text {
-    font-family: 'Martel', serif !important;
-    font-size: 14.5px !important;
-    line-height: 1.6 !important;
 }
 
 /* ==========================================================================
@@ -8759,15 +8708,17 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
 .chapter-header {
     display: flex;
     align-items: center;
-    border-top: 1.5px solid var(--secondary-color, #c5a353);
-    border-bottom: 1.5px solid var(--secondary-color, #c5a353);
-    padding: 12px 0;
+    border: 1.5px solid var(--secondary-color, #c5a353);
+    border-radius: 8px;
+    background-color: color-mix(in srgb, var(--primary-color) 6%, var(--page-bg, #ffffff));
+    padding: 12px 15px;
     margin: 20px 0;
     position: relative;
     width: 100%;
     box-sizing: border-box;
     column-span: all;
     -webkit-column-span: all;
+    z-index: 12; /* Span above column divider line */
 }
 
 .chapter-number-wrapper {
@@ -8840,7 +8791,6 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
     font-family: var(--font-heading, 'Poppins', sans-serif);
     line-height: 1.2;
 }
-
 
 
 

@@ -349,6 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const designInnerBorder = document.getElementById('design-inner-border');
     const designCornerColor = document.getElementById('design-corner-color');
+    const designBorderStyle = document.getElementById('design-border-style');
     const designBorderThick = document.getElementById('design-border-thick');
     const designBorderThickVal = document.getElementById('design-border-thick-val');
     const designCornerSize = document.getElementById('design-corner-size');
@@ -459,6 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cornerSize: '10',
         innerBorderColor: '#c5a353',
         cornerColor: '#c5a353',
+        borderStyle: 'solid',
 
         // Two-column Divider
         dividerColor: '',
@@ -3638,6 +3640,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--custom-corner-size', `${e.target.value}px`);
         saveWorkspaceToLocalStorage();
     });
+
+    if (designBorderStyle) {
+        designBorderStyle.addEventListener('change', (e) => {
+            customDesignSettings.borderStyle = e.target.value;
+            document.documentElement.style.setProperty('--custom-inner-border-style', e.target.value);
+            saveWorkspaceToLocalStorage();
+        });
+    }
 
     // Page Spacing Customizers (Margins & Padding)
     if (pageMarginXInput) {
@@ -7325,6 +7335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--custom-corner-color', customDesignSettings.cornerColor || secondary);
         document.documentElement.style.setProperty('--custom-inner-border-thickness', `${customDesignSettings.borderThick !== undefined ? customDesignSettings.borderThick : 0}px`);
         document.documentElement.style.setProperty('--custom-corner-size', `${customDesignSettings.cornerSize !== undefined ? customDesignSettings.cornerSize : 10}px`);
+        document.documentElement.style.setProperty('--custom-inner-border-style', customDesignSettings.borderStyle || 'solid');
 
         // Two-column divider variables update
         document.documentElement.style.setProperty('--custom-divider-color', customDesignSettings.dividerColor || secondary);
@@ -7397,6 +7408,9 @@ document.addEventListener('DOMContentLoaded', () => {
         designBorderThickVal.textContent = `${customDesignSettings.borderThick !== undefined ? customDesignSettings.borderThick : 0}px`;
         designCornerSize.value = customDesignSettings.cornerSize !== undefined ? customDesignSettings.cornerSize : '10';
         designCornerSizeVal.textContent = `${customDesignSettings.cornerSize !== undefined ? customDesignSettings.cornerSize : 10}px`;
+        if (designBorderStyle) {
+            designBorderStyle.value = customDesignSettings.borderStyle || 'solid';
+        }
 
         // Sync two-column divider UI inputs
         designDividerColor.value = customDesignSettings.dividerColor || secondary;
@@ -7500,6 +7514,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (customDesignSettings.endStarPulse === undefined) {
                     customDesignSettings.endStarPulse = true;
+                }
+                if (customDesignSettings.borderStyle === undefined) {
+                    customDesignSettings.borderStyle = 'solid';
                 }
                 if (customDesignSettings.sectionShape === undefined) {
                     customDesignSettings.sectionShape = 'rectangle';
@@ -8018,6 +8035,11 @@ document.addEventListener('DOMContentLoaded', () => {
         designCornerSize.value = '10';
         designCornerSizeVal.textContent = '10px';
         document.documentElement.style.setProperty('--custom-corner-size', '10px');
+        customDesignSettings.borderStyle = 'solid';
+        if (designBorderStyle) {
+            designBorderStyle.value = 'solid';
+        }
+        document.documentElement.style.setProperty('--custom-inner-border-style', 'solid');
 
         designPageNumPlace.value = 'bottom-center';
         customDesignSettings.pageNumPlacement = 'bottom-center';

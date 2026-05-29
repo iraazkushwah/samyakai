@@ -60,93 +60,11 @@ const TRANSLATIONS = {
   }
 };
 
-// Helper to pause execution
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper to extract pages from PDF as base64 JPEG images using PDF.js
-async function extractPagesFromPdf(pdfBase64: string): Promise<Array<{ pageNum: number; base64: string; mimeType: string }>> {
-  if (!(window as any).pdfjsLib) {
-    throw new Error("PDF.js library failed to load. Please check your internet connection.");
-  }
-  const pdfjsLib = (window as any).pdfjsLib;
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-  const binaryStr = atob(pdfBase64);
-  const len = binaryStr.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryStr.charCodeAt(i);
-  }
-
-  const loadingTask = pdfjsLib.getDocument({ data: bytes });
-  const pdf = await loadingTask.promise;
-  const pages = [];
-
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-    const page = await pdf.getPage(pageNum);
-    // Render at scale 2.0 to ensure Devanagari text script details are crisp for OCR
-    const viewport = page.getViewport({ scale: 2.0 });
-
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!context) {
-      throw new Error("Could not create 2D canvas context.");
-    }
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-    const base64Image = canvas.toDataURL('image/jpeg', 0.85);
-    const cleanBase64 = base64Image.split(',')[1];
-
-    pages.push({
-      pageNum: pageNum,
-      base64: cleanBase64,
-      mimeType: 'image/jpeg'
-    });
-  }
-  return pages;
-}
-
-// Helper to fetch API with automatic retries and exponential backoff
-async function fetchWithRetry(
-  url: string,
-  options: RequestInit,
-  maxRetries: number = 3,
-  initialDelay: number = 3000,
-  onRetry?: (message: string) => void
-): Promise<any> {
-  let lastError;
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) {
-        const errJson = await response.json();
-        throw new Error(errJson.error || `HTTP ${response.status} Error`);
-      }
-      return await response.json();
-    } catch (err: any) {
-      lastError = err;
-      console.warn(`[OCR Retry] Attempt ${attempt} failed: ${err.message || err}`);
-      if (attempt < maxRetries) {
-        const waitTime = initialDelay * attempt;
-        if (onRetry) {
-          onRetry(`Server busy. Retrying in ${waitTime / 1000}s (Attempt ${attempt + 1}/${maxRetries})...`);
-        }
-        await delay(waitTime);
-      }
-    }
-  }
-  throw lastError;
-}
-
 export default function App() {
   const [lang] = useState<"en">("en");
   const t = TRANSLATIONS[lang];
 
   const [uploadedFile, setUploadedFile] = useState<FileData | null>(null);
-  const [ocrProgressMessage, setOcrProgressMessage] = useState<string>("");
   const [activeTab, setActiveTab] = useState<"preview" | "editor" | "alerts">("preview");
   const [isDragOver, setIsDragOver] = useState(false);
   
@@ -239,103 +157,37 @@ export default function App() {
     if (!uploadedFile) return;
 
     setUploadedFile(prev => prev ? { ...prev, status: "processing", error: undefined } : null);
-    setOcrProgressMessage("Parsing PDF...");
 
     try {
-      const isPdf = uploadedFile.type === 'application/pdf' || uploadedFile.name.endsWith('.pdf');
-      let result: OCRResult;
+      const response = await fetch("/api/ocr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileBase64: uploadedFile.base64,
+          mimeType: uploadedFile.type,
+          fileName: uploadedFile.name,
+          engine: ocrEngine,
+          enableLayoutAnalysis: layoutAnalysisEnabled,
+          enableStructuring: autoStructuringEnabled
+        }),
+      });
 
-      if (isPdf) {
-        setOcrProgressMessage("Extracting PDF pages...");
-        const pages = await extractPagesFromPdf(uploadedFile.base64);
-        const totalPages = pages.length;
-        const results: OCRResult[] = [];
-
-        for (let i = 0; i < totalPages; i++) {
-          const page = pages[i];
-          setOcrProgressMessage(`Processing page ${page.pageNum} of ${totalPages}...`);
-
-          const pageResult: OCRResult = await fetchWithRetry(
-            "/api/ocr",
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                fileBase64: page.base64,
-                mimeType: page.mimeType,
-                fileName: `${uploadedFile.name.split('.')[0]}_page_${page.pageNum}.jpg`,
-                engine: ocrEngine,
-                enableLayoutAnalysis: layoutAnalysisEnabled,
-                enableStructuring: autoStructuringEnabled
-              }),
-            },
-            3,
-            3000,
-            (msg) => setOcrProgressMessage(msg)
-          );
-
-          results.push(pageResult);
-
-          if (i < totalPages - 1) {
-            setOcrProgressMessage(`Waiting 2s before next page (Rate limit protection)...`);
-            await delay(2000);
-          }
-        }
-
-        // Merge results
-        const mergedMarkdown = results.map(r => r.markdown).join("\n\n[pagebreak]\n\n");
-        const avgConfidence = Math.round(results.reduce((sum, r) => sum + (r.confidenceEstimate || 98), 0) / totalPages);
-        const totalWords = results.reduce((sum, r) => sum + (r.wordCount || 0), 0);
-        const combinedAlerts: OCRAlert[] = [];
-        results.forEach((r, idx) => {
-          if (r.alerts) {
-            r.alerts.forEach(alert => {
-              combinedAlerts.push({
-                ...alert,
-                reason: `${alert.reason} (Page ${idx + 1})`
-              });
-            });
-          }
-        });
-
-        result = {
-          markdown: mergedMarkdown,
-          confidenceEstimate: avgConfidence,
-          wordCount: totalWords,
-          alerts: combinedAlerts
-        };
-
-      } else {
-        setOcrProgressMessage("Scanning content...");
-        result = await fetchWithRetry(
-          "/api/ocr",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileBase64: uploadedFile.base64,
-              mimeType: uploadedFile.type,
-              fileName: uploadedFile.name,
-              engine: ocrEngine,
-              enableLayoutAnalysis: layoutAnalysisEnabled,
-              enableStructuring: autoStructuringEnabled
-            }),
-          },
-          3,
-          3000,
-          (msg) => setOcrProgressMessage(msg)
-        );
+      if (!response.ok) {
+        const errJson = await response.json();
+        throw new Error(errJson.error || `HTTP ${response.status} Error`);
       }
+
+      const ocrResult: OCRResult = await response.json();
       
       setUploadedFile(prev => {
         if (!prev) return null;
         return {
           ...prev,
           status: "completed",
-          result: result
+          result: ocrResult
         };
       });
-      setEditableMarkdown(result.markdown);
+      setEditableMarkdown(ocrResult.markdown);
 
     } catch (err: any) {
       console.error(err);
@@ -347,8 +199,6 @@ export default function App() {
           error: err.message || "OCR Processing failed unexpectedly."
         };
       });
-    } finally {
-      setOcrProgressMessage("");
     }
   };
 
@@ -729,14 +579,9 @@ export default function App() {
                 )}
 
                 {uploadedFile.status === "processing" && (
-                  <div className="flex flex-col items-center justify-center gap-1.5 p-3 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-200 text-center">
-                    <div className="flex items-center gap-2 animate-pulse">
-                      <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                      <span>{t.processing}</span>
-                    </div>
-                    {ocrProgressMessage && (
-                      <span className="text-[10px] text-indigo-300 font-semibold mt-1 animate-pulse">{ocrProgressMessage}</span>
-                    )}
+                  <div className="flex items-center justify-center gap-2 p-3 bg-slate-800 border border-slate-700 rounded-lg text-xs font-bold text-slate-200 text-center animate-pulse">
+                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                    {t.processing}
                   </div>
                 )}
 
@@ -927,9 +772,6 @@ export default function App() {
                       <div className="h-full flex flex-col items-center justify-center text-center gap-3">
                         <Loader2 className="w-8 h-8 text-indigo-400 animate-spin" />
                         <p className="text-xs font-bold text-indigo-300 animate-pulse">{t.processing}</p>
-                        {ocrProgressMessage && (
-                          <p className="text-[11px] text-indigo-400 font-semibold animate-pulse">{ocrProgressMessage}</p>
-                        )}
                       </div>
                     )}
 

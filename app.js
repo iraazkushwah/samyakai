@@ -349,7 +349,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const designInnerBorder = document.getElementById('design-inner-border');
     const designCornerColor = document.getElementById('design-corner-color');
-    const designBorderStyle = document.getElementById('design-border-style');
     const designBorderThick = document.getElementById('design-border-thick');
     const designBorderThickVal = document.getElementById('design-border-thick-val');
     const designCornerSize = document.getElementById('design-corner-size');
@@ -460,7 +459,6 @@ document.addEventListener('DOMContentLoaded', () => {
         cornerSize: '10',
         innerBorderColor: '#c5a353',
         cornerColor: '#c5a353',
-        borderStyle: 'solid',
 
         // Two-column Divider
         dividerColor: '',
@@ -1824,78 +1822,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Helper to pause execution
-    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-    // Helper to extract pages from PDF as base64 JPEG images using PDF.js
-    async function extractPagesFromPdf(pdfBase64) {
-        if (!window.pdfjsLib) {
-            throw new Error("PDF.js library failed to load. Please check your internet connection.");
-        }
-        const pdfjsLib = window.pdfjsLib;
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        const binaryStr = atob(pdfBase64);
-        const len = binaryStr.length;
-        const bytes = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-            bytes[i] = binaryStr.charCodeAt(i);
-        }
-
-        const loadingTask = pdfjsLib.getDocument({ data: bytes });
-        const pdf = await loadingTask.promise;
-        const pages = [];
-
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            // Render at scale 2.0 to ensure Devanagari text script details are crisp for OCR
-            const viewport = page.getViewport({ scale: 2.0 });
-
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-
-            await page.render({ canvasContext: context, viewport: viewport }).promise;
-
-            const base64Image = canvas.toDataURL('image/jpeg', 0.85);
-            const cleanBase64 = base64Image.split(',')[1];
-
-            pages.push({
-                pageNum: pageNum,
-                base64: cleanBase64,
-                mimeType: 'image/jpeg'
-            });
-        }
-        return pages;
-    }
-
-    // Helper to fetch API with automatic retries and exponential backoff
-    async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 3000, spanEl = null) {
-        let lastError;
-        for (let attempt = 1; attempt <= maxRetries; attempt++) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    const errJson = await response.json();
-                    throw new Error(errJson.error || `HTTP ${response.status} Error`);
-                }
-                return await response.json();
-            } catch (err) {
-                lastError = err;
-                console.warn(`[OCR Retry] Attempt ${attempt} failed: ${err.message || err}`);
-                if (attempt < maxRetries) {
-                    const waitTime = initialDelay * attempt;
-                    if (spanEl) {
-                        spanEl.textContent = `Server busy. Retrying in ${waitTime / 1000}s (Attempt ${attempt + 1}/${maxRetries})...`;
-                    }
-                    await delay(waitTime);
-                }
-            }
-        }
-        throw lastError;
-    }
-
     // Core scanning execution
     if (ocrDashProcessBtn) {
         ocrDashProcessBtn.addEventListener('click', async () => {
@@ -1911,88 +1837,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             try {
                 const selectedEngine = ocrDashEngineSelect ? ocrDashEngineSelect.value : "Google Vision API (High Precision)";
-                const isPdf = ocrDashUploadedFile.type === 'application/pdf' || ocrDashUploadedFile.name.endsWith('.pdf');
-                
-                let result;
 
-                if (isPdf) {
-                    const strongEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('strong') : null;
-                    const spanEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('span:not(.ocr-dash-spinner)') : null;
+                const response = await fetch('/api/ocr', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileBase64: ocrDashUploadedFile.base64,
+                        mimeType: ocrDashUploadedFile.type,
+                        fileName: ocrDashUploadedFile.name,
+                        engine: selectedEngine,
+                        enableLayoutAnalysis: ocrDashLayoutAnalysis,
+                        enableStructuring: ocrDashAutoStructuring
+                    })
+                });
 
-                    if (strongEl) strongEl.textContent = "Parsing PDF...";
-                    if (spanEl) spanEl.textContent = "Extracting pages as high-resolution images...";
-
-                    const pages = await extractPagesFromPdf(ocrDashUploadedFile.base64);
-                    const totalPages = pages.length;
-
-                    if (strongEl) strongEl.textContent = "Scanning content...";
-
-                    const results = [];
-                    for (let i = 0; i < totalPages; i++) {
-                        const page = pages[i];
-                        if (spanEl) spanEl.textContent = `Processing page ${page.pageNum} of ${totalPages}...`;
-
-                        const pageResult = await fetchWithRetry('/api/ocr', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                fileBase64: page.base64,
-                                mimeType: page.mimeType,
-                                fileName: `${ocrDashUploadedFile.name.split('.')[0]}_page_${page.pageNum}.jpg`,
-                                engine: selectedEngine,
-                                enableLayoutAnalysis: ocrDashLayoutAnalysis,
-                                enableStructuring: ocrDashAutoStructuring
-                            })
-                        }, 3, 3000, spanEl);
-
-                        results.push(pageResult);
-
-                        if (i < totalPages - 1) {
-                            if (spanEl) spanEl.textContent = `Waiting 2s before next page (Rate limit protection)...`;
-                            await delay(2000);
-                        }
-                    }
-
-                    // Smart-merge outputs
-                    const mergedMarkdown = results.map(r => r.markdown).join("\n\n[pagebreak]\n\n");
-                    const avgConfidence = Math.round(results.reduce((sum, r) => sum + (r.confidenceEstimate || 98.4), 0) / totalPages);
-                    const totalWords = results.reduce((sum, r) => sum + (r.wordCount || r.markdown.split(/\s+/).filter(Boolean).length), 0);
-                    
-                    const combinedAlerts = [];
-                    results.forEach((r, idx) => {
-                        if (r.alerts) {
-                            r.alerts.forEach(alert => {
-                                combinedAlerts.push({
-                                    ...alert,
-                                    reason: `${alert.reason} (Page ${idx + 1})`
-                                });
-                            });
-                        }
-                    });
-
-                    result = {
-                        markdown: mergedMarkdown,
-                        confidenceEstimate: avgConfidence,
-                        wordCount: totalWords,
-                        alerts: combinedAlerts
-                    };
-
-                } else {
-                    // Standard single image processing
-                    const spanEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('span:not(.ocr-dash-spinner)') : null;
-                    result = await fetchWithRetry('/api/ocr', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            fileBase64: ocrDashUploadedFile.base64,
-                            mimeType: ocrDashUploadedFile.type,
-                            fileName: ocrDashUploadedFile.name,
-                            engine: selectedEngine,
-                            enableLayoutAnalysis: ocrDashLayoutAnalysis,
-                            enableStructuring: ocrDashAutoStructuring
-                        })
-                    }, 3, 3000, spanEl);
+                if (!response.ok) {
+                    const errorText = await response.json();
+                    throw new Error(errorText.error || `Server error: ${response.status}`);
                 }
+
+                const result = await response.json();
 
                 // Scanning succeeded! Populate components
                 ocrDashRawTextarea.value = result.markdown;
@@ -2038,12 +1902,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 ocrDashProcessingIndicator.style.display = 'none';
                 ocrDashProcessBtn.style.display = 'block';
                 ocrDashProcessBtn.textContent = 'Process Again';
-
-                // Reset visual indicator texts for subsequent scanning tasks
-                const strongEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('strong') : null;
-                const spanEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('span:not(.ocr-dash-spinner)') : null;
-                if (strongEl) strongEl.textContent = "Scanning content...";
-                if (spanEl) spanEl.textContent = "Running Gemini layout recognition";
             }
         });
     }
@@ -3640,14 +3498,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--custom-corner-size', `${e.target.value}px`);
         saveWorkspaceToLocalStorage();
     });
-
-    if (designBorderStyle) {
-        designBorderStyle.addEventListener('change', (e) => {
-            customDesignSettings.borderStyle = e.target.value;
-            document.documentElement.style.setProperty('--custom-inner-border-style', e.target.value);
-            saveWorkspaceToLocalStorage();
-        });
-    }
 
     // Page Spacing Customizers (Margins & Padding)
     if (pageMarginXInput) {
@@ -7335,7 +7185,6 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--custom-corner-color', customDesignSettings.cornerColor || secondary);
         document.documentElement.style.setProperty('--custom-inner-border-thickness', `${customDesignSettings.borderThick !== undefined ? customDesignSettings.borderThick : 0}px`);
         document.documentElement.style.setProperty('--custom-corner-size', `${customDesignSettings.cornerSize !== undefined ? customDesignSettings.cornerSize : 10}px`);
-        document.documentElement.style.setProperty('--custom-inner-border-style', customDesignSettings.borderStyle || 'solid');
 
         // Two-column divider variables update
         document.documentElement.style.setProperty('--custom-divider-color', customDesignSettings.dividerColor || secondary);
@@ -7408,9 +7257,6 @@ document.addEventListener('DOMContentLoaded', () => {
         designBorderThickVal.textContent = `${customDesignSettings.borderThick !== undefined ? customDesignSettings.borderThick : 0}px`;
         designCornerSize.value = customDesignSettings.cornerSize !== undefined ? customDesignSettings.cornerSize : '10';
         designCornerSizeVal.textContent = `${customDesignSettings.cornerSize !== undefined ? customDesignSettings.cornerSize : 10}px`;
-        if (designBorderStyle) {
-            designBorderStyle.value = customDesignSettings.borderStyle || 'solid';
-        }
 
         // Sync two-column divider UI inputs
         designDividerColor.value = customDesignSettings.dividerColor || secondary;
@@ -7514,9 +7360,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (customDesignSettings.endStarPulse === undefined) {
                     customDesignSettings.endStarPulse = true;
-                }
-                if (customDesignSettings.borderStyle === undefined) {
-                    customDesignSettings.borderStyle = 'solid';
                 }
                 if (customDesignSettings.sectionShape === undefined) {
                     customDesignSettings.sectionShape = 'rectangle';
@@ -8035,11 +7878,6 @@ document.addEventListener('DOMContentLoaded', () => {
         designCornerSize.value = '10';
         designCornerSizeVal.textContent = '10px';
         document.documentElement.style.setProperty('--custom-corner-size', '10px');
-        customDesignSettings.borderStyle = 'solid';
-        if (designBorderStyle) {
-            designBorderStyle.value = 'solid';
-        }
-        document.documentElement.style.setProperty('--custom-inner-border-style', 'solid');
 
         designPageNumPlace.value = 'bottom-center';
         customDesignSettings.pageNumPlacement = 'bottom-center';

@@ -77,7 +77,13 @@ To test the Progressive Web App (PWA) capabilities and service worker caching, t
 ## 🗂️ Project Structure
 ```markdown
 ├── index.html         # Main structure, Customizer Sidebars & registration scripts
-├── app.js             # Core workspace controllers, IndexedDB, Parser & PWA listeners
+├── js/                # Modular JavaScript files loaded sequentially
+│   ├── db.js          # IndexedDB connection and helper functions
+│   ├── state.js       # Global state configuration and DOM variables declaration
+│   ├── utils.js       # Clean helpers, text preprocess, and markdown formatting
+│   ├── parser.js      # Markdown block parsing and element height estimation
+│   ├── preview.js     # Pages generation, Table of Contents (TOC) layout, and theme engines
+│   └── main.js        # DOM assignments, event bindings, and app startup logic
 ├── styles.css         # Unified styling sheet containing all 8 luxury design systems
 ├── manifest.json      # Web App Manifest describing standalone launcher config
 ├── sw.js              # Service Worker managing offline asset caches

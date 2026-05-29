@@ -80,7 +80,13 @@ Your task is to analyze the provided page or document image/PDF and convert it i
    - IMPORTANT: Avoid inserting hard line breaks (\\n) in the middle of a paragraph or bullet point. Every single bullet point, list item, or paragraph must be output as a single, continuous line in the markdown text, even if it is physically wrapped across multiple lines in the input image. This ensures that the document flow remains intact and the layout parser does not treat mid-sentence breaks as new elements or paragraphs.
    - Avoid double bullet formatting. Do not output lines starting with multiple consecutive bullet symbols (e.g. "- •", "• •", or "* •"). Use only a single markdown bullet character at the start of a list item.
 
-4. **Illegible Words / Bad Handwriting Handling**:
+4. **Bullet Point Validation & Merging (CRITICAL)**:
+   - Carefully verify that each bullet point (indicated by \`•\`, \`-\`, or \`*\`) contains a complete, grammatically whole sentence, thought, or logical statement.
+   - DO NOT place a bullet point in front of small word fragments, isolated keywords, single numbers, page header parts, or split lines that belong to a single continuous sentence.
+   - If a sentence or list item is physically broken across multiple lines or sections in the document image, you MUST merge them into a single continuous sentence under one single bullet point.
+   - DO NOT treat the continuation of a sentence on the next line as a new bullet point. Ensure the bullet symbol is ONLY placed at the very beginning of the complete, fully formed point.
+
+5. **Illegible Words / Bad Handwriting Handling**:
    - If some handwritten words are entirely illegible, fuzzy, or cut-off, mark them inline with: \`==⚠️ High Alert: [illegible word]==\` (or if the surrounding text is Hindi, use: \`==⚠️ High Alert: [अस्पष्ट शब्द]==\`). Add these instances to the 'alerts' array with appropriate context.
 
 Please format your response strictly as valid JSON matching the specified responseSchema. Only return the JSON object, do not markdown-wrap the JSON.

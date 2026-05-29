@@ -31,7 +31,8 @@ Handwritten page ko dekhkar niche diye gaye Rules aur Format ke mutabik text ext
    ```
 
 4. **Bullet Points / Details**:
-   Har detailed point ke aage bullet symbol `•` lagayein:
+   - Har detailed point ke aage bullet symbol `•` lagayein.
+   - **Bullet Validation & Merging (CRITICAL)**: Bullet symbol `•` sirf ek complete aur logically complete sentence/point ke start me hi lagana hai. Chhote isolated words, numbers, ya headings ke fragments ke aage bullet nahi lagana hai. Agar koi sentence physical line breaks ki wajah se split ho gaya hai, toh pure sentence ko merge karke ek hi single bullet point ke roop me return karein. Sentence ki continuation lines ke aage alag se bullet na lagayein.
    ```markdown
    • प्रधानमंत्री फसल बीमा योजना के तहत पॉलिसी जारी करने में राजस्थान देश में प्रथम स्थान पर।
    • प्रधानमंत्री फसल बीमा योजना के तहत राजस्थान में देश में सबसे ज्यादा 2 करोड़ 19 लाख पॉलिसी जारी की गई।

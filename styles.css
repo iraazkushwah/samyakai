@@ -3362,9 +3362,40 @@ body.light-mode .search-replace-panel {
     display: block !important; /* Override flex layout so column-count works! */
     column-count: 2;
     column-gap: 20px;
-    column-rule: var(--custom-divider-thickness) var(--custom-divider-style) var(--custom-divider-color);
-    height: 100%;
+    column-rule: none !important; /* Disable standard rule to allow persistent pseudo-element divider */
+    height: 100% !important; /* Enforce full height to make sure it fills the parent container */
     column-fill: auto;
+    position: relative;
+}
+
+.page-content.layout-two-column::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(50% - (var(--custom-divider-thickness, 1.5px) / 2));
+    width: 0;
+    border-left: var(--custom-divider-thickness, 1.5px) var(--custom-divider-style, dashed) var(--custom-divider-color, var(--secondary-color));
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Hide default divider when page contains a chapter header */
+.page-content.layout-two-column:has(.chapter-header)::after {
+    display: none !important;
+}
+
+/* Draw divider starting exactly below the chapter header on chapter pages */
+.page-content.layout-two-column .chapter-header::after {
+    content: "";
+    position: absolute;
+    top: calc(100% + 20px); /* Starts below the box (100% height + 20px bottom margin) */
+    left: calc(50% - (var(--custom-divider-thickness, 1.5px) / 2));
+    width: 0;
+    height: 800px; /* Extends to the bottom, clipped by overflow:hidden on container */
+    border-left: var(--custom-divider-thickness, 1.5px) var(--custom-divider-style, dashed) var(--custom-divider-color, var(--secondary-color));
+    pointer-events: none;
+    z-index: 10;
 }
 
 .page-content.layout-two-column > * {
@@ -8759,15 +8790,17 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
 .chapter-header {
     display: flex;
     align-items: center;
-    border-top: 1.5px solid var(--secondary-color, #c5a353);
-    border-bottom: 1.5px solid var(--secondary-color, #c5a353);
-    padding: 12px 0;
+    border: 1.5px solid var(--secondary-color, #c5a353);
+    border-radius: 6px;
+    padding: 12px 15px;
     margin: 20px 0;
     position: relative;
     width: 100%;
     box-sizing: border-box;
     column-span: all;
     -webkit-column-span: all;
+    background-color: color-mix(in srgb, var(--secondary-color, #c5a353) 8%, transparent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 
 .chapter-number-wrapper {

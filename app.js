@@ -118,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const coverTaglineSizeVal = document.getElementById('cover-tagline-size-val');
     const coverSubtitleSizeSlider = document.getElementById('cover-subtitle-size');
     const coverSubtitleSizeVal = document.getElementById('cover-subtitle-size-val');
+    const showTocToggle = document.getElementById('show-toc-toggle');
 
     // Last page inputs
     const lastEditorZone = document.getElementById('last-editor-zone');
@@ -455,8 +456,8 @@ document.addEventListener('DOMContentLoaded', () => {
         headerLogoSrc: '',
 
         // Page Borders & Decor
-        borderThick: '0',
-        cornerSize: '10',
+        borderThick: '2',
+        cornerSize: '32',
         innerBorderColor: '#c5a353',
         cornerColor: '#c5a353',
 
@@ -899,6 +900,15 @@ document.addEventListener('DOMContentLoaded', () => {
         coverEmblemSelect.addEventListener('change', () => {
             if (pagesData[0]) {
                 pagesData[0].coverEmblem = coverEmblemSelect.value;
+                debouncedRenderAndSave();
+            }
+        });
+    }
+
+    if (showTocToggle) {
+        showTocToggle.addEventListener('change', () => {
+            if (pagesData[0]) {
+                pagesData[0].showTOC = showTocToggle.checked;
                 debouncedRenderAndSave();
             }
         });
@@ -1471,7 +1481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: newMeta.title,
                 tagline: newMeta.tagline,
                 subtitle: newMeta.subtitle,
-                theme: (fileStates[0] && fileStates[0].pagesData && fileStates[0].pagesData[0] && fileStates[0].pagesData[0].theme) || 'maroon-gold'
+                theme: (fileStates[0] && fileStates[0].pagesData && fileStates[0].pagesData[0] && fileStates[0].pagesData[0].theme) || 'royal-durbar'
             },
             {
                 type: 'content',
@@ -2535,7 +2545,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             docTitleInput.value = pagesData[0].title || '';
                             docTaglineInput.value = pagesData[0].tagline || '';
                             docSubtitleInput.value = pagesData[0].subtitle || '';
-                            const restoredTheme = pagesData[0].theme || 'maroon-gold';
+                            const restoredTheme = pagesData[0].theme || 'royal-durbar';
                             if (docThemeInput) {
                                 docThemeInput.value = restoredTheme;
                             }
@@ -2555,6 +2565,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (pagesData[0].classificationSize === undefined) pagesData[0].classificationSize = 24;
                             if (pagesData[0].taglineSize === undefined) pagesData[0].taglineSize = 20;
                             if (pagesData[0].subtitleSize === undefined) pagesData[0].subtitleSize = 21;
+                            if (pagesData[0].showTOC === undefined) pagesData[0].showTOC = true;
+                            if (showTocToggle) {
+                                showTocToggle.checked = pagesData[0].showTOC;
+                            }
 
                             if (docClassificationInput) {
                                 docClassificationInput.value = pagesData[0].classification || '';
@@ -3795,6 +3809,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (docClassificationInput) {
                 docClassificationInput.value = pagesData[0].classification || '';
+            }
+            if (showTocToggle) {
+                showTocToggle.checked = pagesData[0].showTOC !== false;
             }
             if (coverTitleSizeSlider) {
                 coverTitleSizeSlider.value = pagesData[0].titleSize || 52;
@@ -6561,6 +6578,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const tocPlaceholder = document.createElement('div');
         tocPlaceholder.id = 'toc-placeholder';
         tocPlaceholder.className = 'toc-container';
+        if (coverData.showTOC === false) {
+            tocPlaceholder.style.display = 'none';
+        }
 
         if (emblemEl) {
             coverContent.appendChild(emblemEl);
@@ -7401,7 +7421,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         docTitleInput.value = pagesData[0].title || '';
                         docTaglineInput.value = pagesData[0].tagline || '';
                         docSubtitleInput.value = pagesData[0].subtitle || '';
-                        docThemeInput.value = pagesData[0].theme || 'maroon-gold';
+                        docThemeInput.value = pagesData[0].theme || 'royal-durbar';
                         if (coverThemeSelect) {
                             coverThemeSelect.value = pagesData[0].coverTheme || 'default';
                         }
@@ -7416,6 +7436,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (pagesData[0].classificationSize === undefined) pagesData[0].classificationSize = 24;
                         if (pagesData[0].taglineSize === undefined) pagesData[0].taglineSize = 20;
                         if (pagesData[0].subtitleSize === undefined) pagesData[0].subtitleSize = 21;
+                        if (pagesData[0].showTOC === undefined) pagesData[0].showTOC = true;
+                        if (showTocToggle) {
+                            showTocToggle.checked = pagesData[0].showTOC;
+                        }
 
                         if (docClassificationInput) {
                             docClassificationInput.value = pagesData[0].classification || '';
@@ -7489,7 +7513,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     watermarkImageGroup.style.display = (watermarkSettings.type === 'image') ? 'flex' : 'none';
 
                     // Apply saved visual theme first (programmatic theme application)
-                    const restoredTheme = (pagesData[0] && pagesData[0].theme) || 'maroon-gold';
+                    const restoredTheme = (pagesData[0] && pagesData[0].theme) || 'royal-durbar';
                     if (docThemeInput) {
                         docThemeInput.value = restoredTheme;
                     }
@@ -7517,8 +7541,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearWorkspaceContent() {
-        // Capture currently selected active theme so it acts as a persistent global setting
-        const activeTheme = localStorage.getItem('samyak-global-theme') || docThemeInput.value || 'maroon-gold';
+        // Reset to default theme 'royal-durbar' (Lokbandhu Official) when clearing workspace
+        const activeTheme = 'royal-durbar';
+        localStorage.setItem('samyak-global-theme', activeTheme);
+        applyTheme(activeTheme, false);
 
         // Keep the cover page metadata as is, enforcing the active theme
         const currentCover = {
@@ -7534,7 +7560,8 @@ document.addEventListener('DOMContentLoaded', () => {
             titleSize: 52,
             classificationSize: 24,
             taglineSize: 20,
-            subtitleSize: 21
+            subtitleSize: 21,
+            showTOC: true
         };
         currentCover.theme = activeTheme;
 
@@ -7600,7 +7627,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 title: '',
                 tagline: '',
                 subtitle: '',
-                theme: 'maroon-gold',
+                theme: 'royal-durbar',
                 coverTheme: 'default',
                 coverBorderPattern: 'solid',
                 coverEmblem: 'none',
@@ -7608,7 +7635,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 titleSize: 52,
                 classificationSize: 24,
                 taglineSize: 20,
-                subtitleSize: 21
+                subtitleSize: 21,
+                showTOC: true
             },
             
             // Page 2 (Idx 1)
@@ -7872,12 +7900,12 @@ document.addEventListener('DOMContentLoaded', () => {
             designBulletStyle.value = 'classic';
         }
 
-        designBorderThick.value = '0';
-        designBorderThickVal.textContent = '0px';
-        document.documentElement.style.setProperty('--custom-inner-border-thickness', '0px');
-        designCornerSize.value = '10';
-        designCornerSizeVal.textContent = '10px';
-        document.documentElement.style.setProperty('--custom-corner-size', '10px');
+        designBorderThick.value = '2';
+        designBorderThickVal.textContent = '2px';
+        document.documentElement.style.setProperty('--custom-inner-border-thickness', '2px');
+        designCornerSize.value = '32';
+        designCornerSizeVal.textContent = '32px';
+        document.documentElement.style.setProperty('--custom-corner-size', '32px');
 
         designPageNumPlace.value = 'bottom-center';
         customDesignSettings.pageNumPlacement = 'bottom-center';

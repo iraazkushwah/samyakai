@@ -90,57 +90,86 @@ Your task is to analyze the provided page or document image/PDF and convert it i
 Please format your response strictly as valid JSON matching the specified responseSchema. Only return the JSON object, do not markdown-wrap the JSON.
     `;
 
-    // We use gemini-3.5-flash which is perfect for visually rich OCR and layout preservation
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: [
-        filePart,
-        { text: promptText }
-      ],
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            markdown: {
-              type: Type.STRING,
-              description: "The complete structured Markdown output of the document matching all language-adaptive and image-skipping spacer requirements."
-            },
-            confidenceEstimate: {
-              type: Type.INTEGER,
-              description: "Estimated OCR accuracy/confidence percentage from 0 to 100."
-            },
-            wordCount: {
-              type: Type.INTEGER,
-              description: "Calculated count of words processed in the document."
-            },
-            alerts: {
-              type: Type.ARRAY,
-              items: {
+    // Attempt OCR processing using a progressive fallback list of models to avoid 503 Service Unavailable issues
+    const modelsToTry = ["gemini-3.5-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
+    let response: any = null;
+    let lastError: any = null;
+
+    for (const modelName of modelsToTry) {
+      let attempts = 2; // Try each model up to 2 times
+      for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+          console.log(`[OCR Server] Attempting OCR with model: ${modelName} (Attempt ${attempt}/${attempts})`);
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: [
+              filePart,
+              { text: promptText }
+            ],
+            config: {
+              responseMimeType: "application/json",
+              responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                  fragment: {
+                  markdown: {
                     type: Type.STRING,
-                    description: "The illegible fragment of text detected."
+                    description: "The complete structured Markdown output of the document matching all language-adaptive and image-skipping spacer requirements."
                   },
-                  context: {
-                    type: Type.STRING,
-                    description: "The sentence or surrounding words where this word was positioned."
+                  confidenceEstimate: {
+                    type: Type.INTEGER,
+                    description: "Estimated OCR accuracy/confidence percentage from 0 to 100."
                   },
-                  reason: {
-                    type: Type.STRING,
-                    description: "Why this fragment was flagged as illegible/unclear."
+                  wordCount: {
+                    type: Type.INTEGER,
+                    description: "Calculated count of words processed in the document."
+                  },
+                  alerts: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        fragment: {
+                          type: Type.STRING,
+                          description: "The illegible fragment of text detected."
+                        },
+                        context: {
+                          type: Type.STRING,
+                          description: "The sentence or surrounding words where this word was positioned."
+                        },
+                        reason: {
+                          type: Type.STRING,
+                          description: "Why this fragment was flagged as illegible/unclear."
+                        }
+                      },
+                      required: ["fragment", "context", "reason"]
+                    },
+                    description: "Any fuzzy, overlapping, or bad handwriting alerts detected in the document."
                   }
                 },
-                required: ["fragment", "context", "reason"]
-              },
-              description: "Any fuzzy, overlapping, or bad handwriting alerts detected in the document."
+                required: ["markdown", "confidenceEstimate", "wordCount", "alerts"]
+              }
             }
-          },
-          required: ["markdown", "confidenceEstimate", "wordCount", "alerts"]
+          });
+          // Break inner loop if successful
+          break;
+        } catch (err: any) {
+          lastError = err;
+          console.warn(`[OCR Server] Model ${modelName} failed on attempt ${attempt}. Error: ${err.message || err}`);
+          if (attempt < attempts) {
+            // Wait 1 second before retrying this model
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
       }
-    });
+      if (response) {
+        console.log(`[OCR Server] OCR successfully completed using model: ${modelName}`);
+        break; // Exit outer loop
+      }
+    }
+
+    if (!response) {
+      throw lastError || new Error("Failed to process document with all available OCR models.");
+    }
 
     const parsedOCRResult = JSON.parse(response.text?.trim() || "{}");
     

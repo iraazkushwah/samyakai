@@ -1868,6 +1868,32 @@ document.addEventListener('DOMContentLoaded', () => {
         return pages;
     }
 
+    // Helper to fetch API with automatic retries and exponential backoff
+    async function fetchWithRetry(url, options, maxRetries = 3, initialDelay = 3000, spanEl = null) {
+        let lastError;
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errJson = await response.json();
+                    throw new Error(errJson.error || `HTTP ${response.status} Error`);
+                }
+                return await response.json();
+            } catch (err) {
+                lastError = err;
+                console.warn(`[OCR Retry] Attempt ${attempt} failed: ${err.message || err}`);
+                if (attempt < maxRetries) {
+                    const waitTime = initialDelay * attempt;
+                    if (spanEl) {
+                        spanEl.textContent = `Server busy. Retrying in ${waitTime / 1000}s (Attempt ${attempt + 1}/${maxRetries})...`;
+                    }
+                    await delay(waitTime);
+                }
+            }
+        }
+        throw lastError;
+    }
+
     // Core scanning execution
     if (ocrDashProcessBtn) {
         ocrDashProcessBtn.addEventListener('click', async () => {
@@ -1904,7 +1930,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         const page = pages[i];
                         if (spanEl) spanEl.textContent = `Processing page ${page.pageNum} of ${totalPages}...`;
 
-                        const response = await fetch('/api/ocr', {
+                        const pageResult = await fetchWithRetry('/api/ocr', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -1915,14 +1941,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 enableLayoutAnalysis: ocrDashLayoutAnalysis,
                                 enableStructuring: ocrDashAutoStructuring
                             })
-                        });
+                        }, 3, 3000, spanEl);
 
-                        if (!response.ok) {
-                            const errorText = await response.json();
-                            throw new Error(errorText.error || `Server error on page ${page.pageNum}: ${response.status}`);
-                        }
-
-                        const pageResult = await response.json();
                         results.push(pageResult);
 
                         if (i < totalPages - 1) {
@@ -1957,7 +1977,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } else {
                     // Standard single image processing
-                    const response = await fetch('/api/ocr', {
+                    const spanEl = ocrDashProcessingIndicator ? ocrDashProcessingIndicator.querySelector('span:not(.ocr-dash-spinner)') : null;
+                    result = await fetchWithRetry('/api/ocr', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -1968,14 +1989,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             enableLayoutAnalysis: ocrDashLayoutAnalysis,
                             enableStructuring: ocrDashAutoStructuring
                         })
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.json();
-                        throw new Error(errorText.error || `Server error: ${response.status}`);
-                    }
-
-                    result = await response.json();
+                    }, 3, 3000, spanEl);
                 }
 
                 // Scanning succeeded! Populate components

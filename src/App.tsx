@@ -109,6 +109,38 @@ async function extractPagesFromPdf(pdfBase64: string): Promise<Array<{ pageNum: 
   return pages;
 }
 
+// Helper to fetch API with automatic retries and exponential backoff
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries: number = 3,
+  initialDelay: number = 3000,
+  onRetry?: (message: string) => void
+): Promise<any> {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      if (!response.ok) {
+        const errJson = await response.json();
+        throw new Error(errJson.error || `HTTP ${response.status} Error`);
+      }
+      return await response.json();
+    } catch (err: any) {
+      lastError = err;
+      console.warn(`[OCR Retry] Attempt ${attempt} failed: ${err.message || err}`);
+      if (attempt < maxRetries) {
+        const waitTime = initialDelay * attempt;
+        if (onRetry) {
+          onRetry(`Server busy. Retrying in ${waitTime / 1000}s (Attempt ${attempt + 1}/${maxRetries})...`);
+        }
+        await delay(waitTime);
+      }
+    }
+  }
+  throw lastError;
+}
+
 export default function App() {
   const [lang] = useState<"en">("en");
   const t = TRANSLATIONS[lang];
@@ -223,25 +255,25 @@ export default function App() {
           const page = pages[i];
           setOcrProgressMessage(`Processing page ${page.pageNum} of ${totalPages}...`);
 
-          const response = await fetch("/api/ocr", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              fileBase64: page.base64,
-              mimeType: page.mimeType,
-              fileName: `${uploadedFile.name.split('.')[0]}_page_${page.pageNum}.jpg`,
-              engine: ocrEngine,
-              enableLayoutAnalysis: layoutAnalysisEnabled,
-              enableStructuring: autoStructuringEnabled
-            }),
-          });
+          const pageResult: OCRResult = await fetchWithRetry(
+            "/api/ocr",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fileBase64: page.base64,
+                mimeType: page.mimeType,
+                fileName: `${uploadedFile.name.split('.')[0]}_page_${page.pageNum}.jpg`,
+                engine: ocrEngine,
+                enableLayoutAnalysis: layoutAnalysisEnabled,
+                enableStructuring: autoStructuringEnabled
+              }),
+            },
+            3,
+            3000,
+            (msg) => setOcrProgressMessage(msg)
+          );
 
-          if (!response.ok) {
-            const errJson = await response.json();
-            throw new Error(errJson.error || `HTTP ${response.status} Error on page ${page.pageNum}`);
-          }
-
-          const pageResult: OCRResult = await response.json();
           results.push(pageResult);
 
           if (i < totalPages - 1) {
@@ -275,25 +307,24 @@ export default function App() {
 
       } else {
         setOcrProgressMessage("Scanning content...");
-        const response = await fetch("/api/ocr", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fileBase64: uploadedFile.base64,
-            mimeType: uploadedFile.type,
-            fileName: uploadedFile.name,
-            engine: ocrEngine,
-            enableLayoutAnalysis: layoutAnalysisEnabled,
-            enableStructuring: autoStructuringEnabled
-          }),
-        });
-
-        if (!response.ok) {
-          const errJson = await response.json();
-          throw new Error(errJson.error || `HTTP ${response.status} Error`);
-        }
-
-        result = await response.json();
+        result = await fetchWithRetry(
+          "/api/ocr",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fileBase64: uploadedFile.base64,
+              mimeType: uploadedFile.type,
+              fileName: uploadedFile.name,
+              engine: ocrEngine,
+              enableLayoutAnalysis: layoutAnalysisEnabled,
+              enableStructuring: autoStructuringEnabled
+            }),
+          },
+          3,
+          3000,
+          (msg) => setOcrProgressMessage(msg)
+        );
       }
       
       setUploadedFile(prev => {

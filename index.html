@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="styles.css?v=1782624735">
     
     <!-- Favicon & PWA Headers -->
-    <link rel="icon" type="image/png" href="luka.png">
-    <link rel="apple-touch-icon" href="luka.png">
+    <link rel="icon" type="image/png" href="luka_192.png">
+    <link rel="apple-touch-icon" href="luka_192.png">
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#09090b">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -51,16 +51,6 @@
                         <span class="author-by">by</span>
                         <img src="raaz_profile.png" alt="Raaz Kushwah" class="author-avatar-mini">
                         <span class="author-name">Raaz</span>
-                    </div>
-                </div>
-                
-                <!-- Custom Pinnable Searchable Dropdown Panel -->
-                <div id="custom-theme-dropdown" class="custom-theme-dropdown-panel" style="display: none;">
-                    <div class="theme-search-wrapper">
-                        <input type="text" id="theme-search-input" placeholder="Search themes..." autocomplete="off">
-                    </div>
-                    <div class="theme-list-container">
-                        <!-- Dynamic Category Groups & Items go here via JS IIFE -->
                     </div>
                 </div>
             </div>
@@ -819,6 +809,65 @@
                 </div>
             </div>
         </header>
+
+        <!-- Mobile Top Header Bar -->
+        <header class="mobile-top-bar">
+            <div class="mobile-logo-group">
+                <img src="luka.png" alt="Samyak Logo" class="logo-icon-img">
+                <span class="mobile-logo-text">Samyak</span>
+            </div>
+            <div class="mobile-header-actions">
+                <button type="button" id="mobile-grid-btn" class="mobile-header-action-btn" title="Page Grid Manager">📁</button>
+                <button type="button" id="mobile-theme-btn" class="mobile-header-action-btn" title="Select Theme">🎨</button>
+                <button type="button" id="mobile-print-btn" class="mobile-header-action-btn" title="Print/Save PDF">🖨️</button>
+            </div>
+        </header>
+
+        <!-- Custom Theme Dropdown Moved Here for Mobile Access -->
+        <div id="custom-theme-dropdown" class="custom-theme-dropdown-panel" style="display: none;">
+            <div class="theme-search-wrapper">
+                <input type="text" id="theme-search-input" placeholder="Search themes..." autocomplete="off">
+            </div>
+            <div class="theme-list-container">
+                <!-- Dynamic Category Groups & Items go here via JS IIFE -->
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Formatting Bar -->
+        <div class="mobile-bottom-bar">
+            <button type="button" class="mobile-bar-btn mobile-tool-btn" data-prefix="# " title="Add Section Header">
+                <span class="mobile-bar-icon">📌</span>
+                <span class="mobile-bar-lbl">Section</span>
+            </button>
+            <button type="button" class="mobile-bar-btn mobile-tool-btn" data-prefix="[chapter 1] मुख्य शीर्षक | उपशीर्षक" title="Add Chapter">
+                <span class="mobile-bar-icon">🔖</span>
+                <span class="mobile-bar-lbl">Chapter</span>
+            </button>
+            <button type="button" class="mobile-bar-btn mobile-tool-btn" data-prefix="## 🔶 " title="Add Topic Title">
+                <span class="mobile-bar-icon">🔶</span>
+                <span class="mobile-bar-lbl">Topic</span>
+            </button>
+            <button type="button" class="mobile-bar-btn mobile-tool-btn" data-prefix="• " title="Add Bullet Point">
+                <span class="mobile-bar-icon">🟤</span>
+                <span class="mobile-bar-lbl">Bullet</span>
+            </button>
+            <button type="button" class="mobile-bar-btn mobile-tool-btn" data-prefix="&gt; " title="Add Note Box">
+                <span class="mobile-bar-icon">💡</span>
+                <span class="mobile-bar-lbl">Note</span>
+            </button>
+            <button type="button" class="mobile-bar-btn mobile-tool-btn" data-prefix="&#10;[pagebreak]&#10;" title="Insert Page Break">
+                <span class="mobile-bar-icon">📄</span>
+                <span class="mobile-bar-lbl">Break</span>
+            </button>
+            <button type="button" id="mobile-table-btn" class="mobile-bar-btn" title="Insert Table">
+                <span class="mobile-bar-icon">📊</span>
+                <span class="mobile-bar-lbl">Table</span>
+            </button>
+            <button type="button" id="mobile-gaps-btn" class="mobile-bar-btn" title="Remove Blank Lines">
+                <span class="mobile-bar-icon">🗜️</span>
+                <span class="mobile-bar-lbl">Gaps</span>
+            </button>
+        </div>
 
         <!-- MAIN SPLIT WORKSPACE -->
         <div class="main-workspace">

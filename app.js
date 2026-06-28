@@ -9777,7 +9777,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isOpen) {
                 dropdown.style.display = 'none';
             } else {
-                // Close other panels if open
+                // Position dropdown exactly below the trigger button
+                const rect = trigger.getBoundingClientRect();
+                const dropdownWidth = 340;
+                let left = rect.left;
+                // Prevent overflow off the right edge of the viewport
+                if (left + dropdownWidth > window.innerWidth - 8) {
+                    left = window.innerWidth - dropdownWidth - 8;
+                }
+                if (left < 8) left = 8;
+                dropdown.style.top = (rect.bottom + 6) + 'px';
+                dropdown.style.left = left + 'px';
                 dropdown.style.display = 'flex';
                 searchInput.value = '';
                 searchInput.focus();
@@ -10944,4 +10954,80 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+    // --- Mobile Header and Bottom Bar Controls Binding ---
+    const mobileGridBtn = document.getElementById('mobile-grid-btn');
+    const mobileThemeBtn = document.getElementById('mobile-theme-btn');
+    const mobilePrintBtn = document.getElementById('mobile-print-btn');
+    const mobileTableBtn = document.getElementById('mobile-table-btn');
+    const mobileGapsBtn = document.getElementById('mobile-gaps-btn');
+
+    if (mobileGridBtn) {
+        mobileGridBtn.addEventListener('click', () => {
+            const deskGridBtn = document.getElementById('quick-grid-view-btn') || document.getElementById('grid-view-btn');
+            if (deskGridBtn) deskGridBtn.click();
+        });
+    }
+
+    if (mobileThemeBtn) {
+        mobileThemeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const dropdown = document.getElementById('custom-theme-dropdown');
+            const searchInput = document.getElementById('theme-search-input');
+            if (!dropdown) return;
+            const isOpen = dropdown.style.display === 'flex';
+            if (isOpen) {
+                dropdown.style.display = 'none';
+            } else {
+                const rect = mobileThemeBtn.getBoundingClientRect();
+                const dropdownWidth = 340;
+                let left = rect.left;
+                if (left + dropdownWidth > window.innerWidth - 8) left = window.innerWidth - dropdownWidth - 8;
+                if (left < 8) left = 8;
+                dropdown.style.top = (rect.bottom + 6) + 'px';
+                dropdown.style.left = left + 'px';
+                dropdown.style.display = 'flex';
+                if (searchInput) { searchInput.value = ''; searchInput.focus(); }
+            }
+        });
+    }
+
+    if (mobilePrintBtn) {
+        mobilePrintBtn.addEventListener('click', () => {
+            const deskPrintBtn = document.getElementById('print-pdf-btn');
+            if (deskPrintBtn) deskPrintBtn.click();
+        });
+    }
+
+    if (mobileTableBtn) {
+        mobileTableBtn.addEventListener('click', () => {
+            const deskTableBtn = document.getElementById('insert-table-btn');
+            if (deskTableBtn) deskTableBtn.click();
+        });
+    }
+
+    if (mobileGapsBtn) {
+        mobileGapsBtn.addEventListener('click', () => {
+            const deskGapsBtn = document.getElementById('remove-gaps-btn');
+            if (deskGapsBtn) deskGapsBtn.click();
+        });
+    }
+
+    // Handle mobile-tool-btn formatting clicks
+    const mobileToolBtns = document.querySelectorAll('.mobile-tool-btn');
+    mobileToolBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            if (activePageIndex > 0) {
+                const prefix = btn.getAttribute('data-prefix') || '';
+                const suffix = btn.getAttribute('data-suffix') || '';
+                insertWrappedAtCursor(pageContentInput, prefix, suffix);
+                pagesData[activePageIndex].text = pageContentInput.value;
+                renderPreview();
+                updateStats();
+                saveWorkspaceToLocalStorage();
+            } else {
+                alert('This can only be inserted on content pages!');
+            }
+        });
+    });
 });

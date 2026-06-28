@@ -1,10 +1,12 @@
-const CACHE_NAME = 'samyak-cache-v9';
+const CACHE_NAME = 'samyak-cache-v10';
 const ASSETS = [
   './',
   './index.html',
   './app.js',
   './styles.css',
   './luka.png',
+  './luka_192.png',
+  './luka_512.png',
   './raaz_profile.png',
   'https://fonts.googleapis.com/css2?family=Martel:wght@400;700;900&family=Mukta:wght@400;500;600;700;800&family=Noto+Sans+Devanagari:wght@400;500;600;700;800&family=Noto+Serif+Devanagari:wght@400;600;700;900&family=Poppins:wght@300;400;500;600;700&family=Rozha+One&family=Yatra+One&family=Outfit:wght@300;400;500;600;700;800;900&display=swap'
 ];

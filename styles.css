@@ -25,7 +25,7 @@
     --heading-color: #000000;
     
     --shadow-premium: 0 10px 30px rgba(0, 0, 0, 0.3);
-    --shadow-page: 0 12px 30px rgba(0, 0, 0, 0.12);
+    --shadow-page: 0 4px 6px rgba(0,0,0,0.25), 0 20px 48px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255,255,255,0.04);
     --border-radius-sm: 6px;
     --border-radius-md: 10px;
     --border-radius-lg: 16px;
@@ -503,9 +503,10 @@ body.font-hybrid-style {
 
 body {
     font-family: var(--font-ui);
-    background: radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.12) 0%, transparent 45%),
-                #07070c;
+    background:
+        radial-gradient(ellipse at 0% 0%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 100% 100%, rgba(99, 102, 241, 0.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(15, 15, 25, 1) 0%, #07070c 100%);
     color: var(--ui-text);
     overflow: hidden;
     height: 100vh;
@@ -537,20 +538,21 @@ sub {
 /* Editor Panel (Left Sidebar) */
 .editor-panel {
     position: relative;
-    width: 210mm; /* Sized exactly to A4 page width */
+    width: 210mm;
     min-width: 380px;
     max-width: 210mm;
     flex-shrink: 0;
-    background: rgba(12, 12, 20, 0.45);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, rgba(14, 14, 22, 0.75) 0%, rgba(10, 10, 18, 0.85) 100%);
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 2px solid rgba(197, 160, 89, 0.25); /* Accent top line — premium brand marker */
     display: flex;
     flex-direction: column;
     height: 100%;
     z-index: 10;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
-    overflow: hidden; /* Prevent sidebar itself from overflowing */
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.45), inset -1px 0 0 rgba(255, 255, 255, 0.03);
+    overflow: hidden;
 }
 
 .editor-header {
@@ -607,7 +609,6 @@ sub {
     width: auto;
     object-fit: contain;
     display: block;
-    mix-blend-mode: multiply;
 }
 
 @keyframes pulse-glow {
@@ -1737,36 +1738,41 @@ body.light-mode .header-stats {
     flex-direction: column;
     height: 100%;
     min-width: 0;
-    background-color: #09090b;
+    background: linear-gradient(160deg, #0b0b14 0%, #08080f 100%);
 }
 
 .preview-header {
-    height: 42px !important;
-    padding: 0 16px !important;
+    height: 44px !important;
+    padding: 0 20px !important;
     box-sizing: border-box !important;
-    background-color: var(--ui-sidebar-bg);
-    border-bottom: 1px solid var(--ui-border);
+    background: linear-gradient(180deg, rgba(16, 16, 26, 0.95) 0%, rgba(12, 12, 20, 0.98) 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: relative;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03), 0 2px 12px rgba(0, 0, 0, 0.3) !important;
 }
 
 .preview-header h2 {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--ui-text);
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.55);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
 }
 
 .preview-zoom-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
-    background-color: var(--ui-bg);
-    padding: 4px 12px;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 3px 12px;
     border-radius: 20px;
-    border: 1px solid var(--ui-border);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(8px);
 }
 
 .zoom-btn {
@@ -1794,12 +1800,15 @@ body.light-mode .header-stats {
 /* Preview Canvas Scroll Wrapper */
 .canvas-wrapper {
     flex: 1;
-    overflow: auto; /* Contains both vertical and horizontal scroll */
-    padding: 20px;
+    overflow: auto;
+    padding: 28px 24px;
     display: flex;
-    justify-content: flex-start; /* flex-start + margin auto is the best cross-browser centering + scroll overflow fix */
+    justify-content: flex-start;
     align-items: flex-start;
     scroll-behavior: smooth;
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(197, 160, 89, 0.04) 0%, transparent 60%),
+        linear-gradient(180deg, #0a0a13 0%, #07070e 100%);
 }
 
 /* A4 Page Layout Container */
@@ -3409,19 +3418,30 @@ strong {
 
 /* Resize Divider Handle */
 .resize-handle {
-    width: 6px;
-    background-color: var(--ui-border);
+    width: 4px;
+    background: linear-gradient(180deg, rgba(197, 160, 89, 0.15) 0%, rgba(197, 160, 89, 0.05) 50%, rgba(197, 160, 89, 0.15) 100%);
     cursor: col-resize;
     z-index: 100;
-    transition: background-color 0.25s ease;
+    transition: background 0.15s ease;
     flex-shrink: 0;
-    border-left: 1px solid rgba(0, 0, 0, 0.5);
-    border-right: 1px solid rgba(0, 0, 0, 0.5);
+    position: relative;
+}
+
+.resize-handle::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 40px;
+    background: rgba(197, 160, 89, 0.2);
+    border-radius: 2px;
 }
 
 .resize-handle:hover,
 .resize-handle.resizing {
-    background-color: var(--ui-accent);
+    background: linear-gradient(180deg, rgba(197, 160, 89, 0.45) 0%, rgba(197, 160, 89, 0.25) 50%, rgba(197, 160, 89, 0.45) 100%);
 }
 
 /* ==========================================================================
@@ -5664,23 +5684,22 @@ body.theme-zen-compact .toc-header {
 }
 
 .custom-theme-dropdown-panel {
-    position: absolute;
-    top: 100%; /* Float exactly below the bottom border of the header */
-    left: 12px; /* Align with left padding of the header */
-    right: 12px; /* Align with right padding of the header */
-    width: auto; /* Dynamically span the full available width of the sidebar! */
+    position: fixed;
+    top: auto;
+    left: auto;
+    width: 340px;
     max-height: 420px;
-    background-color: rgba(30, 41, 59, 0.95); /* Dark Slate Glass */
-    backdrop-filter: blur(12px) saturate(180%);
-    -webkit-backdrop-filter: blur(12px) saturate(180%);
+    background-color: rgba(18, 22, 32, 0.97);
+    backdrop-filter: blur(16px) saturate(200%);
+    -webkit-backdrop-filter: blur(16px) saturate(200%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.2);
-    z-index: 10000;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 99999;
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    animation: dropdownFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 body.light-mode .custom-theme-dropdown-panel {
@@ -6753,8 +6772,8 @@ body.theme-raaz-compact .page-content p.body-text {
 
 /* Style all scrollbars on webkit engines (Chrome, Safari, Edge, Brave) */
 ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -6762,17 +6781,18 @@ body.theme-raaz-compact .page-content p.body-text {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 10px;
     border: 1px solid transparent;
     background-clip: padding-box;
-    transition: background 0.2s ease;
+    transition: background 0.12s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--ui-accent, #f59e0b) !important;
+    background: rgba(197, 160, 89, 0.5) !important;
     border: 1px solid transparent;
     background-clip: padding-box;
+    box-shadow: 0 0 6px rgba(197, 160, 89, 0.3);
 }
 
 /* Light mode scrollbar thumb override */
@@ -10182,7 +10202,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease;
     border-radius: 4px 4px 0 0;
     border: 1px solid transparent;
     border-bottom: none;
@@ -10272,7 +10292,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
     padding-right: 12px;
     margin-right: 4px;
     height: 100%;
@@ -10317,7 +10337,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     min-width: 48px;
     height: 60px;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease;
 }
 
 .ribbon-btn:hover {
@@ -10589,62 +10609,64 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
    16. PROFESSIONAL ENTERPRISE-GRADE RIBBON UI VISUAL UPGRADE
    ========================================================================== */
    
-/* Dark Matte Palette & Smooth Borders */
+/* Deep Glass-Charcoal Base */
 .ribbon-container {
-    background-color: #0e0e12 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    background: linear-gradient(180deg, #13131a 0%, #0f0f16 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 .ribbon-title-bar {
-    background-color: #0e0e12 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    background: linear-gradient(180deg, #13131a 0%, #0f0f16 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
     height: 40px !important;
     padding: 0 16px !important;
 }
 
 .ribbon-panels-content {
-    background-color: #141419 !important; /* Soft premium dark charcoal slate */
-    border-top: none !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-    padding: 8px 16px !important;
+    background: linear-gradient(180deg, #18181f 0%, #15151c 100%) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.055) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+    padding: 10px 18px !important;
     min-height: 88px !important;
     height: 88px !important;
 }
 
-/* Tab buttons - Clean & Modern (Word style) */
+/* Tab buttons - Professional Premium Style */
 .ribbon-tab-btn {
-    color: #94a3b8 !important;
+    color: #8b9ab5 !important;
     font-size: 11.5px !important;
     font-weight: 600 !important;
-    letter-spacing: 0.2px !important;
-    padding: 8px 16px !important;
+    letter-spacing: 0.3px !important;
+    padding: 6px 14px !important;
     height: calc(100% - 2px) !important;
     border: none !important;
-    border-radius: 4px 4px 0 0 !important;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 5px 5px 0 0 !important;
+    transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease !important;
     margin-right: 2px !important;
+    background: transparent !important;
 }
 
 .ribbon-tab-btn:hover {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-    color: #ffffff !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: #dde4f0 !important;
 }
 
 .ribbon-tab-btn.active {
-    background-color: #141419 !important; /* Blends perfectly with active panel */
+    background: linear-gradient(180deg, #18181f 0%, #15151c 100%) !important;
     color: var(--ui-accent, #c5a059) !important;
     font-weight: 700 !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-bottom: 2px solid #141419 !important; /* Cover bottom border overlap */
-    box-shadow: none !important;
+    border-left: 1px solid rgba(197,160,89,0.18) !important;
+    border-right: 1px solid rgba(197,160,89,0.18) !important;
+    border-top: 2px solid var(--ui-accent, #c5a059) !important;
+    border-bottom: 2px solid #15151c !important;
+    box-shadow: 0 -2px 10px rgba(197,160,89,0.08) !important;
+    text-shadow: 0 0 12px rgba(197,160,89,0.3) !important;
 }
 
 /* Ribbon Group Structure */
 .ribbon-group {
-    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
     padding-right: 14px !important;
     margin-right: 8px !important;
     height: 100% !important;
@@ -10653,55 +10675,58 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 .ribbon-group-label {
     font-size: 8px !important;
     font-weight: 700 !important;
-    color: #4b5563 !important; /* Soft grey letter spacing */
+    color: #4e5a6e !important;
     letter-spacing: 1px !important;
     text-transform: uppercase !important;
     margin-top: 4px !important;
 }
 
-/* Universal Button Overrides - Eliminating Cheap Toy Border/Bg Color Clutter */
+/* Universal Button Overrides - Premium Glass Style */
 .ribbon-container .ribbon-btn {
-    background: rgba(255, 255, 255, 0.01) !important;
-    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    background: rgba(255, 255, 255, 0.025) !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
     border-radius: 6px !important;
-    color: #cbd5e1 !important; /* Consistent, highly legible soft gray */
+    color: #c4cedf !important;
     padding: 6px 8px !important;
     min-width: 54px !important;
     height: 58px !important;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    box-shadow: none !important;
+    transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 .ribbon-container .ribbon-btn:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
     color: #ffffff !important;
-    transform: none !important; /* Zero cheap bounce animations */
+    transform: none !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 8px rgba(0,0,0,0.25) !important;
 }
 
-/* Give formatting tools specific subtle accent when active/hovered */
+/* Accent glow when hovering formatting tools */
 .ribbon-container .ribbon-btn.tool-btn:hover {
-    background: rgba(197, 160, 89, 0.05) !important;
-    border-color: rgba(197, 160, 89, 0.18) !important;
-    color: #ffffff !important;
+    background: rgba(197, 160, 89, 0.07) !important;
+    border-color: rgba(197, 160, 89, 0.22) !important;
+    color: #f0d898 !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.08) !important;
 }
 
 .ribbon-container .ribbon-btn:active {
-    background: rgba(197, 160, 89, 0.1) !important;
-    border-color: rgba(197, 160, 89, 0.3) !important;
+    background: rgba(197, 160, 89, 0.12) !important;
+    border-color: rgba(197, 160, 89, 0.35) !important;
     color: var(--ui-accent, #c5a059) !important;
+    transform: scale(0.98) !important;
 }
 
-/* Button Labels under Icons */
+/* Button Labels */
 .ribbon-container .ribbon-btn-label {
     font-size: 9.5px !important;
     font-weight: 500 !important;
-    color: #64748b !important; /* Subtle slate labels */
+    color: #6a7a8e !important;
     margin-top: 3px !important;
 }
 
 .ribbon-container .ribbon-btn:hover .ribbon-btn-label {
-    color: #cbd5e1 !important;
+    color: #c4cedf !important;
 }
 
 /* Fix Font Size Adjuster - Single Line Layout */
@@ -10745,7 +10770,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     padding: 0 !important;
     margin: 0 !important;
     line-height: 1 !important;
-    transition: all 0.1s ease !important;
+    transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease !important;
 }
 
 .font-adjuster button:hover {
@@ -11026,21 +11051,21 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 
 /* Lock the Ribbon top container to grow dynamically with tabs and panel */
 .ribbon-container {
-    background-color: #0e0e12 !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    background: linear-gradient(180deg, #13131a 0%, #0f0f16 100%) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
     position: relative !important;
     z-index: 1000 !important;
     display: flex !important;
     flex-direction: column !important;
     height: auto !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 /* Make ribbon panels content relative and push content down */
 .ribbon-panels-content {
-    background-color: #141419 !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
-    padding: 8px 16px !important;
+    background: linear-gradient(180deg, #18181f 0%, #15151c 100%) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.055) !important;
+    padding: 10px 18px !important;
     min-height: 104px !important;
     box-sizing: border-box !important;
     display: block !important;
@@ -11076,25 +11101,26 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     display: flex !important;
 }
 
-/* Style active tab button to melt into active panel */
+/* Active tab button melts into active panel with accent top border */
 .ribbon-tab-btn.active {
-    background-color: #141419 !important; /* Blends perfectly with panel */
+    background: linear-gradient(180deg, #18181f 0%, #15151c 100%) !important;
     color: var(--ui-accent, #c5a059) !important;
     font-weight: 700 !important;
-    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
-    border-bottom: 2px solid #141419 !important; /* Overlaps container border */
-    border-radius: 4px 4px 0 0 !important;
-    box-shadow: none !important;
+    border-left: 1px solid rgba(197,160,89,0.18) !important;
+    border-right: 1px solid rgba(197,160,89,0.18) !important;
+    border-top: 2px solid var(--ui-accent, #c5a059) !important;
+    border-bottom: 2px solid #15151c !important;
+    border-radius: 5px 5px 0 0 !important;
+    box-shadow: 0 -2px 10px rgba(197,160,89,0.08) !important;
+    text-shadow: 0 0 12px rgba(197,160,89,0.3) !important;
     z-index: 1001 !important;
     position: relative !important;
-    bottom: -1px !important; /* Moves down 1px to cover the container border */
+    bottom: -1px !important;
 }
 
-/* Ribbon Group inside horizontal panel */
+/* Ribbon Group inside horizontal panel - Premium Separators */
 .ribbon-panel .ribbon-group {
-    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.09) !important;
     border-bottom: none !important;
     padding-right: 16px !important;
     margin-right: 8px !important;
@@ -11105,6 +11131,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     justify-content: space-between !important;
     height: auto !important;
     width: auto !important;
+    position: relative !important;
 }
 
 .ribbon-panel .ribbon-group:last-child {
@@ -11114,7 +11141,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 .ribbon-panel .ribbon-group-controls {
     display: grid !important;
     grid-template-rows: repeat(3, 24px) !important;
-    grid-auto-flow: column !important; /* Lay items out column by column, filling rows first! */
+    grid-auto-flow: column !important;
     gap: 4px 12px !important;
     align-items: center !important;
     width: auto !important;
@@ -11123,12 +11150,14 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 .ribbon-panel .ribbon-group-label {
     order: 1 !important;
     text-align: center !important;
-    font-size: 8.5px !important;
-    font-weight: 600 !important;
-    color: #8899b0 !important;
-    letter-spacing: 0.8px !important;
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #4e5a6e !important;
+    letter-spacing: 1px !important;
     text-transform: uppercase !important;
-    margin: 4px 0 0 0 !important;
+    margin: 5px 0 0 0 !important;
+    padding-top: 3px !important;
+    border-top: 1px solid rgba(255,255,255,0.05) !important;
 }
 
 /* Style editor toolbar when inside the ribbon to lay out cleanly in horizontal row */
@@ -11152,43 +11181,45 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 
 .ribbon-container .ribbon-btn {
     display: inline-flex !important;
-    flex-direction: row !important; /* Icon on left, label on right */
+    flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-start !important;
     gap: 6px !important;
     height: 22px !important;
-    min-width: 80px !important; /* Compact width */
-    padding: 2px 8px !important;
-    background: rgba(255, 255, 255, 0.02) !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    min-width: 80px !important;
+    padding: 2px 9px !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 4px !important;
     box-sizing: border-box !important;
-    grid-row: span 1 !important; /* Takes 1 row! */
-    color: #cbd5e1 !important;
-    transition: all 0.15s ease !important;
-    box-shadow: none !important;
+    grid-row: span 1 !important;
+    color: #c4cedf !important;
+    transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 .ribbon-container .ribbon-btn:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
     color: #ffffff !important;
     transform: none !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 4px rgba(0,0,0,0.2) !important;
 }
 
 .ribbon-container .ribbon-btn.tool-btn:hover {
-    background: rgba(197, 160, 89, 0.05) !important;
-    border-color: rgba(197, 160, 89, 0.18) !important;
-    color: #ffffff !important;
+    background: rgba(197, 160, 89, 0.07) !important;
+    border-color: rgba(197, 160, 89, 0.22) !important;
+    color: #f0d898 !important;
 }
 
 .ribbon-container .ribbon-btn:active {
-    background: rgba(197, 160, 89, 0.1) !important;
-    border-color: rgba(197, 160, 89, 0.3) !important;
+    background: rgba(197, 160, 89, 0.12) !important;
+    border-color: rgba(197, 160, 89, 0.35) !important;
     color: var(--ui-accent, #c5a059) !important;
+    transform: scale(0.98) !important;
 }
 
-/* Button Icons and Labels under 3-row layout */
+/* Button Icons and Labels */
 .ribbon-container .ribbon-btn-icon {
     font-size: 11px !important;
     display: inline-flex !important;
@@ -11198,7 +11229,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 .ribbon-container .ribbon-btn-label {
     font-size: 9.5px !important;
     font-weight: 500 !important;
-    color: #cbd5e1 !important;
+    color: #c4cedf !important;
     margin-top: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -11206,29 +11237,29 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 
 .ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn {
     display: inline-flex !important;
-    flex-direction: row !important; /* Icon on left, label on right */
+    flex-direction: row !important;
     align-items: center !important;
     justify-content: flex-start !important;
     min-width: 80px !important;
     width: auto !important;
     height: 22px !important;
-    padding: 2px 8px !important;
+    padding: 2px 9px !important;
     box-sizing: border-box !important;
     position: relative !important;
-    background: rgba(255, 255, 255, 0.02) !important;
-    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 4px !important;
-    color: #cbd5e1 !important;
+    color: #c4cedf !important;
     transform: none !important;
-    box-shadow: none !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
     margin: 0 !important;
     flex-shrink: 0 !important;
     grid-row: span 1 !important;
 }
 
 .ribbon-container .editor-toolbar .tool-btn:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.1) !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
     color: #ffffff !important;
 }
 
@@ -11246,9 +11277,9 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
 
 .ribbon-control-item label {
     font-size: 9px !important;
-    color: #94a3b8 !important;
+    color: #8b9ab5 !important;
     font-weight: 600 !important;
-    letter-spacing: 0.2px !important;
+    letter-spacing: 0.3px !important;
     white-space: nowrap !important;
     margin: 0 !important;
 }
@@ -11427,7 +11458,7 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     box-sizing: border-box !important;
     cursor: pointer !important;
     white-space: nowrap !important;
-    transition: all 0.15s ease !important;
+    transition: background 0.08s ease, color 0.08s ease, border-color 0.08s ease !important;
 }
 
 .ribbon-file-input:hover::before {
@@ -11485,55 +11516,65 @@ body.light-mode .btn-audit-action.fix-overflow:hover {
     }
 }
 
-/* --- Ribbon Light Mode Overrides --- */
+/* --- Ribbon Light Mode Overrides (Professional Warm White) --- */
 body.light-mode .ribbon-container {
-    background-color: #f8fafc !important; /* Premium Slate 50 */
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+    background: linear-gradient(180deg, #f7f8fc 0%, #f2f4f9 100%) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07), inset 0 -1px 0 rgba(0,0,0,0.04) !important;
 }
 
 body.light-mode .ribbon-panels-content {
-    background-color: #f1f5f9 !important; /* Premium Slate 100 */
-    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+    background: linear-gradient(180deg, #eef1f7 0%, #e8ecf4 100%) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-mode .ribbon-title-bar {
+    background: linear-gradient(180deg, #f7f8fc 0%, #f2f4f9 100%) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07) !important;
 }
 
 body.light-mode .ribbon-tab-btn {
-    color: #475569 !important; /* Slate 600 */
+    color: #546580 !important;
+    background: transparent !important;
 }
 
 body.light-mode .ribbon-tab-btn:hover {
-    color: #0f172a !important; /* Slate 900 */
-    background-color: rgba(0, 0, 0, 0.03) !important;
+    color: #1e293b !important;
+    background: rgba(0, 0, 0, 0.04) !important;
 }
 
 body.light-mode .ribbon-tab-btn.active {
-    background-color: #f1f5f9 !important; /* Blends with panel */
-    color: var(--ui-accent, #c5a059) !important;
-    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
-    border-bottom: 2px solid #f1f5f9 !important;
+    background: linear-gradient(180deg, #eef1f7 0%, #e8ecf4 100%) !important;
+    color: var(--ui-accent, #b8873a) !important;
+    font-weight: 700 !important;
+    border-left: 1px solid rgba(184,135,58,0.2) !important;
+    border-right: 1px solid rgba(184,135,58,0.2) !important;
+    border-top: 2px solid var(--ui-accent, #b8873a) !important;
+    border-bottom: 2px solid #e8ecf4 !important;
+    box-shadow: 0 -2px 8px rgba(184,135,58,0.08) !important;
 }
 
 body.light-mode .ribbon-panel .ribbon-group {
-    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
 body.light-mode .ribbon-panel .ribbon-group-label {
-    color: #64748b !important; /* Slate 500 */
+    color: #78899e !important;
+    border-top: 1px solid rgba(0,0,0,0.06) !important;
 }
 
 body.light-mode .ribbon-container .ribbon-btn,
 body.light-mode .ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn {
-    background: #ffffff !important;
-    border: 1px solid rgba(0, 0, 0, 0.08) !important;
-    color: #334155 !important;
+    background: rgba(255,255,255,0.85) !important;
+    border: 1px solid rgba(0, 0, 0, 0.09) !important;
+    color: #2d3748 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.06) !important;
 }
 
 body.light-mode .ribbon-container .ribbon-btn:hover,
 body.light-mode .ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn:hover {
-    background: #f8fafc !important;
-    border-color: rgba(0, 0, 0, 0.15) !important;
+    background: #ffffff !important;
+    border-color: rgba(0, 0, 0, 0.14) !important;
     color: #0f172a !important;
 }
 
@@ -12593,22 +12634,24 @@ body.light-mode .rl-vbtn:hover .rl-vbtn-label {
     height: 100% !important;
     min-width: 52px !important;
     padding: 5px 8px !important;
-    background: rgba(255,255,255,0.02) !important;
-    border: 1px solid transparent !important;
-    border-radius: 5px !important;
+    background: rgba(255,255,255,0.035) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
-    transition: background 0.12s, border-color 0.12s, color 0.12s !important;
-    color: #cbd5e1 !important;
+    transition: background 0.08s ease, border-color 0.08s ease, color 0.08s ease !important;
+    color: #c4cedf !important;
     white-space: nowrap !important;
     outline: none !important;
     box-sizing: border-box !important;
     flex-shrink: 0 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.2) !important;
 }
 
 .rl-tool-btn:hover {
-    background: rgba(197,160,89,0.09) !important;
-    border-color: rgba(197,160,89,0.25) !important;
-    color: #fff !important;
+    background: rgba(197,160,89,0.1) !important;
+    border-color: rgba(197,160,89,0.32) !important;
+    color: #f0d898 !important;
+    box-shadow: 0 0 12px rgba(197,160,89,0.1), inset 0 1px 0 rgba(255,255,255,0.07) !important;
 }
 
 .rl-tool-btn:hover .rl-tool-lbl {
@@ -12617,17 +12660,19 @@ body.light-mode .rl-vbtn:hover .rl-vbtn-label {
 
 .rl-tool-btn:active {
     background: rgba(197,160,89,0.18) !important;
-    border-color: rgba(197,160,89,0.45) !important;
+    border-color: rgba(197,160,89,0.5) !important;
     color: var(--ui-accent, #c5a059) !important;
+    transform: scale(0.97) !important;
 }
 
 .rl-tool-btn.rl-tool-danger:hover {
     background: rgba(239,68,68,0.1) !important;
-    border-color: rgba(239,68,68,0.3) !important;
+    border-color: rgba(239,68,68,0.35) !important;
     color: #fca5a5 !important;
+    box-shadow: 0 0 10px rgba(239,68,68,0.1) !important;
 }
 
-/* Icon — fixed 24x24 container for visual uniformity across all emoji */
+/* Icon */
 .rl-tool-icon {
     font-size: 18px !important;
     line-height: 1 !important;
@@ -12637,41 +12682,44 @@ body.light-mode .rl-vbtn:hover .rl-vbtn-label {
     width: 24px !important;
     height: 24px !important;
     flex-shrink: 0 !important;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3)) !important;
 }
 
 .rl-tool-lbl {
     font-size: 9px !important;
-    font-weight: 600 !important;
-    color: #bfcfe0 !important;
-    letter-spacing: 0.2px !important;
+    font-weight: 700 !important;
+    color: #8fa0b5 !important;
+    letter-spacing: 0.5px !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
     text-align: center !important;
     line-height: 1.2 !important;
 }
 
-/* Light mode overrides for tools grid */
+/* Light mode */
 body.light-mode .rl-tool-btn {
-    background: #ffffff !important;
-    border: 1px solid rgba(0,0,0,0.09) !important;
-    color: #334155 !important;
+    background: rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    color: #2d3748 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,1), 0 1px 3px rgba(0,0,0,0.07) !important;
 }
 
 body.light-mode .rl-tool-btn:hover {
-    background: #fef9ee !important;
-    border-color: #c5a059 !important;
-    color: #92400e !important;
+    background: #fffaec !important;
+    border-color: rgba(197,160,89,0.55) !important;
+    color: #7c3d0a !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.1) !important;
 }
 
 body.light-mode .rl-tool-btn:active {
     background: rgba(197,160,89,0.12) !important;
-    border-color: rgba(197,160,89,0.35) !important;
+    border-color: rgba(197,160,89,0.4) !important;
     color: var(--ui-accent, #c5a059) !important;
 }
 
 body.light-mode .rl-tool-btn.rl-tool-danger:hover {
-    background: rgba(239,68,68,0.08) !important;
-    border-color: rgba(239,68,68,0.28) !important;
+    background: rgba(239,68,68,0.07) !important;
+    border-color: rgba(239,68,68,0.3) !important;
     color: #dc2626 !important;
 }
 
@@ -12682,45 +12730,49 @@ body.light-mode .rl-tool-btn.rl-tool-danger:hover {
     align-items: center !important;
     justify-content: center !important;
     gap: 5px !important;
-    padding: 5px 8px !important;
-    background: rgba(255,255,255,0.02) !important;
-    border: 1px solid transparent !important;
-    border-radius: 5px !important;
+    padding: 5px 10px !important;
+    background: rgba(255,255,255,0.035) !important;
+    border: 1px solid rgba(255,255,255,0.09) !important;
+    border-radius: 6px !important;
     cursor: pointer !important;
-    transition: background 0.12s, border-color 0.12s !important;
+    transition: background 0.08s ease, border-color 0.08s ease, color 0.08s ease !important;
     min-width: 52px !important;
     height: 100% !important;
     outline: none !important;
     flex-shrink: 0 !important;
     box-sizing: border-box !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.2) !important;
 }
 
 .rl-tall-btn:hover {
-    background: rgba(197,160,89,0.09) !important;
-    border-color: rgba(197,160,89,0.25) !important;
+    background: rgba(197,160,89,0.1) !important;
+    border-color: rgba(197,160,89,0.32) !important;
+    box-shadow: 0 0 12px rgba(197,160,89,0.1), inset 0 1px 0 rgba(255,255,255,0.07) !important;
 }
 
 .rl-tall-btn:active {
     background: rgba(197,160,89,0.18) !important;
+    transform: scale(0.97) !important;
 }
 
-/* Active State with highlight borders and colors */
+/* Active State */
 .rl-tall-btn.active {
-    background: rgba(197,160,89,0.12) !important;
-    border-color: rgba(197,160,89,0.45) !important;
-    box-shadow: 0 0 8px rgba(197, 160, 89, 0.12) !important;
+    background: rgba(197,160,89,0.13) !important;
+    border-color: rgba(197,160,89,0.5) !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.15), inset 0 1px 0 rgba(255,255,255,0.07) !important;
 }
 
 .rl-tall-btn.active .rl-tall-lbl {
     color: var(--ui-accent, #c5a059) !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 
 .rl-tall-btn.active .rl-tall-icon {
     transform: scale(1.08) !important;
+    filter: drop-shadow(0 0 4px rgba(197,160,89,0.5)) !important;
 }
 
-/* Status Indicator Dot (Top-Right Badge) - Restricted to Cover Toggle or toggle buttons */
+/* Status Indicator Dot */
 #btn-cover-page-toggle {
     position: relative !important;
 }
@@ -12733,23 +12785,24 @@ body.light-mode .rl-tool-btn.rl-tool-danger:hover {
     width: 6px !important;
     height: 6px !important;
     border-radius: 50% !important;
-    background-color: #ef4444 !important; /* Red for Inactive/OFF */
+    background-color: #ef4444 !important;
     box-shadow: 0 0 4px rgba(239, 68, 68, 0.5) !important;
     transition: background-color 0.15s, box-shadow 0.15s !important;
 }
 
 #btn-cover-page-toggle.active::after {
-    background-color: #10b981 !important; /* Green for Active/ON */
+    background-color: #10b981 !important;
     box-shadow: 0 0 6px rgba(16, 185, 129, 0.7) !important;
 }
 
-/* Danger variant (Clear All) */
+/* Danger variant */
 .rl-tall-btn.rl-tall-danger:hover {
     background: rgba(239,68,68,0.1) !important;
-    border-color: rgba(239,68,68,0.3) !important;
+    border-color: rgba(239,68,68,0.35) !important;
+    box-shadow: 0 0 10px rgba(239,68,68,0.1) !important;
 }
 
-/* Icon — fixed container size for visual uniformity across all emoji */
+/* Icon */
 .rl-tall-icon {
     font-size: 18px !important;
     line-height: 1 !important;
@@ -12759,14 +12812,15 @@ body.light-mode .rl-tool-btn.rl-tool-danger:hover {
     width: 24px !important;
     height: 24px !important;
     flex-shrink: 0 !important;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35)) !important;
 }
 
 /* Label */
 .rl-tall-lbl {
     font-size: 9px !important;
-    font-weight: 600 !important;
-    color: #bfcfe0 !important;
-    letter-spacing: 0.2px !important;
+    font-weight: 700 !important;
+    color: #8fa0b5 !important;
+    letter-spacing: 0.5px !important;
     text-transform: uppercase !important;
     white-space: nowrap !important;
     text-align: center !important;
@@ -12783,24 +12837,34 @@ body.light-mode .rl-tool-btn.rl-tool-danger:hover {
 
 /* Light mode */
 body.light-mode .rl-grid-btn {
-    background: #ffffff !important;
-    border-color: #e2e8f0 !important;
+    background: rgba(255,255,255,0.9) !important;
+    border-color: rgba(0,0,0,0.1) !important;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.07) !important;
 }
 body.light-mode .rl-grid-btn:hover {
-    background: #fef9ee !important;
-    border-color: #c5a059 !important;
+    background: #fffaec !important;
+    border-color: rgba(197,160,89,0.5) !important;
 }
 body.light-mode .rl-gb-lbl { color: #475569 !important; }
 body.light-mode .rl-grid-btn:hover .rl-gb-lbl { color: #92400e !important; }
 
-body.light-mode .rl-tall-btn { background: #ffffff !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; }
-body.light-mode .rl-tall-btn:hover { background: #fef9ee !important; border-color: #c5a059 !important; }
-body.light-mode .rl-tall-lbl { color: #475569 !important; }
-body.light-mode .rl-tall-btn:hover .rl-tall-lbl { color: #92400e !important; }
+body.light-mode .rl-tall-btn {
+    background: rgba(255,255,255,0.9) !important;
+    border: 1px solid rgba(0,0,0,0.1) !important;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.07) !important;
+}
+body.light-mode .rl-tall-btn:hover {
+    background: #fffaec !important;
+    border-color: rgba(197,160,89,0.55) !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.1) !important;
+}
+body.light-mode .rl-tall-lbl { color: #546580 !important; }
+body.light-mode .rl-tall-btn:hover .rl-tall-lbl { color: #7c3d0a !important; }
 
 body.light-mode .rl-tall-btn.active {
     background: #fffbeb !important;
     border-color: rgba(197, 160, 89, 0.6) !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.12) !important;
 }
 body.light-mode .rl-tall-btn.active .rl-tall-lbl {
     color: #b45309 !important;
@@ -12823,60 +12887,62 @@ body.light-mode .rl-tall-btn.active .rl-tall-lbl {
     grid-auto-flow: row !important;
 }
 
-/* Each swatch button — label hata diya, sirf circle center mein */
+/* Each swatch button */
 .rl-swatch-btn {
     display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
     justify-content: center !important;
     gap: 0 !important;
-    padding: 2px !important;
-    background: rgba(255,255,255,0.02) !important;
-    border: 1px solid rgba(255,255,255,0.06) !important;
-    border-radius: 4px !important;
+    padding: 3px !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 5px !important;
     cursor: pointer !important;
-    transition: background 0.12s, border-color 0.12s !important;
+    transition: background 0.08s ease, border-color 0.08s ease !important;
     outline: none !important;
     overflow: hidden !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06) !important;
 }
 
 .rl-swatch-btn:hover {
-    background: rgba(255,255,255,0.07) !important;
-    border-color: rgba(255,255,255,0.2) !important;
+    background: rgba(255,255,255,0.09) !important;
+    border-color: rgba(255,255,255,0.25) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25) !important;
 }
 
 .rl-swatch-btn:active {
-    transform: scale(0.96) !important;
+    transform: scale(0.94) !important;
 }
 
 .rl-swatch-btn.active {
-    border-color: #c5a059 !important;
-    background: rgba(197,160,89,0.1) !important;
-    box-shadow: 0 0 0 1px rgba(197,160,89,0.4) inset !important;
+    border-color: var(--ui-accent, #c5a059) !important;
+    background: rgba(197,160,89,0.12) !important;
+    box-shadow: 0 0 0 1px rgba(197,160,89,0.5) inset, 0 0 8px rgba(197,160,89,0.15) !important;
 }
 
 /* Colour circle */
 .rl-swatch-circle {
-    width: 14px !important;
-    height: 14px !important;
+    width: 16px !important;
+    height: 16px !important;
     border-radius: 50% !important;
     flex-shrink: 0 !important;
     display: block !important;
-    border: 1.5px solid rgba(0,0,0,0.15) !important;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+    border: 1.5px solid rgba(0,0,0,0.18) !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3) !important;
 }
 
 .rl-swatch-btn:hover .rl-swatch-circle {
-    transform: scale(1.15) !important;
-    transition: transform 0.12s !important;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+    transform: scale(1.2) !important;
+    transition: transform 0.14s !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.35) !important;
 }
 
 .rl-swatch-btn.active .rl-swatch-circle {
-    box-shadow: 0 0 0 2px #c5a059, 0 1px 4px rgba(0,0,0,0.3) !important;
+    box-shadow: 0 0 0 2px var(--ui-accent,#c5a059), 0 2px 5px rgba(0,0,0,0.3) !important;
 }
 
-/* Label beside circle */
+/* Label */
 .rl-swatch-lbl {
     font-size: 8.5px !important;
     font-weight: 600 !important;
@@ -12893,12 +12959,14 @@ body.light-mode .rl-tall-btn.active .rl-tall-lbl {
 
 /* Light mode */
 body.light-mode .rl-swatch-btn {
-    background: #ffffff !important;
-    border-color: #e2e8f0 !important;
+    background: rgba(255,255,255,0.9) !important;
+    border-color: rgba(0,0,0,0.11) !important;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,0.07) !important;
 }
 body.light-mode .rl-swatch-btn:hover {
     background: #f8fafc !important;
-    border-color: #94a3b8 !important;
+    border-color: rgba(100,116,139,0.45) !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1) !important;
 }
 body.light-mode .rl-swatch-lbl { color: #475569 !important; }
 body.light-mode .rl-swatch-btn:hover .rl-swatch-lbl { color: #1e293b !important; }
@@ -12944,25 +13012,27 @@ body.light-mode .rl-swatch-btn:hover .rl-swatch-lbl { color: #1e293b !important;
     align-items: flex-start !important;
     justify-content: center !important;
     gap: 3px !important;
-    background: rgba(255,255,255,0.025) !important;
-    border: 1px solid rgba(255,255,255,0.07) !important;
-    border-radius: 6px !important;
-    padding: 4px 8px !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 7px !important;
+    padding: 5px 10px !important;
     min-width: 0 !important;
-    transition: border-color 0.15s, background 0.15s !important;
+    transition: border-color 0.08s ease, background 0.08s ease !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 1px 3px rgba(0,0,0,0.15) !important;
 }
 
 .typo-ctrl:hover {
-    background: rgba(197,160,89,0.06) !important;
-    border-color: rgba(197,160,89,0.25) !important;
+    background: rgba(197,160,89,0.08) !important;
+    border-color: rgba(197,160,89,0.3) !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.08), inset 0 1px 0 rgba(255,255,255,0.06) !important;
 }
 
 .typo-ctrl-label {
-    font-size: 8.5px !important;
+    font-size: 8px !important;
     font-weight: 700 !important;
-    color: #64748b !important;
+    color: #5e7087 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.4px !important;
+    letter-spacing: 0.6px !important;
     white-space: nowrap !important;
     line-height: 1 !important;
     user-select: none !important;
@@ -13004,16 +13074,17 @@ body.light-mode .rl-swatch-btn:hover .rl-swatch-lbl { color: #1e293b !important;
     justify-content: center !important;
     width: 20px !important;
     height: 20px !important;
-    background: rgba(255,255,255,0.05) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
     border-radius: 4px !important;
-    color: #e2e8f0 !important;
+    color: #c4cedf !important;
     font-size: 14px !important;
     font-weight: 700 !important;
     cursor: pointer !important;
     line-height: 1 !important;
-    transition: all 0.12s !important;
+    transition: background 0.08s ease, border-color 0.08s ease !important;
     padding: 0 !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05) !important;
 }
 
 .typo-step-btn:hover {
@@ -13031,13 +13102,30 @@ body.light-mode .rl-swatch-btn:hover .rl-swatch-lbl { color: #1e293b !important;
     letter-spacing: 0.2px !important;
 }
 
-body.light-mode .typo-ctrl { background: #ffffff !important; border-color: #e2e8f0 !important; }
-body.light-mode .typo-ctrl:hover { background: #fef9ee !important; border-color: #c5a059 !important; }
-body.light-mode .typo-ctrl-label { color: #94a3b8 !important; }
-body.light-mode .typo-ctrl:hover .typo-ctrl-label { color: #92400e !important; }
+body.light-mode .typo-ctrl {
+    background: rgba(255,255,255,0.9) !important;
+    border-color: rgba(0,0,0,0.1) !important;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 3px rgba(0,0,0,0.07) !important;
+}
+body.light-mode .typo-ctrl:hover {
+    background: #fffaec !important;
+    border-color: rgba(197,160,89,0.5) !important;
+    box-shadow: 0 0 10px rgba(197,160,89,0.1) !important;
+}
+body.light-mode .typo-ctrl-label { color: #78899e !important; }
+body.light-mode .typo-ctrl:hover .typo-ctrl-label { color: #7c3d0a !important; }
 body.light-mode .ribbon-select.typo-select { color: #1e293b !important; }
-body.light-mode .typo-step-btn { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #334155 !important; }
-body.light-mode .typo-step-btn:hover { background: #fef9ee !important; border-color: #c5a059 !important; color: #92400e !important; }
+body.light-mode .typo-step-btn {
+    background: rgba(255,255,255,0.9) !important;
+    border-color: rgba(0,0,0,0.1) !important;
+    color: #334155 !important;
+    box-shadow: inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,0.06) !important;
+}
+body.light-mode .typo-step-btn:hover {
+    background: #fffaec !important;
+    border-color: rgba(197,160,89,0.5) !important;
+    color: #7c3d0a !important;
+}
 body.light-mode .typo-step-val { color: #1e293b !important; }
 
 /* ============================================================
@@ -13083,9 +13171,9 @@ body.light-mode .typo-step-val { color: #1e293b !important; }
 .typo-lbl {
     font-size: 7.5px !important;
     font-weight: 700 !important;
-    color: #8899b0 !important;
+    color: #5e7087 !important;
     text-transform: uppercase !important;
-    letter-spacing: 0.5px !important;
+    letter-spacing: 0.6px !important;
     line-height: 1 !important;
     white-space: nowrap !important;
     user-select: none !important;
@@ -13096,10 +13184,10 @@ body.light-mode .typo-step-val { color: #1e293b !important; }
 .typo-select {
     appearance: auto !important;
     -webkit-appearance: auto !important;
-    background-color: rgba(255,255,255,0.04) !important;
-    border: 1px solid rgba(255,255,255,0.1) !important;
-    border-radius: 3px !important;
-    color: #e2e8f0 !important;
+    background-color: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.12) !important;
+    border-radius: 4px !important;
+    color: #dde4f0 !important;
     font-size: 11px !important;
     font-weight: 500 !important;
     height: 26px !important;
@@ -13108,19 +13196,20 @@ body.light-mode .typo-step-val { color: #1e293b !important; }
     cursor: pointer !important;
     width: 100% !important;
     min-width: 70px !important;
-    transition: border-color 0.12s, background 0.12s !important;
+    transition: border-color 0.08s ease, background 0.08s ease !important;
     box-sizing: border-box !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 .typo-select:hover {
-    background-color: rgba(255,255,255,0.08) !important;
-    border-color: rgba(197,160,89,0.4) !important;
+    background-color: rgba(255,255,255,0.09) !important;
+    border-color: rgba(197,160,89,0.45) !important;
     color: #fff !important;
 }
 
 .typo-select:focus {
     border-color: rgba(197,160,89,0.7) !important;
-    background-color: rgba(255,255,255,0.08) !important;
+    background-color: rgba(255,255,255,0.09) !important;
     color: #fff !important;
 }
 
@@ -13513,3 +13602,259 @@ body.light-mode #ribbon-tab-tables .ribbon-number-input {
     border-color: #d1d5db !important;
     color: #1e293b !important;
 }
+
+/* ==========================================================================
+   SAMYAK MOBILE-FRIENDLY VISUAL UPGRADE
+   ========================================================================== */
+
+/* Hide mobile elements on desktop by default */
+.mobile-top-bar,
+.mobile-bottom-bar {
+    display: none !important;
+}
+
+@media screen and (max-width: 768px) {
+    /* Hide the desktop Ribbon menu */
+    .ribbon-container {
+        display: none !important;
+    }
+
+    /* Show mobile-specific bars */
+    .mobile-top-bar {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+        height: 52px;
+        background: #0e0e12;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0 12px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        box-sizing: border-box;
+    }
+
+    .mobile-bottom-bar {
+        display: flex !important;
+        align-items: center;
+        gap: 6px;
+        height: 54px;
+        background: #101014;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        padding: 0 8px;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 2000;
+        overflow-x: auto;
+        white-space: nowrap;
+        box-sizing: border-box;
+        scrollbar-width: none; /* Hide scrollbars */
+    }
+    
+    .mobile-bottom-bar::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Mobile Logo */
+    .mobile-logo-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobile-logo-group img {
+        width: 24px;
+        height: 24px;
+        object-fit: contain;
+        display: block;
+        animation: pulse-glow 3s ease-in-out infinite;
+    }
+
+    .mobile-logo-text {
+        font-family: 'Poppins', 'Outfit', sans-serif;
+        font-size: 16px;
+        font-weight: 700;
+        background: linear-gradient(135deg, var(--ui-accent, #c5a059) 0%, #fff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Header buttons styling */
+    .mobile-header-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobile-header-action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 8px;
+        color: #cbd5e1;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mobile-header-action-btn:active {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(0.95);
+    }
+
+    /* Bottom toolbar buttons styling */
+    .mobile-bar-btn {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: 58px;
+        height: 42px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        border-radius: 6px;
+        color: #cbd5e1;
+        cursor: pointer;
+        padding: 2px 4px;
+        box-sizing: border-box;
+        flex-shrink: 0;
+        transition: all 0.2s;
+    }
+
+    .mobile-bar-btn:active {
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(0.95);
+    }
+
+    .mobile-bar-icon {
+        font-size: 14px;
+        line-height: 1;
+    }
+
+    .mobile-bar-lbl {
+        font-size: 9px;
+        font-weight: 500;
+        margin-top: 2px;
+        color: #94a3b8;
+    }
+
+    /* Position Theme Dropdown correctly below Mobile Top Bar */
+    .custom-theme-dropdown-panel {
+        position: fixed !important;
+        top: 52px !important;
+        left: 12px !important;
+        right: 12px !important;
+        bottom: auto !important;
+        width: calc(100% - 24px) !important;
+        z-index: 100000 !important;
+        max-height: calc(100vh - 120px) !important;
+        max-height: calc(100dvh - 120px) !important;
+    }
+
+    /* Adjust page layout container for mobile */
+    .app-container {
+        padding-top: 52px !important;
+        padding-bottom: 54px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        box-sizing: border-box !important;
+    }
+
+    .main-workspace {
+        height: calc(100vh - 106px) !important;
+        height: calc(100dvh - 106px) !important;
+        position: relative !important;
+    }
+
+    .editor-panel {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        height: 100% !important;
+        border-right: none !important;
+    }
+
+    .editor-core {
+        height: calc(100% - 42px) !important; /* height minus quick nav bar */
+    }
+
+    /* Spacing fixes for editor area */
+    .textarea-wrapper {
+        padding: 8px !important;
+        box-sizing: border-box !important;
+    }
+
+    .textarea-wrapper textarea {
+        font-size: 15px !important; /* slightly larger font for better legibility on mobile */
+        line-height: 1.5 !important;
+        padding: 10px !important;
+    }
+
+    /* Mobile Quick Navigation Page Bar tweaks */
+    .quick-page-navigation-bar {
+        background: #0e0e12 !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    /* Fixed alignment for mobile preview toggles */
+    .mobile-preview-toggle-btn {
+        bottom: calc(68px + env(safe-area-inset-bottom, 0px)) !important; /* Raised to clear the mobile bottom bar */
+        right: 16px !important;
+        width: 48px !important;
+        height: 48px !important;
+    }
+
+    /* Light Mode Overrides for Mobile UI elements */
+    body.light-mode .mobile-top-bar {
+        background: #f8fafc !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+
+    body.light-mode .mobile-bottom-bar {
+        background: #f1f5f9 !important;
+        border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+
+    body.light-mode .mobile-logo-text {
+        background: linear-gradient(135deg, var(--ui-accent, #c5a059) 0%, #0f172a 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+    }
+
+    body.light-mode .mobile-header-action-btn {
+        background: rgba(0, 0, 0, 0.03) !important;
+        border: 1px solid rgba(0, 0, 0, 0.06) !important;
+        color: #334155 !important;
+    }
+
+    body.light-mode .mobile-header-action-btn:active {
+        background: rgba(0, 0, 0, 0.08) !important;
+    }
+
+    body.light-mode .mobile-bar-btn {
+        background: rgba(0, 0, 0, 0.02) !important;
+        border: 1px solid rgba(0, 0, 0, 0.04) !important;
+        color: #334155 !important;
+    }
+
+    body.light-mode .mobile-bar-btn:active {
+        background: rgba(0, 0, 0, 0.06) !important;
+    }
+
+    body.light-mode .mobile-bar-lbl {
+        color: #475569 !important;
+    }
+
+    body.light-mode .quick-page-navigation-bar {
+        background: #f8fafc !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    }
+}
+

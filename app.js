@@ -2,7 +2,46 @@
    SAMYAK - PAGE-BY-PAGE WORKSPACE CONTROLLER
    ========================================================================== */
 
+// ==========================================================================
+// 💡 CONFIGURATION: अपना नया OCR Backend URL यहाँ डालें (e.g., "https://your-backend.com/api/ocr")
+// यदि इसे खाली ("") छोड़ेंगे, तो यह स्थानीय /api/ocr पाथ का उपयोग करेगा।
+// ==========================================================================
+const OCR_BACKEND_URL = "https://untitled-1038614782118.asia-southeast1.run.app/api/ocr";
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Global Stepper Button click handler for range-slider replacements
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.stepper-btn');
+        if (!btn) return;
+        
+        e.preventDefault();
+        
+        const targetId = btn.getAttribute('data-target');
+        const action = btn.getAttribute('data-action');
+        const minVal = parseFloat(btn.getAttribute('data-min'));
+        const maxVal = parseFloat(btn.getAttribute('data-max'));
+        const stepVal = parseFloat(btn.getAttribute('data-step') || '1');
+        
+        const input = document.getElementById(targetId);
+        if (!input) return;
+        
+        let currentVal = parseFloat(input.value) || 0;
+        let newVal = currentVal;
+        
+        if (action === 'increase') {
+            newVal = Math.min(maxVal, currentVal + stepVal);
+        } else if (action === 'decrease') {
+            newVal = Math.max(minVal, currentVal - stepVal);
+        }
+        
+        // Prevent float precision bugs (e.g. 1.5 - 0.5 = 0.9999999)
+        newVal = parseFloat(newVal.toFixed(2));
+        
+        // Update input and trigger 'input' event to run existing handlers
+        input.value = newVal;
+        input.dispatchEvent(new Event('input'));
+    });
+
     // IndexedDB Database utilities
     const DB_NAME = 'SamyakDatabase';
     const STORE_NAME = 'SamyakStore';
@@ -68,6 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const pageLayoutSelect = document.getElementById('page-layout-select');
     const applyLayoutAllBtn = document.getElementById('apply-layout-all-btn');
     const compactSpacingToggle = document.getElementById('compact-spacing-toggle');
+    const tightCompactionToggle = document.getElementById('tight-compaction-toggle');
+    const showCoverPageToggle = document.getElementById('show-cover-page-toggle');
     const pageTemplateSelect = document.getElementById('page-template-select');
     const btnSearchToggle = document.getElementById('btn-search-toggle');
     const searchReplacePanel = document.getElementById('search-replace-panel');
@@ -79,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchStatus = document.getElementById('search-status');
     
     // Compiler DOM Elements
-    const compileMagazinesBtn = document.getElementById('compile-magazines-btn');
     const compilerModal = document.getElementById('compiler-modal');
     const closeCompilerModalBtn = document.getElementById('close-compiler-modal-btn');
     const cancelCompilerBtn = document.getElementById('cancel-compiler-btn');
@@ -133,7 +173,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearAllBtn = document.getElementById('clear-all-btn');
     const printPdfBtn = document.getElementById('print-pdf-btn');
     const smartShrinkBtn = document.getElementById('smart-shrink-btn');
-    const smartSpaceBtn = document.getElementById('smart-space-btn');
+    const removeGapsBtn = document.getElementById('remove-gaps-btn');
+    const btnRemoveGaps = document.getElementById('btn-remove-gaps');
     const loadingOverlay = document.getElementById('loading-overlay');
     
     const zoomInBtn = document.getElementById('zoom-in');
@@ -153,15 +194,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const globalLineSpacingSelect = document.getElementById('global-line-spacing');
     const globalLetterSpacingSelect = document.getElementById('global-letter-spacing');
     
-    const toolbarButtons = document.querySelectorAll('.tool-btn');
+    const toolbarButtons = document.querySelectorAll('.tool-btn, .rl-tool-btn');
     const toolbarTrayTrigger = document.getElementById('toolbar-tray-trigger');
     const toolbarTrayDrawer = document.getElementById('toolbar-tray-drawer');
     const toolbarCustomizeTrigger = document.getElementById('toolbar-customize-trigger');
 
     // Dynamic Toolbar Layout Configurations & Sanitization
+    // Note: btn-pagebreak and insert-table-btn are now permanent in the Insert group
+    // Only the 5 core insert buttons are managed by the layout customizer
     const defaultToolbarLayout = {
         main: ['btn-section', 'btn-chapter', 'btn-topic', 'btn-bullet', 'btn-note'],
-        tray: ['btn-pagebreak', 'insert-table-btn', 'btn-search-toggle', 'btn-help-shortcuts']
+        tray: []
     };
 
     let currentToolbarLayout = { ...defaultToolbarLayout };
@@ -192,7 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return sanitized;
     }
 
-    const savedLayout = localStorage.getItem('samyak-toolbar-layout-v1');
+    // Version bump: clear old layout that had btn-pagebreak/insert-table in tray
+    localStorage.removeItem('samyak-toolbar-layout-v1');
+
+    const savedLayout = localStorage.getItem('samyak-toolbar-layout-v2');
     if (savedLayout) {
         try {
             currentToolbarLayout = sanitizeToolbarLayout(JSON.parse(savedLayout));
@@ -212,7 +258,12 @@ document.addEventListener('DOMContentLoaded', () => {
         currentToolbarLayout.main.forEach(id => {
             const btn = document.getElementById(id);
             if (btn) {
-                toolbar.insertBefore(btn, trayTrigger);
+                // Only use insertBefore if trayTrigger is actually a child of toolbar
+                if (trayTrigger.parentNode === toolbar) {
+                    toolbar.insertBefore(btn, trayTrigger);
+                } else {
+                    toolbar.appendChild(btn);
+                }
             }
         });
         
@@ -347,6 +398,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const designSectionShape = document.getElementById('design-section-shape');
     const designTopicIcon = document.getElementById('design-topic-icon');
     const designBulletStyle = document.getElementById('design-bullet-style');
+    const designExplanationStyle = document.getElementById('design-explanation-style');
+
+    const designTableHeaderSize = document.getElementById('design-table-header-size');
+    const designTableHeaderSizeVal = document.getElementById('design-table-header-size-val');
+    const designTableBodySize = document.getElementById('design-table-body-size');
+    const designTableBodySizeVal = document.getElementById('design-table-body-size-val');
+    const designTableColWidths = document.getElementById('design-table-col-widths');
 
     const designInnerBorder = document.getElementById('design-inner-border');
     const designCornerColor = document.getElementById('design-corner-color');
@@ -407,10 +465,15 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomLevel = 60;
     }
     
-    let contentFontSize = 13.5; // Default body text font size is 13.5px
+    let contentFontSize = 16.1; // Default body text font size is 16.1px
     let MAX_CONTENT_HEIGHT = 910; // Measured dynamically inside renderPreview
     let cachedMaxContentHeight = null; // Cache to prevent layout thrashing
     let draggedTOCSectionName = null; // Store dragged section name for TOC reordering
+
+    let isTightCompaction = localStorage.getItem('samyak-tight-compaction') === 'true';
+    if (isTightCompaction) {
+        document.body.classList.add('tight-compaction');
+    }
 
     // Last Page State
     let lastPageData = {
@@ -474,6 +537,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sectionShape: 'rectangle',
         topicIcon: 'orange-diamond',
         bulletStyle: 'classic',
+        explanationStyle: 'modern-accent',
+        tableHeaderFontSize: '12.5',
+        tableBodyFontSize: '11.5',
+        tableColWidths: '',
         
         // Page Spacings Customizations
         pageMarginX: '8',
@@ -660,23 +727,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 3. Swap main preview with Integrated OCR Workspace if active panel is panel-ocr
+        // Ensure preview panel and standard A4 page layout remain fully visible at all times
         const previewHeader = document.querySelector('.preview-panel .preview-header');
         const canvasWrapper = document.querySelector('.preview-panel .canvas-wrapper');
         const mobileCloseBtn = document.getElementById('mobile-preview-close-btn');
+        const appContainer = document.querySelector('.app-container');
         
-        if (targetPanelId === 'panel-ocr') {
-            if (previewHeader) previewHeader.style.display = 'none';
-            if (canvasWrapper) canvasWrapper.style.display = 'none';
-            if (mobileCloseBtn) mobileCloseBtn.style.display = 'none';
-            if (ocrIntegratedWorkspace) ocrIntegratedWorkspace.style.display = 'flex';
-            resetOcrDashProject(false);
-        } else {
-            if (previewHeader) previewHeader.style.display = 'flex';
-            if (canvasWrapper) canvasWrapper.style.display = 'block';
-            if (mobileCloseBtn) mobileCloseBtn.style.display = '';
-            if (ocrIntegratedWorkspace) ocrIntegratedWorkspace.style.display = 'none';
-        }
+        if (appContainer) appContainer.classList.remove('ocr-mode');
+        if (previewHeader) previewHeader.style.display = 'flex';
+        if (canvasWrapper) canvasWrapper.style.display = 'block';
+        if (mobileCloseBtn) mobileCloseBtn.style.display = '';
+        if (ocrIntegratedWorkspace) ocrIntegratedWorkspace.style.display = 'none';
     }
 
     // Reusable image compression helper using Canvas (reduces 1MB+ images to ~50KB for insane performance)
@@ -750,6 +811,23 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastActiveBlockId = null;
     let scrollSyncPending = false;
 
+    function safeScrollToElement(targetElement, behavior = 'smooth') {
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        if (!canvasWrapper || !targetElement) return;
+        
+        const wrapperRect = canvasWrapper.getBoundingClientRect();
+        const elementRect = targetElement.getBoundingClientRect();
+        
+        // Calculate target scrollTop relative to canvas-wrapper scrollable area
+        const relativeTop = elementRect.top - wrapperRect.top + canvasWrapper.scrollTop;
+        const targetScrollTop = relativeTop - (wrapperRect.height / 2) + (elementRect.height / 2);
+        
+        canvasWrapper.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: behavior
+        });
+    }
+
     // Scroll preview to match the current line in the editor (Lag-free requestAnimationFrame backed performance version)
     function syncPreviewScroll(forceScroll = false) {
         if (scrollSyncPending && !forceScroll) return; // Throttled within frame rate limits to eliminate keystroke typing lag
@@ -801,7 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Scroll the block into the center of the preview viewport only if forced or the block changed
                     if (forceScroll || activeBlockChanged) {
-                        previewElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        safeScrollToElement(previewElement);
                     }
                 }
             }
@@ -1260,106 +1338,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Magazine Compiler Modal Event Listeners
-    if (compileMagazinesBtn && compilerModal) {
-        compileMagazinesBtn.addEventListener('click', () => {
-            // Reset files
-            compilerFile1.value = '';
-            compilerFile2.value = '';
-            compilerFile3.value = '';
-            compileConfirmBtn.disabled = true;
 
-            // Pre-populate metadata fields from current cover page
-            if (pagesData[0]) {
-                compiledTitleInput.value = pagesData[0].title || 'Samyak';
-                compiledTaglineInput.value = pagesData[0].tagline || 'कोचिंग नहीं क्रांति';
-                compiledSubtitleInput.value = pagesData[0].subtitle || 'राजस्थान समसामयिकी';
-            }
 
-            // Show compiler modal
-            compilerModal.classList.add('active');
-        });
 
-        const hideCompilerModal = () => {
-            compilerModal.classList.remove('active');
-        };
-        closeCompilerModalBtn.addEventListener('click', hideCompilerModal);
-        cancelCompilerBtn.addEventListener('click', hideCompilerModal);
-
-        compilerModal.addEventListener('click', (e) => {
-            if (e.target === compilerModal) {
-                hideCompilerModal();
-            }
-        });
-
-        // Function to validate files (must have at least File 1 and File 2)
-        const validateCompilerFiles = () => {
-            const file1 = compilerFile1.files[0];
-            const file2 = compilerFile2.files[0];
-            compileConfirmBtn.disabled = !(file1 && file2);
-        };
-
-        compilerFile1.addEventListener('change', validateCompilerFiles);
-        compilerFile2.addEventListener('change', validateCompilerFiles);
-        compilerFile3.addEventListener('change', validateCompilerFiles);
-
-        // Merge confirm action
-        compileConfirmBtn.addEventListener('click', () => {
-            const file1 = compilerFile1.files[0];
-            const file2 = compilerFile2.files[0];
-            const file3 = compilerFile3.files[0];
-
-            if (!file1 || !file2) {
-                alert('Please select both Part 1 and Part 2 files to compile!');
-                return;
-            }
-
-            // Read all files asynchronously
-            const readState = (file) => {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        try {
-                            const state = JSON.parse(e.target.result);
-                            resolve(state);
-                        } catch (err) {
-                            reject(new Error(`Error reading file "${file.name}": ${err.message}`));
-                        }
-                    };
-                    reader.onerror = () => reject(new Error(`Issue loading file "${file.name}".`));
-                    reader.readAsText(file);
-                });
-            };
-
-            const promises = [readState(file1), readState(file2)];
-            if (file3) {
-                promises.push(readState(file3));
-            }
-
-            compileConfirmBtn.disabled = true;
-            compileConfirmBtn.textContent = 'Compiling...';
-
-            Promise.all(promises)
-                .then((fileStates) => {
-                    const newMeta = {
-                        title: compiledTitleInput.value.trim() || 'Samyak',
-                        tagline: compiledTaglineInput.value.trim() || 'कोचिंग नहीं क्रांति',
-                        subtitle: compiledSubtitleInput.value.trim() || 'राजस्थान समसामयिकी'
-                    };
-
-                    compileAndMergeMagazines(fileStates, newMeta);
-                    hideCompilerModal();
-                    alert('Magazines have been smart-merged and the monthly edition is loaded successfully!');
-                })
-                .catch((err) => {
-                    alert(err.message);
-                })
-                .finally(() => {
-                    compileConfirmBtn.disabled = false;
-                    compileConfirmBtn.textContent = 'Compile & Merge';
-                });
-        });
-    }
 
     // Shortcuts & Formatting Help Modal Event Listeners
     if (btnHelpShortcuts && helpModal) {
@@ -1462,7 +1443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fileBlocks.forEach(b => {
                     // Strip manual page breaks and column breaks inside sections to let content flow naturally
                     if (b.type !== 'pagebreak' && b.type !== 'columnbreak') {
-                        mergedMarkdownParts.push(b.markdown);
+                        mergedMarkdownParts.push(getBlockMarkdown(b));
                     }
                 });
             }
@@ -1474,7 +1455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const unifiedMarkdown = mergedMarkdownParts.join('\n');
 
         // 4. Overwrite pagesData with cover page and the merged content markdown
-        const firstFileLayout = (fileStates[0] && fileStates[0].pagesData && fileStates[0].pagesData[1]) ? (fileStates[0].pagesData[1].layout || 'single') : 'single';
+        const firstFileLayout = (fileStates[0] && fileStates[0].pagesData && fileStates[0].pagesData[1]) ? (fileStates[0].pagesData[1].layout || 'two-column') : 'two-column';
         const compiledPages = [
             {
                 type: 'cover',
@@ -1553,6 +1534,100 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Event listener for Phonetic Typing (English to Hindi) - Google Input Tools Emulation
     if (pageContentInput) {
+        // Helper to merge broken line wraps when pasting from PDFs
+        function cleanPastedText(text) {
+            if (!text) return '';
+            const lines = text.split('\n');
+            const joinedLines = [];
+            
+            for (let i = 0; i < lines.length; i++) {
+                let line = lines[i];
+                const trimmedCurrent = line.trim();
+                if (!trimmedCurrent) {
+                    joinedLines.push(line);
+                    continue;
+                }
+                
+                const isStartOfBox = trimmedCurrent.startsWith("[box");
+                const isEndOfBox = trimmedCurrent.startsWith("[/box]");
+                const isChapter = trimmedCurrent.startsWith("[chapter");
+                const isTable = trimmedCurrent.startsWith("|");
+                const isComment = trimmedCurrent.startsWith("<!--") || trimmedCurrent.startsWith("[table");
+                const isHtml = trimmedCurrent.startsWith("<");
+                const isHeading = trimmedCurrent.startsWith("#");
+                const isQuote = trimmedCurrent.startsWith(">");
+                const isPageBreak = trimmedCurrent.startsWith("[pagebreak") || 
+                                    trimmedCurrent.startsWith("[columnbreak") || 
+                                    trimmedCurrent.startsWith("[colbreak") || 
+                                    trimmedCurrent === "[thankyou]" ||
+                                    trimmedCurrent === "***" ||
+                                    trimmedCurrent === "* * *" ||
+                                    trimmedCurrent === "✦ ✦ ✦" ||
+                                    trimmedCurrent === "---";
+                                    
+                const canHaveContinuation = !isStartOfBox && !isEndOfBox && !isChapter && !isTable && !isComment && !isHtml && !isHeading && !isQuote && !isPageBreak;
+                
+                if (canHaveContinuation) {
+                    while (i + 1 < lines.length) {
+                        const nextLine = lines[i + 1];
+                        const trimmedNext = nextLine.trim();
+                        if (!trimmedNext) {
+                            break;
+                        }
+                        
+                        const isNextHeading = trimmedNext.startsWith("#");
+                        const isNextBullet = /^\s*(?:[•\u2022\u25CF\u25AA\u25AB➜⭐★]\s*|[-\*]\s+|🔶|🔷|🔸|🔹|♦️|💎|\d+[\.\)]|\(\d+\)|[a-zA-Z][\.\)]|\([a-zA-Z]\)|[ivxIVX]+[\.\)]|\([ivxIVX]+\))/i.test(trimmedNext);
+                        const isNextQuote = trimmedNext.startsWith(">");
+                        const isNextBox = trimmedNext.startsWith("[box") || trimmedNext.startsWith("[/box]");
+                        const isNextChapter = trimmedNext.startsWith("[chapter");
+                        const isNextPageBreak = trimmedNext.startsWith("[pagebreak") || 
+                                                trimmedNext.startsWith("[columnbreak") || 
+                                                trimmedNext.startsWith("[colbreak") || 
+                                                trimmedNext === "[thankyou]" ||
+                                                trimmedNext === "***" ||
+                                                trimmedNext === "* * *" ||
+                                                trimmedNext === "✦ ✦ ✦" ||
+                                                trimmedNext === "---";
+                        const isNextTable = trimmedNext.startsWith("|");
+                        const isNextComment = trimmedNext.startsWith("<!--") || trimmedNext.startsWith("[table");
+                        const isNextHtml = trimmedNext.startsWith("<");
+                        
+                        const isNextNewBlock = isNextHeading || isNextBullet || isNextQuote || isNextBox || isNextChapter || isNextPageBreak || isNextTable || isNextComment || isNextHtml;
+                        if (isNextNewBlock) {
+                            break;
+                        }
+                        
+                        const separator = line.endsWith(" ") ? "" : " ";
+                        line = line + separator + trimmedNext;
+                        i++;
+                    }
+                }
+                joinedLines.push(line);
+            }
+            return joinedLines.join('\n');
+        }
+
+        // Paste event listener to auto-join broken lines
+        pageContentInput.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const clipboardData = e.clipboardData || window.clipboardData;
+            const pastedText = clipboardData.getData('text');
+            const cleanedText = cleanPastedText(pastedText);
+            
+            // Insert cleaned text at caret position
+            const start = pageContentInput.selectionStart;
+            const end = pageContentInput.selectionEnd;
+            const text = pageContentInput.value;
+            const newText = text.substring(0, start) + cleanedText + text.substring(end);
+            
+            pageContentInput.value = newText;
+            pageContentInput.selectionStart = pageContentInput.selectionEnd = start + cleanedText.length;
+            
+            // Dispatch input event to trigger automatic page updates and save
+            const inputEvent = new Event('input', { bubbles: true });
+            pageContentInput.dispatchEvent(inputEvent);
+        });
+
         // Keydown listener for controlling the floating suggestions dropdown
         pageContentInput.addEventListener('keydown', (e) => {
             if (!phoneticTypingToggle || !phoneticTypingToggle.checked) return;
@@ -1848,7 +1923,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const selectedEngine = ocrDashEngineSelect ? ocrDashEngineSelect.value : "Google Vision API (High Precision)";
 
-                const response = await fetch('/api/ocr', {
+                const backendUrl = OCR_BACKEND_URL || '/api/ocr';
+                const response = await fetch(backendUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2297,21 +2373,40 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
 
     // Initialize Theme on Load
-    let editorTheme = localStorage.getItem('editor-theme') || 'dark';
-    if (editorTheme === 'light') {
-        document.body.classList.add('light-mode');
-        if (themeToggleBtn) themeToggleBtn.textContent = '☀️';
-    } else {
-        document.body.classList.remove('light-mode');
-        if (themeToggleBtn) themeToggleBtn.textContent = '🌙';
+    const editorThemeToggleBtn = document.getElementById('editor-theme-toggle-btn');
+    const editorThemeToggleIcon = document.getElementById('editor-theme-toggle-icon');
+    const editorThemeToggleLabel = document.getElementById('editor-theme-toggle-label');
+
+    function syncThemeUI(isLight) {
+        if (isLight) {
+            document.body.classList.add('light-mode');
+            if (themeToggleBtn) themeToggleBtn.textContent = '☀️';
+            if (editorThemeToggleIcon) editorThemeToggleIcon.textContent = '☀️';
+            if (editorThemeToggleLabel) editorThemeToggleLabel.textContent = 'Light Mode';
+        } else {
+            document.body.classList.remove('light-mode');
+            if (themeToggleBtn) themeToggleBtn.textContent = '🌙';
+            if (editorThemeToggleIcon) editorThemeToggleIcon.textContent = '🌙';
+            if (editorThemeToggleLabel) editorThemeToggleLabel.textContent = 'Dark Mode';
+        }
     }
+
+    let editorTheme = localStorage.getItem('editor-theme') || 'dark';
+    syncThemeUI(editorTheme === 'light');
 
     if (themeToggleBtn) {
         themeToggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('light-mode');
-            const isLight = document.body.classList.contains('light-mode');
-            themeToggleBtn.textContent = isLight ? '☀️' : '🌙';
-            localStorage.setItem('editor-theme', isLight ? 'light' : 'dark');
+            const willBeLight = !document.body.classList.contains('light-mode');
+            syncThemeUI(willBeLight);
+            localStorage.setItem('editor-theme', willBeLight ? 'light' : 'dark');
+        });
+    }
+
+    if (editorThemeToggleBtn) {
+        editorThemeToggleBtn.addEventListener('click', () => {
+            const willBeLight = !document.body.classList.contains('light-mode');
+            syncThemeUI(willBeLight);
+            localStorage.setItem('editor-theme', willBeLight ? 'light' : 'dark');
         });
     }
 
@@ -2361,10 +2456,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // Tight Compaction Toggle binding
+    if (tightCompactionToggle) {
+        tightCompactionToggle.addEventListener('change', () => {
+            isTightCompaction = tightCompactionToggle.checked;
+            localStorage.setItem('samyak-tight-compaction', isTightCompaction ? 'true' : 'false');
+            document.body.classList.toggle('tight-compaction', isTightCompaction);
+            cachedMaxContentHeight = null;
+            renderPreview();
+            saveWorkspaceToLocalStorage();
+        });
+    }
+
+    // Show Cover Page Toggle binding
+    if (showCoverPageToggle) {
+        showCoverPageToggle.addEventListener('change', () => {
+            if (pagesData[0]) {
+                pagesData[0].showCoverPage = showCoverPageToggle.checked;
+                if (!pagesData[0].showCoverPage && activePageIndex === 0) {
+                    activePageIndex = 1;
+                }
+            }
+            const coverBtn = document.getElementById('btn-cover-page-toggle');
+            if (coverBtn) coverBtn.classList.toggle('active', showCoverPageToggle.checked);
+            renderPreview();
+            saveWorkspaceToLocalStorage();
+        });
+    }
+
     // Page Template binding
     if (pageTemplateSelect) {
         pageTemplateSelect.addEventListener('change', () => {
-            if (activePageIndex === 0 || activePageIndex === pagesData.length) {
+            if (activePageIndex === 0) {
                 alert('Templates can only be applied to content pages (Page 2, Page 3...)!');
                 pageTemplateSelect.value = '';
                 return;
@@ -2525,7 +2648,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         pagesData = state.pagesData;
                         lastPageData = state.lastPageData || { title: 'THANK YOU', subtitle: 'Samyak', tagline: 'कोचिंग नहीं क्रांति' };
                         activePageIndex = state.activePageIndex || 0;
-                        contentFontSize = state.contentFontSize || 13.5;
+                        contentFontSize = state.contentFontSize || 16.1;
                         watermarkSettings = state.watermarkSettings || watermarkSettings;
                         customDesignSettings = state.customDesignSettings || customDesignSettings;
                         if (customDesignSettings.compactMode === undefined) {
@@ -2609,7 +2732,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         // Restore font/spacing inputs
                         if (state.spacingSettings) {
                             globalFontStyleSelect.value = state.spacingSettings.fontStyle || 'modern-sans';
-                            globalFontWeightSelect.value = state.spacingSettings.fontWeight || '700';
+                            globalFontWeightSelect.value = state.spacingSettings.fontWeight || '500';
                             globalLineSpacingSelect.value = state.spacingSettings.lineSpacing || '1.45';
                             globalLetterSpacingSelect.value = state.spacingSettings.letterSpacing || '0px';
                         }
@@ -2787,13 +2910,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Smart Shrink (Overflow Fixer) Click Listener
-    if (smartShrinkBtn) {
-        smartShrinkBtn.addEventListener('click', () => {
+    // Modularized performSmartShrink function returning a Promise
+    function performSmartShrink(showFeedbackAlert = true) {
+        return new Promise((resolve) => {
             const originalPageCount = pagesData.length;
             
             if (originalPageCount <= 2) {
-                alert("Smart Shrink only works when you have multiple pages!");
+                if (showFeedbackAlert) {
+                    alert("Smart Shrink only works when you have multiple pages!");
+                }
+                resolve(false);
                 return;
             }
 
@@ -2804,9 +2930,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const characterCount = lastPageText.length;
             const lineCount = lastPageText.split('\n').filter(l => l.trim()).length;
 
-            if (characterCount > 600 || lineCount > 6) {
+            if (showFeedbackAlert && (characterCount > 600 || lineCount > 6)) {
                 const proceed = confirm(`The last page contains a lot of content (${lineCount} lines, ${characterCount} chars). Fitting this on previous pages might require making the text size significantly smaller. Do you still want to proceed?`);
-                if (!proceed) return;
+                if (!proceed) {
+                    resolve(false);
+                    return;
+                }
             }
 
             // Show premium loading overlay
@@ -2893,7 +3022,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         cleanTempOptions(globalLineSpacingSelect, bestLs);
                         renderPreview();
                         saveWorkspaceToLocalStorage();
-                        alert(`🪄 Smart Shrink was successful!\n\nPages: ${originalPageCount} -> ${pagesData.length}\nFont Size: ${bestFs}px\nLine Spacing: ${bestLs}`);
+                        if (showFeedbackAlert) {
+                            alert(`🪄 Smart Shrink was successful!\n\nPages: ${originalPageCount} -> ${pagesData.length}\nFont Size: ${bestFs}px\nLine Spacing: ${bestLs}`);
+                        }
+                        resolve(true);
                     } else {
                         // Restore original settings
                         contentFontSize = originalFontSize;
@@ -2906,96 +3038,145 @@ document.addEventListener('DOMContentLoaded', () => {
                         cachedMaxContentHeight = null;
                         
                         renderPreview();
-                        alert("Attempted, but could not fit the content onto the previous pages without shrinking the font size below 13px.");
+                        if (showFeedbackAlert) {
+                            alert("Attempted, but could not fit the content onto the previous pages without shrinking the font size below 13px.");
+                        }
+                        resolve(false);
                     }
                 }, 60);
             }, 80);
         });
     }
 
-    // Smart Space (Blank Line & Space Cleaner) Click Listener
-    if (smartSpaceBtn) {
-        smartSpaceBtn.addEventListener('click', () => {
-            // First, save the current editor text if active page is a content page
-            if (activePageIndex > 0 && activePageIndex < pagesData.length) {
-                pagesData[activePageIndex].text = pageContentInput.value;
+    // Smart Shrink (Overflow Fixer) Click Listener
+    if (smartShrinkBtn) {
+        smartShrinkBtn.addEventListener('click', () => {
+            performSmartShrink(true);
+        });
+    }
+
+
+
+    // Modularized performRemoveDocumentGaps function returning status object
+    function performRemoveDocumentGaps(forceAllPages = false, showFeedbackAlert = true) {
+        // Save current input state before running cleaner
+        saveCurrentInputState();
+
+        let allPages = forceAllPages;
+        if (!forceAllPages && showFeedbackAlert) {
+            if (activePageIndex <= 0 || activePageIndex >= pagesData.length) {
+                alert("कृपया कोई कंटेंट पेज चुनें (बदलाव केवल कंटेंट पेजों पर लागू होते हैं)।");
+                return { success: false, emptyLinesRemoved: 0, spacersRemoved: 0, pagesCleaned: 0 };
             }
 
-            let spacesCleaned = 0;
-            let doubleNewlinesFixed = 0;
-            let totalFixedCount = 0;
+            const proceed = confirm("क्या आप खाली लाइनें (blank lines) और [space] गैप हटाना चाहते हैं?");
+            if (!proceed) return { success: false, emptyLinesRemoved: 0, spacersRemoved: 0, pagesCleaned: 0 };
 
-            // Iterate over all content pages and clean their text content
+            allPages = confirm("क्या आप इसे सभी पेजों पर लागू करना चाहते हैं?\n\n- OK: सभी पेजों से हटाएं\n- Cancel: केवल वर्तमान सक्रिय पेज से हटाएं");
+        }
+
+        let pagesCleaned = 0;
+        let emptyLinesRemoved = 0;
+        let spacersRemoved = 0;
+
+        function cleanText(text) {
+            if (!text) return { text: '', emptyLines: 0, spacers: 0 };
+            let original = text;
+            
+            // Remove spacer tags like [space N] or space N
+            const spacerRegex = /^\[?(space|spce)(?:\s+\d+)?\]?$/gim;
+            const spacerMatches = original.match(spacerRegex) || [];
+            let cleaned = original.replace(spacerRegex, '');
+
+            // Remove all blank lines (reduce multiple newlines to a single newline)
+            let lines = cleaned.split('\n');
+            let originalLineCount = lines.length;
+            let nonSpaceLines = lines.filter(line => line.trim() !== '');
+            let cleanedLineCount = nonSpaceLines.length;
+            
+            let emptyLinesRemovedCount = Math.max(0, originalLineCount - cleanedLineCount - (lines[lines.length - 1] === '' ? 1 : 0));
+            cleaned = nonSpaceLines.join('\n');
+
+            return {
+                text: cleaned,
+                emptyLines: emptyLinesRemovedCount,
+                spacers: spacerMatches.length
+            };
+        }
+
+        if (allPages) {
             for (let idx = 1; idx < pagesData.length; idx++) {
                 if (pagesData[idx] && pagesData[idx].type === 'content' && pagesData[idx].text) {
-                    const originalText = pagesData[idx].text;
-                    let cleanedText = originalText;
-
-                    // 1. Remove trailing spaces or tabs from all lines
-                    cleanedText = cleanedText.replace(/[ \t]+$/gm, '');
-
-                    // 2. Reduce 3 or more consecutive newlines to exactly 2 newlines (standard double newline spacing)
-                    const consecutiveNewlinesRegex = /\n{3,}/g;
-                    const newlineMatches = cleanedText.match(consecutiveNewlinesRegex);
-                    if (newlineMatches) {
-                        doubleNewlinesFixed += newlineMatches.length;
-                    }
-                    cleanedText = cleanedText.replace(consecutiveNewlinesRegex, '\n\n');
-
-                    // 3. Trim leading/trailing blank lines/spaces per page to guarantee clean starts/ends
-                    cleanedText = cleanedText.trim();
-
-                    // 4. Clean consecutive horizontal spaces between words (2 or more spaces) to a single space
-                    // We use [^\n ] to ensure it is bounded by non-spaces, preserving starting indent spaces!
-                    const multiSpaceRegex = /([^\n ]) {2,}([^\n ])/g;
-                    const spaceMatches = cleanedText.match(multiSpaceRegex);
-                    if (spaceMatches) {
-                        spacesCleaned += spaceMatches.length;
-                    }
-                    cleanedText = cleanedText.replace(multiSpaceRegex, '$1 $2');
-
-                    // Update pagesData
-                    if (cleanedText !== originalText) {
-                        pagesData[idx].text = cleanedText;
-                        totalFixedCount++;
+                    const res = cleanText(pagesData[idx].text);
+                    if (res.text !== pagesData[idx].text) {
+                        pagesData[idx].text = res.text;
+                        pagesCleaned++;
+                        emptyLinesRemoved += res.emptyLines;
+                        spacersRemoved += res.spacers;
                     }
                 }
             }
-
-            if (totalFixedCount > 0) {
-                // If the active page was updated, update the textarea value instantly
-                if (activePageIndex > 0 && activePageIndex < pagesData.length) {
-                    pageContentInput.value = pagesData[activePageIndex].text;
-                }
-
-                // Show visual feedback or toast
-                alert(`Smart Space Completed successfully! ✨\n- Cleaned up double spaces in ${spacesCleaned} places.\n- Normalized excessive blank lines in ${doubleNewlinesFixed} places.\n- Optimized ${totalFixedCount} page layout streams.`);
-                
-                // Re-render and save
-                renderPreview();
-                saveWorkspaceToLocalStorage();
-            } else {
-                alert("Your document layout is already perfectly optimized! No extra blank lines or redundant spaces were found. ✨");
+            if (activePageIndex > 0 && activePageIndex < pagesData.length) {
+                pageContentInput.value = pagesData[activePageIndex].text;
             }
+        } else {
+            if (activePageIndex > 0 && activePageIndex < pagesData.length) {
+                const res = cleanText(pagesData[activePageIndex].text);
+                if (res.text !== pagesData[activePageIndex].text) {
+                    pagesData[activePageIndex].text = res.text;
+                    pageContentInput.value = res.text;
+                    pagesCleaned = 1;
+                    emptyLinesRemoved = res.emptyLines;
+                    spacersRemoved = res.spacers;
+                }
+            }
+        }
+
+        if (pagesCleaned > 0) {
+            if (showFeedbackAlert) {
+                alert(`सफलतापूर्वक खाली लाइनें और गैप हटा दिए गए हैं! ✨\n- हटाए गए खाली लाइन्स: ${emptyLinesRemoved}\n- हटाए गए स्पेस टैग: ${spacersRemoved}\n- अपडेट किए गए पेज: ${pagesCleaned}`);
+            }
+            renderPreview();
+            saveWorkspaceToLocalStorage();
+            return { success: true, emptyLinesRemoved, spacersRemoved, pagesCleaned };
+        } else {
+            if (showFeedbackAlert) {
+                alert("पेज में कोई अतिरिक्त खाली लाइन या गैप नहीं मिला। ✨");
+            }
+            return { success: false, emptyLinesRemoved: 0, spacersRemoved: 0, pagesCleaned: 0 };
+        }
+    }
+
+    function removeDocumentGaps() {
+        performRemoveDocumentGaps(false, true);
+    }
+
+    if (removeGapsBtn) {
+        removeGapsBtn.addEventListener('click', removeDocumentGaps);
+    }
+    if (btnRemoveGaps) {
+        btnRemoveGaps.addEventListener('click', removeDocumentGaps);
+    }
+
+    // Reusable triggerPrintSequence function
+    function triggerPrintSequence() {
+        // 1. Save current state of inputs
+        saveCurrentInputState();
+        // 2. Re-render standard layouts to ensure perfect content alignment
+        renderPreview();
+        // 3. Wait for browser to fully paint ALL pages before opening print dialog
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    window.print();
+                }, 350);
+            });
         });
     }
 
     // Highly robust PDF print button action
     if (printPdfBtn) {
-        printPdfBtn.addEventListener('click', () => {
-            // 1. Save current state of inputs
-            saveCurrentInputState();
-            // 2. Re-render standard layouts to ensure perfect content alignment
-            renderPreview();
-            // 3. Wait for browser to fully paint ALL pages before opening print dialog
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        window.print();
-                    }, 350);
-                });
-            });
-        });
+        printPdfBtn.addEventListener('click', triggerPrintSequence);
     }
 
 
@@ -3033,7 +3214,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Intercept Ctrl+P for print
         if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
             e.preventDefault();
-            printPdfBtn.click();
+            triggerPrintSequence();
         }
         // Intercept Ctrl+/ for toggling toolbar
         if ((e.ctrlKey || e.metaKey) && e.key === '/') {
@@ -3174,7 +3355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Markdown tool prefix insertion (and wrapping selection if data-suffix is present)
     toolbarButtons.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            if (btn.id === 'toolbar-tray-trigger' || btn.id === 'toolbar-customize-trigger') return; // Skip trigger buttons
+            if (btn.id === 'toolbar-tray-trigger' || btn.id === 'toolbar-customize-trigger' || btn.id === 'btn-remove-gaps') return; // Skip trigger and custom action buttons
             
             if (isCustomizeMode) {
                 // Intercept click in customize mode to move the icon
@@ -3195,7 +3376,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     currentToolbarLayout.main.push(btnId);
                 }
                 
-                localStorage.setItem('samyak-toolbar-layout-v1', JSON.stringify(currentToolbarLayout));
+                localStorage.setItem('samyak-toolbar-layout-v2', JSON.stringify(currentToolbarLayout));
                 renderToolbarLayout();
                 
                 // Update title tooltip dynamically
@@ -3216,6 +3397,44 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     });
+
+    const editorColorHighlight = document.getElementById('editor-color-highlight');
+    if (editorColorHighlight) {
+        editorColorHighlight.addEventListener('change', (e) => {
+            const colorVal = e.target.value;
+            if (!colorVal) return;
+            if (activePageIndex > 0) {
+                insertWrappedAtCursor(pageContentInput, `==${colorVal}|`, `==`);
+                pagesData[activePageIndex].text = pageContentInput.value;
+                renderPreview();
+                updateStats();
+                saveWorkspaceToLocalStorage();
+            }
+            editorColorHighlight.selectedIndex = 0; // reset
+        });
+    }
+
+    // ── Color swatch buttons — applyColorHighlight(color) ──
+    window.applyColorHighlight = function(colorVal) {
+        if (!colorVal) return;
+        if (activePageIndex > 0) {
+            insertWrappedAtCursor(pageContentInput, `==${colorVal}|`, `==`);
+            pagesData[activePageIndex].text = pageContentInput.value;
+            renderPreview();
+            updateStats();
+            saveWorkspaceToLocalStorage();
+        }
+        // Update active state on swatch buttons
+        document.querySelectorAll('.rl-swatch-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.color === colorVal);
+        });
+        // Auto-clear active after 800ms
+        setTimeout(() => {
+            document.querySelectorAll('.rl-swatch-btn').forEach(btn => btn.classList.remove('active'));
+        }, 800);
+    };
+
+
 
     if (toolbarCustomizeTrigger) {
         toolbarCustomizeTrigger.addEventListener('click', () => {
@@ -3443,6 +3662,105 @@ document.addEventListener('DOMContentLoaded', () => {
             customDesignSettings.bulletStyle = e.target.value;
             renderPreview();
             saveWorkspaceToLocalStorage();
+        });
+    }
+
+    // ── Word-style Page Layout: column thumbnail active state ──
+    (function() {
+        const rlColSingle = document.getElementById('rl-col-single');
+        const rlColTwo    = document.getElementById('rl-col-two');
+        const pageLayoutSel = document.getElementById('page-layout-select');
+        function syncColThumbs(val) {
+            if (!rlColSingle || !rlColTwo) return;
+            rlColSingle.classList.toggle('active', val === 'single');
+            rlColTwo.classList.toggle('active', val === 'two-column');
+        }
+        if (pageLayoutSel) {
+            pageLayoutSel.addEventListener('change', () => syncColThumbs(pageLayoutSel.value));
+            syncColThumbs(pageLayoutSel.value);
+        }
+    })();
+
+    // ── Word-style margin preset function (global) ──
+    window.setMarginPreset = function(preset) {
+        const mxInput = document.getElementById('page-margin-x');
+        const myInput = document.getElementById('page-margin-y');
+        const mxSpan  = document.getElementById('margin-x-val');
+        const mySpan  = document.getElementById('margin-y-val');
+        const presets = { normal: [8, 6], narrow: [5, 5], wide: [12, 10] };
+        const [mx, my] = presets[preset] || [8, 6];
+
+        // Directly update settings and CSS variables so it works even if sliders are deleted
+        customDesignSettings.pageMarginX = mx;
+        customDesignSettings.pageMarginY = my;
+        document.documentElement.style.setProperty('--custom-page-margin-x', `${mx}mm`);
+        document.documentElement.style.setProperty('--custom-page-margin-y', `${my}mm`);
+        cachedMaxContentHeight = null; // Clear height cache to trigger re-measurement
+
+        if (mxInput) mxInput.value = mx;
+        if (myInput) myInput.value = my;
+        if (mxSpan) mxSpan.textContent = mx + 'mm';
+        if (mySpan) mySpan.textContent = my + 'mm';
+
+        // Trigger render and save
+        debouncedRenderAndSave();
+
+        ['normal','narrow','wide'].forEach(p => {
+            const btn = document.getElementById('rl-margin-' + p);
+            if (btn) btn.classList.toggle('active', p === preset);
+        });
+    };
+
+    // ── Compact spinner [−] [val] [+] — rlSpin(inputId, spanId, delta, min, max) ──
+    window.rlSpin = function(inputId, spanId, delta, min, max) {
+        const inp  = document.getElementById(inputId);
+        const span = document.getElementById(spanId);
+        if (!inp) return;
+        const step    = parseFloat(inp.step) || 0.5;
+        const current = parseFloat(inp.value) || 0;
+        const next    = Math.min(max, Math.max(min, Math.round((current + delta) / step) * step));
+        inp.value = next;
+        inp.dispatchEvent(new Event('input')); // triggers app.js event listeners
+        if (span) span.textContent = next + 'mm';
+        // Also clear any margin preset active state when custom is used
+        ['normal','narrow','wide'].forEach(p => {
+            const btn = document.getElementById('rl-margin-' + p);
+            if (btn) btn.classList.remove('active');
+        });
+    };
+
+
+
+    if (designExplanationStyle) {
+        designExplanationStyle.addEventListener('change', (e) => {
+            customDesignSettings.explanationStyle = e.target.value;
+            renderPreview();
+            saveWorkspaceToLocalStorage();
+        });
+    }
+    if (designTableHeaderSize) {
+        designTableHeaderSize.addEventListener('input', (e) => {
+            customDesignSettings.tableHeaderFontSize = e.target.value;
+            if (designTableHeaderSizeVal) designTableHeaderSizeVal.textContent = `${e.target.value}px`;
+            document.documentElement.style.setProperty('--table-header-font-size', `${e.target.value}px`);
+            cachedMaxContentHeight = null;
+            debouncedRenderAndSave();
+        });
+    }
+    if (designTableBodySize) {
+        designTableBodySize.addEventListener('input', (e) => {
+            customDesignSettings.tableBodyFontSize = e.target.value;
+            if (designTableBodySizeVal) designTableBodySizeVal.textContent = `${e.target.value}px`;
+            document.documentElement.style.setProperty('--table-body-font-size', `${e.target.value}px`);
+            cachedMaxContentHeight = null;
+            debouncedRenderAndSave();
+        });
+    }
+    if (designTableColWidths) {
+        designTableColWidths.addEventListener('input', (e) => {
+            customDesignSettings.tableColWidths = e.target.value;
+            cachedMaxContentHeight = null;
+            debouncedRenderAndSave();
         });
     }
 
@@ -3748,13 +4066,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Switch active page editor view
-    function switchActivePage(index, saveState = true) {
+    function switchActivePage(index, saveState = true, preventPreviewScroll = false) {
         // 1. Save current active page state if requested
         if (saveState) {
             saveCurrentInputState();
         }
 
-        // 2. Shift active index
+        // 2. Shift active index (bounded and cover-adjusted)
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+        const lastTabIdx = pagesData.length - 1;
+        if (index === 0 && !showCover) {
+            index = 1;
+        }
+        if (index >= pagesData.length) {
+            index = lastTabIdx;
+        }
         activePageIndex = index;
 
         // 2.5 Sync global theme dropdown
@@ -3768,18 +4094,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Auto-switch dynamic horizontal sidebar tabs to editor panel
         switchSidebarTab('panel-editor');
 
-        const lastTabIdx = pagesData.length;
-        const totalPages = pagesData.length + 1;
-        
         // Dynamically show the current page inside the tab button itself
         const tabEditorBtn = document.getElementById('tab-editor-btn');
         if (tabEditorBtn) {
             if (index === 0) {
                 tabEditorBtn.innerHTML = '<span class="tab-icon">✍️</span> Ed. (Cover)';
-            } else if (index === lastTabIdx) {
-                tabEditorBtn.innerHTML = '<span class="tab-icon">✍️</span> Ed. (End)';
             } else {
-                tabEditorBtn.innerHTML = `<span class="tab-icon">✍️</span> Ed. (P. ${index + 1})`;
+                tabEditorBtn.innerHTML = `<span class="tab-icon">✍️</span> Ed. (P. ${index})`;
             }
         }
 
@@ -3830,21 +4151,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 coverSubtitleSizeVal.textContent = `${coverSubtitleSizeSlider.value}px`;
             }
             applyTheme(pagesData[0].theme);
-        } else if (index === lastTabIdx) {
-            // Display Last Page controls
-            coverEditorZone.classList.remove('active');
-            contentEditorZone.classList.remove('active');
-            lastEditorZone.classList.add('active');
-            activePageLabel.textContent = "End";
-
-            if (pageTemplateSelect) pageTemplateSelect.disabled = true;
-            if (pageLayoutSelect) pageLayoutSelect.disabled = true;
-            if (applyLayoutAllBtn) applyLayoutAllBtn.disabled = true;
-
-            // Sync values to last page fields
-            lastTitleInput.value = lastPageData.title;
-            lastSubtitleInput.value = lastPageData.subtitle;
-            lastTaglineInput.value = lastPageData.tagline;
         } else {
             // Display Content Text Area controls
             coverEditorZone.classList.remove('active');
@@ -3858,7 +4164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Sync page layout selector
             if (pageLayoutSelect && pagesData[index]) {
-                pageLayoutSelect.value = pagesData[index].layout || 'single';
+                pageLayoutSelect.value = pagesData[index].layout || 'two-column';
             }
             
             // Populate textarea specifically for this page
@@ -3867,7 +4173,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // 4. Scroll A4 preview smoothly to corresponding page and spotlight it
-        const targetPageElement = document.querySelector(`.a4-page[data-page="${index + 1}"]`);
+        const pageSelectorIndex = index === 0 ? 1 : index + (showCover ? 1 : 0);
+        const targetPageElement = document.querySelector(`.a4-page[data-page="${pageSelectorIndex}"]`);
         if (targetPageElement) {
             // Remove previous active highlights
             document.querySelectorAll('.a4-page').forEach(page => {
@@ -3877,11 +4184,13 @@ document.addEventListener('DOMContentLoaded', () => {
             targetPageElement.classList.add('active-page-spotlight');
             
             // Scroll to element center or block center
-            if (index === 0 || index === lastTabIdx) {
-                targetPageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                // Let syncPreviewScroll align smoothly to the active editing block
-                setTimeout(() => syncPreviewScroll(true), 80);
+            if (!preventPreviewScroll) {
+                if (index === 0 || index === lastTabIdx) {
+                    safeScrollToElement(targetPageElement);
+                } else {
+                    // Let syncPreviewScroll align smoothly to the active editing block
+                    setTimeout(() => syncPreviewScroll(true), 80);
+                }
             }
         }
 
@@ -3895,7 +4204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pagesData.push({
             type: 'content',
             text: '',
-            layout: 'single'
+            layout: 'two-column'
         });
 
         const newIndex = pagesData.length - 1;
@@ -3911,10 +4220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (activePageIndex === pagesData.length) {
-            alert('The End Page cannot be deleted!');
-            return;
-        }
+
 
         if (pagesData.length <= 2) {
             alert('At least one Content Page is required!');
@@ -3939,7 +4245,9 @@ document.addEventListener('DOMContentLoaded', () => {
             pageTabsList.innerHTML = '';
         }
         
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
         pagesData.forEach((page, idx) => {
+            if (idx === 0 && !showCover) return;
             if (pageTabsList) {
                 const tab = document.createElement('div');
                 tab.className = 'page-tab';
@@ -3954,7 +4262,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 // Sync overflow warning style from A4 page to tab button
-                const previewPage = document.querySelector(`.a4-page[data-page="${idx + 1}"]`);
+                const pageNumAttr = idx === 0 ? 1 : idx + (showCover ? 1 : 0);
+                const previewPage = document.querySelector(`.a4-page[data-page="${pageNumAttr}"]`);
                 if (previewPage && previewPage.classList.contains('overflow-detected')) {
                     tab.classList.add('overflow');
                     tab.title = "Page overflow detected! Click to reduce text.";
@@ -3975,14 +4284,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         quickPageSelect.innerHTML = '';
         const lastTabIdx = pagesData.length;
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
 
-        for (let idx = 0; idx <= lastTabIdx; idx++) {
+        for (let idx = 0; idx < lastTabIdx; idx++) {
+            if (idx === 0 && !showCover) continue;
             const opt = document.createElement('option');
             opt.value = idx.toString();
             if (idx === 0) {
                 opt.textContent = '👑 Cover Page';
-            } else if (idx === lastTabIdx) {
-                opt.textContent = '🏁 End Page';
             } else {
                 opt.textContent = `📄 Page ${idx}`;
             }
@@ -3991,7 +4300,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 opt.selected = true;
             }
 
-            const previewPage = document.querySelector(`.a4-page[data-page="${idx + 1}"]`);
+            const pageNumAttr = idx === 0 ? 1 : idx + (showCover ? 1 : 0);
+            const previewPage = document.querySelector(`.a4-page[data-page="${pageNumAttr}"]`);
             if (previewPage && previewPage.classList.contains('overflow-detected')) {
                 opt.textContent += ' ⚠️ (Overflow)';
             }
@@ -3999,17 +4309,18 @@ document.addEventListener('DOMContentLoaded', () => {
             quickPageSelect.appendChild(opt);
         }
 
+        const firstTabIdx = showCover ? 0 : 1;
         const quickPrevPageBtn = document.getElementById('quick-prev-page-btn');
         const quickNextPageBtn = document.getElementById('quick-next-page-btn');
         if (quickPrevPageBtn) {
-            quickPrevPageBtn.disabled = (activePageIndex === 0);
-            quickPrevPageBtn.style.opacity = (activePageIndex === 0) ? '0.4' : '1';
-            quickPrevPageBtn.style.pointerEvents = (activePageIndex === 0) ? 'none' : 'auto';
+            quickPrevPageBtn.disabled = (activePageIndex === firstTabIdx);
+            quickPrevPageBtn.style.opacity = (activePageIndex === firstTabIdx) ? '0.4' : '1';
+            quickPrevPageBtn.style.pointerEvents = (activePageIndex === firstTabIdx) ? 'none' : 'auto';
         }
         if (quickNextPageBtn) {
-            quickNextPageBtn.disabled = (activePageIndex === lastTabIdx);
-            quickNextPageBtn.style.opacity = (activePageIndex === lastTabIdx) ? '0.4' : '1';
-            quickNextPageBtn.style.pointerEvents = (activePageIndex === lastTabIdx) ? 'none' : 'auto';
+            quickNextPageBtn.disabled = (activePageIndex === lastTabIdx - 1);
+            quickNextPageBtn.style.opacity = (activePageIndex === lastTabIdx - 1) ? '0.4' : '1';
+            quickNextPageBtn.style.pointerEvents = (activePageIndex === lastTabIdx - 1) ? 'none' : 'auto';
         }
     }
 
@@ -4029,7 +4340,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (quickPrevPageBtnEl) {
         quickPrevPageBtnEl.addEventListener('click', () => {
-            if (activePageIndex > 0) {
+            const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+            const firstIdx = showCover ? 0 : 1;
+            if (activePageIndex > firstIdx) {
                 switchActivePage(activePageIndex - 1);
             }
         });
@@ -4037,7 +4350,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (quickNextPageBtnEl) {
         quickNextPageBtnEl.addEventListener('click', () => {
-            if (activePageIndex < pagesData.length) {
+            const lastIdx = pagesData.length - 1;
+            if (activePageIndex < lastIdx) {
                 switchActivePage(activePageIndex + 1);
             }
         });
@@ -4053,7 +4367,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const clonedPage = {
             type: 'content',
             text: pageToClone.text || '',
-            layout: pageToClone.layout || 'single'
+            layout: pageToClone.layout || 'two-column'
         };
         // Insert after idx
         pagesData.splice(idx + 1, 0, clonedPage);
@@ -4092,9 +4406,13 @@ document.addEventListener('DOMContentLoaded', () => {
             gridTotalPagesLabel.textContent = `Total Content Pages: ${totalContentCount}`;
         }
 
-        // 1. Render Cover Page card (always index 0)
-        const coverCard = createGridCardDOM(0, 'cover');
-        pageGridItemsContainer.appendChild(coverCard);
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+
+        // 1. Render Cover Page card (always index 0) if shown
+        if (showCover) {
+            const coverCard = createGridCardDOM(0, 'cover');
+            pageGridItemsContainer.appendChild(coverCard);
+        }
 
         // 2. Render Content Page cards (indices 1 to pagesData.length - 1)
         for (let idx = 1; idx < pagesData.length; idx++) {
@@ -4115,10 +4433,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderGridPages();
         });
         pageGridItemsContainer.appendChild(addCardPlaceholder);
-
-        // 4. Render End Page card (Index pagesData.length)
-        const endCard = createGridCardDOM(pagesData.length, 'end');
-        pageGridItemsContainer.appendChild(endCard);
 
         // Setup Drag & Drop handlers on items
         setupGridDragAndDrop();
@@ -4332,19 +4646,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const labelNum = document.createElement('span');
         labelNum.className = 'page-label-num';
         if (type === 'cover') {
-            labelNum.textContent = 'Page 1';
-        } else if (type === 'end') {
-            labelNum.textContent = `Page ${pagesData.length + 1}`;
+            labelNum.textContent = 'Cover Page';
         } else {
-            labelNum.textContent = `Page ${idx + 1}`;
+            labelNum.textContent = `Page ${idx}`;
         }
 
         const labelType = document.createElement('span');
         labelType.className = 'page-label-type';
         if (type === 'cover') {
             labelType.textContent = 'Cover';
-        } else if (type === 'end') {
-            labelType.textContent = 'End Page';
         } else {
             labelType.textContent = pagesData[idx].layout === 'two-column' ? '2 Cols' : '1 Col';
         }
@@ -4355,11 +4665,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Click on page card to switch and close modal
         card.addEventListener('click', () => {
-            if (type === 'end') {
-                switchActivePage(pagesData.length);
-            } else {
-                switchActivePage(idx);
-            }
+            switchActivePage(idx);
             if (pageGridModal) {
                 pageGridModal.classList.remove('active');
                 setTimeout(() => {
@@ -5079,11 +5385,12 @@ document.addEventListener('DOMContentLoaded', () => {
             'g': 'green', 'green': 'green',
             'p': 'pink', 'pink': 'pink',
             'b': 'blue', 'blue': 'blue',
-            'o': 'orange', 'orange': 'orange'
+            'o': 'orange', 'orange': 'orange',
+            'r': 'red', 'red': 'red'
         };
         let formatted = text
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/==(?:(yellow|green|pink|blue|orange|y|g|p|b|o)\|)?(.*?)==/gi, (match, color, content) => {
+            .replace(/==(?:(yellow|green|pink|blue|orange|red|y|g|p|b|o|r)\|)?(.*?)==/gi, (match, color, content) => {
                 const colorKey = (color || 'yellow').toLowerCase();
                 const normalizedColor = colorMap[colorKey] || 'yellow';
                 return `<mark class="text-highlight highlight-${normalizedColor}">${content}</mark>`;
@@ -5129,12 +5436,50 @@ document.addEventListener('DOMContentLoaded', () => {
         return formatted;
     }
 
+    function getBlockMarkdown(block) {
+        if (!block) return '';
+        if (block.type === 'box-container') {
+            const tag = block.boxType || 'box';
+            return `[${tag}]\n${block.markdown || ''}\n[/box]`;
+        }
+        if (block.type === 'explanation') {
+            const qPart = block.qNum ? ` q="${block.qNum}"` : '';
+            return `[explanation${qPart}]\n${block.markdown || ''}\n[/explanation]`;
+        }
+        if (block.type === 'table' && block.config) {
+            return `${block.config}\n${block.markdown}`;
+        }
+        return block.markdown !== undefined ? block.markdown : '';
+    }
+
     function parseTextToBlocks(text) {
         // Preserving trailing spaces and newlines to prevent cursor jumping
         text = text || '';
         text = preProcessText(text);
         const lines = text.split('\n');
         const blocks = [];
+        
+        function cleanRepeatedTableHeaders(tableLines) {
+            if (!tableLines || tableLines.length < 3) return tableLines;
+            
+            const isSeparator = (str) => /^\s*\|(\s*:?-+:?\s*\|)+\s*$/.test(str);
+            const cleanLines = [tableLines[0], tableLines[1]];
+            const headerTrimmed = tableLines[0].trim().replace(/\s+/g, ' ');
+            
+            for (let k = 2; k < tableLines.length; k++) {
+                const currentLine = tableLines[k];
+                const currentTrimmed = currentLine.trim().replace(/\s+/g, ' ');
+                
+                if (k + 1 < tableLines.length && 
+                    currentTrimmed === headerTrimmed && 
+                    isSeparator(tableLines[k + 1])) {
+                    k++; 
+                    continue;
+                }
+                cleanLines.push(currentLine);
+            }
+            return cleanLines;
+        }
         
         const knownSections = [
             "योजनाएँ एवं नीतियाँ", "योजनाएँ एवं नीतियां", "योजनाएं एवं नीतियां", 
@@ -5186,12 +5531,98 @@ document.addEventListener('DOMContentLoaded', () => {
                 continue;
             }
 
-            // Match '[chapter <number>] <title> | <subtitle>'
-            const chapterMatch = trimmed.match(/^\[chapter(?:\s+(\d+))?\]\s*([^|]*?)(?:\s*\|\s*(.*))?$/i);
+            // 0.22 BILINGUAL MCQ BLOCK DETECTOR
+            const bilingualMCQStartMatch = cleanBoxLine.match(/^\[bilingual-mcq(?:\s+q=["']?(\d+)["']?)?\]$/i);
+            if (bilingualMCQStartMatch) {
+                const qNum = bilingualMCQStartMatch[1] || null;
+                let mcqLines = [];
+                i++;
+                while (i < lines.length) {
+                    const nextLine = lines[i];
+                    const nextTrimmed = nextLine.trim();
+                    const nextCleanBoxLine = nextTrimmed.replace(bulletRegex, '').trim();
+                    if (nextCleanBoxLine === '[/bilingual-mcq]') {
+                        break;
+                    }
+                    mcqLines.push(nextLine);
+                    i++;
+                }
+                const fullInner = mcqLines.join('\n');
+                let hiMarkdown = "";
+                let enMarkdown = "";
+                const hiIndex = fullInner.indexOf('{hi}');
+                const enIndex = fullInner.indexOf('{en}');
+                if (hiIndex !== -1 && enIndex !== -1) {
+                    if (hiIndex < enIndex) {
+                        hiMarkdown = fullInner.substring(hiIndex + 4, enIndex).trim();
+                        enMarkdown = fullInner.substring(enIndex + 4).trim();
+                    } else {
+                        enMarkdown = fullInner.substring(enIndex + 4, hiIndex).trim();
+                        hiMarkdown = fullInner.substring(hiIndex + 4).trim();
+                    }
+                } else if (hiIndex !== -1) {
+                    hiMarkdown = fullInner.substring(hiIndex + 4).trim();
+                } else if (enIndex !== -1) {
+                    enMarkdown = fullInner.substring(enIndex + 4).trim();
+                } else {
+                    hiMarkdown = fullInner.trim();
+                }
+                blocks.push({
+                    type: 'bilingual-mcq',
+                    qNum: qNum,
+                    hiMarkdown: hiMarkdown,
+                    enMarkdown: enMarkdown,
+                    markdown: line + '\n' + mcqLines.join('\n') + '\n' + (lines[i] || ''),
+                    startLine: start,
+                    endLine: i
+                });
+                continue;
+            }
+
+            // 0.24 EXPLANATION BLOCK DETECTOR
+            const explanationStartMatch = cleanBoxLine.match(/^\[explanation(?:\s+q=["']?(\d+)["']?)?\]$/i);
+            if (explanationStartMatch) {
+                const qNum = explanationStartMatch[1] || null;
+                let expLines = [];
+                i++;
+                while (i < lines.length) {
+                    const nextLine = lines[i];
+                    const nextTrimmed = nextLine.trim();
+                    const nextCleanBoxLine = nextTrimmed.replace(bulletRegex, '').trim();
+                    if (nextCleanBoxLine === '[/explanation]') {
+                        break;
+                    }
+                    expLines.push(nextLine);
+                    i++;
+                }
+                blocks.push({
+                    type: 'explanation',
+                    qNum: qNum,
+                    markdown: expLines.join('\n'),
+                    startLine: start,
+                    endLine: i
+                });
+                continue;
+            }
+
+
+            // Match '[chapter <attrs>] <title> | <subtitle>' where attrs can have chapter number and size=XX
+            const chapterMatch = trimmed.match(/^\[chapter\s*([^\]]*?)\]\s*([^|]*?)(?:\s*\|\s*(.*))?$/i);
             if (chapterMatch) {
+                let attrs = chapterMatch[1];
+                let fontSize = null;
+                const sizeMatch = attrs.match(/size=(\d+)/i);
+                if (sizeMatch) {
+                    fontSize = parseInt(sizeMatch[1], 10);
+                    attrs = attrs.replace(/size=\d+/i, '').trim();
+                }
+                const numMatch = attrs.match(/(?:\b|^)(\d+)(?:\b|$)/);
+                const chapterNum = numMatch ? numMatch[1] : null;
+
                 blocks.push({
                     type: 'chapter-header',
-                    chapterNum: chapterMatch[1] || null,
+                    chapterNum: chapterNum,
+                    fontSize: fontSize,
                     mainTitle: chapterMatch[2].trim(),
                     subTitle: chapterMatch[3] ? chapterMatch[3].trim() : null,
                     markdown: line,
@@ -5255,8 +5686,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 0. TABLE DETECTOR WITH CONFIG SUPPORT
             let tableConfig = null;
+            let tableConfigFormat = null;
             if (trimmed.startsWith('<!-- table|') && trimmed.endsWith('-->')) {
                 tableConfig = trimmed;
+                tableConfigFormat = 'comment';
                 if (i + 1 < lines.length && lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|')) {
                     i++; // consume comment, move to first table row
                     let tableLines = [lines[i]];
@@ -5264,9 +5697,32 @@ document.addEventListener('DOMContentLoaded', () => {
                         i++;
                         tableLines.push(lines[i]);
                     }
+                    tableLines = cleanRepeatedTableHeaders(tableLines);
                     blocks.push({
                         type: 'table',
                         config: tableConfig,
+                        configFormat: tableConfigFormat,
+                        markdown: tableLines.join('\n'),
+                        startLine: start,
+                        endLine: i
+                    });
+                    continue;
+                }
+            } else if (trimmed.startsWith('[table') && trimmed.endsWith(']')) {
+                tableConfig = trimmed;
+                tableConfigFormat = 'square';
+                if (i + 1 < lines.length && lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|')) {
+                    i++; // consume tag, move to first table row
+                    let tableLines = [lines[i]];
+                    while (i + 1 < lines.length && lines[i + 1].trim().startsWith('|') && lines[i + 1].trim().endsWith('|')) {
+                        i++;
+                        tableLines.push(lines[i]);
+                    }
+                    tableLines = cleanRepeatedTableHeaders(tableLines);
+                    blocks.push({
+                        type: 'table',
+                        config: tableConfig,
+                        configFormat: tableConfigFormat,
                         markdown: tableLines.join('\n'),
                         startLine: start,
                         endLine: i
@@ -5279,6 +5735,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     i++;
                     tableLines.push(lines[i]);
                 }
+                tableLines = cleanRepeatedTableHeaders(tableLines);
                 blocks.push({
                     type: 'table',
                     config: null,
@@ -5327,8 +5784,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 1. SECTION BAR DETECTOR
             if (trimmed.startsWith('# ') || (trimmed.startsWith('#') && !trimmed.startsWith('##'))) {
+                let fontSize = null;
+                const sizeMatch = trimmed.match(/\[size=(\d+)\]/i);
+                if (sizeMatch) {
+                    fontSize = parseInt(sizeMatch[1], 10);
+                }
                 blocks.push({
                     type: 'section',
+                    fontSize: fontSize,
                     markdown: line,
                     startLine: start,
                     endLine: i
@@ -5341,8 +5804,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     return cleanLine === cleanSec || trimmed === sec;
                 })
             ) {
+                let fontSize = null;
+                const sizeMatch = trimmed.match(/\[size=(\d+)\]/i);
+                if (sizeMatch) {
+                    fontSize = parseInt(sizeMatch[1], 10);
+                }
                 blocks.push({
                     type: 'section',
+                    fontSize: fontSize,
                     markdown: line,
                     startLine: start,
                     endLine: i
@@ -5356,8 +5825,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 /^[🔶🔷🔸🔹♦️💎]/u.test(trimmed) ||
                 /^##\s*[🔶🔷🔸🔹♦️💎]/u.test(trimmed)
             ) {
+                let fontSize = null;
+                const sizeMatch = trimmed.match(/\[size=(\d+)\]/i);
+                if (sizeMatch) {
+                    fontSize = parseInt(sizeMatch[1], 10);
+                }
                 blocks.push({
                     type: 'topic',
+                    fontSize: fontSize,
                     markdown: line,
                     startLine: start,
                     endLine: i
@@ -5365,18 +5840,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } 
             
             // 3. BULLET ITEM DETECTOR
-            else if (
-                trimmed.startsWith('•') || 
-                trimmed.startsWith('-') || 
-                trimmed.startsWith('*') || 
-                /^\(\d+\)/.test(trimmed) || 
-                /^\d+\./.test(trimmed)
-            ) {
+            else if (/^\s*(?:[•\u2022\u25CF\u25AA\u25AB➜⭐★]\s*|[-\*]\s+|🔶|🔷|🔸|🔹|♦️|💎|\d+[\.\)]|\(\d+\)|[a-zA-Z][\.\)]|\([a-zA-Z]\)|[ivxIVX]+[\.\)]|\([ivxIVX]+\))/i.test(trimmed)) {
+                const leadingSpaces = line.match(/^(\s+)/);
+                const isNested = leadingSpaces && leadingSpaces[1].length >= 2;
                 blocks.push({
                     type: 'bullet',
                     markdown: line,
                     startLine: start,
-                    endLine: i
+                    endLine: i,
+                    isNested: isNested,
+                    indentLevel: isNested ? Math.floor(leadingSpaces[1].length / 2) : 0
                 });
             } 
             
@@ -5496,6 +5969,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const mainTitle = document.createElement('h2');
             mainTitle.className = 'chapter-main-title';
+            if (block.fontSize) {
+                mainTitle.style.fontSize = `${block.fontSize}px`;
+            }
             mainTitle.innerHTML = parseInlineHighlightsToHtml(block.mainTitle);
             titleGroup.appendChild(mainTitle);
             
@@ -5526,6 +6002,92 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             return containerEl;
+        }
+
+        if (block.type === 'bilingual-mcq') {
+            const container = document.createElement('div');
+            container.className = 'bilingual-mcq-container';
+            
+            const hiCol = document.createElement('div');
+            hiCol.className = 'bilingual-mcq-col bilingual-mcq-hi';
+            const hiBlocks = parseTextToBlocks(block.hiMarkdown);
+            hiBlocks.forEach(b => {
+                const node = renderBlockToNode(b);
+                if (node) hiCol.appendChild(node);
+            });
+            
+            const enCol = document.createElement('div');
+            enCol.className = 'bilingual-mcq-col bilingual-mcq-en';
+            const enBlocks = parseTextToBlocks(block.enMarkdown);
+            enBlocks.forEach(b => {
+                const node = renderBlockToNode(b);
+                if (node) enCol.appendChild(node);
+            });
+            
+            container.appendChild(hiCol);
+            container.appendChild(enCol);
+            return container;
+        }
+
+        if (block.type === 'explanation') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'explanation-wrapper';
+            
+            const expStyle = customDesignSettings.explanationStyle || 'modern-accent';
+            wrapper.classList.add(`style-${expStyle}`);
+            
+            // Floating style toggle action button on the preview card
+            const toggleStyleBtn = document.createElement('button');
+            toggleStyleBtn.className = 'explanation-style-toggle';
+            toggleStyleBtn.title = 'Change Explanation Style (व्याख्या कार्ड स्टाइल बदलें)';
+            toggleStyleBtn.innerHTML = '🔄';
+            toggleStyleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                const styleArray = ['classic-header', 'modern-accent', 'editorial-ribbon', 'glass-floating', 'two-tone-split'];
+                const currentStyle = customDesignSettings.explanationStyle || 'modern-accent';
+                let nextIdx = (styleArray.indexOf(currentStyle) + 1) % styleArray.length;
+                const nextStyle = styleArray[nextIdx];
+                
+                customDesignSettings.explanationStyle = nextStyle;
+                
+                const designExplanationStyle = document.getElementById('design-explanation-style');
+                if (designExplanationStyle) {
+                    designExplanationStyle.value = nextStyle;
+                }
+                
+                renderPreview();
+                saveWorkspaceToLocalStorage();
+            });
+            wrapper.appendChild(toggleStyleBtn);
+            
+            if (block.qNum) {
+                const qNumEl = document.createElement('div');
+                qNumEl.className = 'explanation-qnum';
+                qNumEl.textContent = `${block.qNum}.`;
+                wrapper.appendChild(qNumEl);
+            }
+            
+            const card = document.createElement('div');
+            card.className = 'explanation-card';
+            
+            const header = document.createElement('div');
+            header.className = 'explanation-header';
+            header.textContent = 'Explanation';
+            card.appendChild(header);
+            
+            const content = document.createElement('div');
+            content.className = 'explanation-content';
+            const innerBlocks = parseTextToBlocks(block.markdown);
+            innerBlocks.forEach(b => {
+                const node = renderBlockToNode(b);
+                if (node) content.appendChild(node);
+            });
+            
+            card.appendChild(content);
+            wrapper.appendChild(card);
+            return wrapper;
         }
         
         if (block.type === 'personality') {
@@ -5634,10 +6196,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 1. SECTION BAR RENDER
         if (block.type === 'section') {
-            const sectionTitle = line.replace(/^#+\s*/, '').replace(/^[?？\s]+/, '').trim();
+            let sectionTitle = line.replace(/^#+\s*/, '').replace(/^[?？\s]+/, '').trim();
+            sectionTitle = sectionTitle.replace(/\[size=\d+\]/gi, '').trim();
             const sectionEl = document.createElement('h1');
             sectionEl.className = 'section-heading-bar';
             sectionEl.setAttribute('data-shape', customDesignSettings.sectionShape || 'rectangle');
+            if (block.fontSize) {
+                sectionEl.style.fontSize = `${block.fontSize}px`;
+            }
             sectionEl.textContent = sectionTitle;
             return sectionEl;
         } 
@@ -5648,6 +6214,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (topicTitle.startsWith('##')) {
                 topicTitle = topicTitle.replace(/^##+\s*/, '');
             }
+            topicTitle = topicTitle.replace(/\[size=\d+\]/gi, '').trim();
             
             let icon = '🔶'; // Default icon
             const emojiMatch = topicTitle.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\p{Emoji_Presentation}|\p{Emoji}|\S)\s*/u);
@@ -5691,6 +6258,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const titleEl = document.createElement('h3');
             titleEl.className = 'topic-title';
+            if (block.fontSize) {
+                titleEl.style.fontSize = `${block.fontSize}px`;
+            }
             titleEl.innerHTML = `<span class="diamond">${icon}</span> ${topicTitle}`;
 
             const divider = document.createElement('div');
@@ -5703,9 +6273,25 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // 3. BULLET ITEM RENDER
         else if (block.type === 'bullet') {
-            let bulletText = line.replace(/^[•\-\*\u2022\u25CF]\s*/, '').trim();
+            // Fix Double Bullet Bug: strip any standard/custom bullet character
+            let bulletText = line.replace(/^\s*[•\-\*\u2022\u25CF\u25AA\u25AB➜⭐★]\s*/, '').trim();
             const item = document.createElement('div');
             item.className = 'bullet-item';
+            
+            // Add nested list and indentation classes if applicable
+            if (block.isNested) {
+                item.classList.add('bullet-item-nested');
+                if (block.indentLevel) {
+                    item.classList.add(`bullet-indent-${block.indentLevel}`);
+                }
+            }
+
+            // Check if list item already has numbering format to hide the bullet icon
+            const hasNumbering = /^\s*(\([0-9a-zA-Z\u0966-\u096f]+\)|[0-9a-zA-Z\u0966-\u096f]+[\.\)])/.test(bulletText);
+            if (hasNumbering) {
+                item.classList.add('no-bullet-icon');
+            }
+            
             let formattedText = formatMarkdownText(bulletText);
             item.innerHTML = formattedText;
             return item;
@@ -5773,15 +6359,21 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (block.type === 'table') {
             const table = document.createElement('table');
             table.className = 'markdown-table';
+            if (block.isContinuation) {
+                table.classList.add('table-continuation');
+            }
+            table.setAttribute('data-block-id', block.id);
+            let columnWidths = null;
 
             // Apply configuration if present
             if (block.config) {
-                const parts = block.config.replace('<!--', '').replace('-->', '').split('|');
-                parts.forEach(part => {
-                    const kv = part.trim().split('=');
-                    if (kv.length === 2) {
-                        const key = kv[0].trim().toLowerCase();
-                        const val = kv[1].trim();
+                if (block.configFormat === 'square' || (block.config.startsWith('[table') && block.config.endsWith(']'))) {
+                    const configText = block.config.slice(6, -1).trim(); // remove "[table" and "]"
+                    const regex = /(\w+)=([^\s]+)/g;
+                    let match;
+                    while ((match = regex.exec(configText)) !== null) {
+                        const key = match[1].toLowerCase();
+                        const val = match[2].replace(/['"]/g, '');
                         if (key === 'width') {
                             table.style.width = val;
                         } else if (key === 'align') {
@@ -5795,15 +6387,54 @@ document.addEventListener('DOMContentLoaded', () => {
                                 table.style.marginLeft = '0';
                                 table.style.marginRight = 'auto';
                             }
+                        } else if (key === 'cols' || key === 'col-widths') {
+                            columnWidths = val.split(',').map(w => w.trim());
                         }
                     }
-                });
+                } else {
+                    const parts = block.config.replace('<!--', '').replace('-->', '').split('|');
+                    parts.forEach(part => {
+                        const kv = part.trim().split('=');
+                        if (kv.length === 2) {
+                            const key = kv[0].trim().toLowerCase();
+                            const val = kv[1].trim();
+                            if (key === 'width') {
+                                table.style.width = val;
+                            } else if (key === 'align') {
+                                if (val === 'center') {
+                                    table.style.marginLeft = 'auto';
+                                    table.style.marginRight = 'auto';
+                                } else if (val === 'right') {
+                                    table.style.marginLeft = 'auto';
+                                    table.style.marginRight = '0';
+                                } else {
+                                    table.style.marginLeft = '0';
+                                    table.style.marginRight = 'auto';
+                                }
+                            } else if (key === 'cols' || key === 'col-widths') {
+                                columnWidths = val.split(',').map(w => w.trim());
+                            }
+                        }
+                    });
+                }
             }
             
+            // Fallback to global setting if no specific table columns width config is provided
+            if (!columnWidths && customDesignSettings && customDesignSettings.tableColWidths) {
+                columnWidths = customDesignSettings.tableColWidths.split(',').map(w => w.trim());
+            }
+
+            if (columnWidths) {
+                table.setAttribute('data-widths', columnWidths.join(', '));
+                table.style.tableLayout = 'fixed';
+            }
+            
+            const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
             const lines = block.markdown.split('\n');
             
             let isFirstRow = true;
+            let firstColIsNo = false;
             
             for (let j = 0; j < lines.length; j++) {
                 const line = lines[j].trim();
@@ -5818,20 +6449,110 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(c => c.trim())
                     .slice(1, -1);
                 
+                if (isFirstRow && cells.length > 0) {
+                    const firstHeader = (cells[0] || '').replace(/\*/g, '').replace(/\s+/g, '').replace(/\./g, '').toLowerCase().trim();
+                    if (firstHeader === 'no' || firstHeader === 'sno' || firstHeader === 'sr' || firstHeader === 'srno' || firstHeader === '#') {
+                        firstColIsNo = true;
+                    }
+                }
+                
                 const tr = document.createElement('tr');
                 const isHeader = isFirstRow;
-                isFirstRow = false;
                 
+                let cellIdx = 0;
                 cells.forEach(cellText => {
                     const cell = document.createElement(isHeader ? 'th' : 'td');
                     let formattedText = formatMarkdownText(cellText);
                     cell.innerHTML = formattedText;
+                    
+                    if (cellIdx === 0 && firstColIsNo) {
+                        cell.classList.add('table-col-no');
+                    }
+                    
+                    if (isHeader && columnWidths && columnWidths[cellIdx]) {
+                        cell.style.width = columnWidths[cellIdx];
+                    }
+                    
+                    if (isHeader) {
+                        cell.style.position = 'relative';
+                        // Add drag handle for resizing columns (except for the last one)
+                        if (cellIdx < cells.length - 1) {
+                            const handle = document.createElement('div');
+                            handle.className = 'table-resize-handle';
+                            
+                            handle.addEventListener('mousedown', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                const tableEl = cell.closest('table');
+                                tableEl.style.tableLayout = 'fixed';
+                                const pageEl = tableEl.closest('.a4-page');
+                                if (!pageEl) return;
+                                const pageNum = parseInt(pageEl.getAttribute('data-page'), 10);
+                                if (isNaN(pageNum)) return;
+
+                                // Switch to this page in the editor, preventing preview scrolling
+                                const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+                                switchActivePage(showCover ? pageNum - 1 : pageNum, true, true);
+                                
+                                const ths = Array.from(tableEl.querySelectorAll('thead th'));
+                                const startWidths = ths.map(th => th.getBoundingClientRect().width);
+                                const startX = e.clientX;
+                                const cellIndex = ths.indexOf(cell);
+                                
+                                handle.classList.add('active');
+
+                                const onMouseMove = (moveEvent) => {
+                                    const dx = moveEvent.clientX - startX;
+                                    const nextCellIndex = cellIndex + 1;
+                                    
+                                    const w1 = startWidths[cellIndex] + dx;
+                                    const w2 = startWidths[nextCellIndex] - dx;
+                                    
+                                    if (w1 > 30 && w2 > 30) {
+                                        ths[cellIndex].style.width = w1 + 'px';
+                                        ths[nextCellIndex].style.width = w2 + 'px';
+                                    }
+                                };
+                                
+                                const onMouseUp = () => {
+                                    document.removeEventListener('mousemove', onMouseMove);
+                                    document.removeEventListener('mouseup', onMouseUp);
+                                    
+                                    handle.classList.remove('active');
+                                    
+                                    // Calculate new percentages
+                                    const finalWidths = ths.map(th => th.getBoundingClientRect().width);
+                                    const totalWidth = finalWidths.reduce((a, b) => a + b, 0);
+                                    const percentageWidths = finalWidths.map(w => Math.round((w / totalWidth) * 100) + '%');
+                                    
+                                    // Update markdown using exact block ID and ths fallback
+                                    const blockId = parseInt(tableEl.getAttribute('data-block-id'), 10);
+                                    updateTableConfigInMarkdown(pageNum - 1, blockId, percentageWidths.join(', '), ths);
+                                };
+                                
+                                document.addEventListener('mousemove', onMouseMove);
+                                document.addEventListener('mouseup', onMouseUp);
+                            });
+                            
+                            cell.appendChild(handle);
+                        }
+                    }
+                    
                     tr.appendChild(cell);
+                    cellIdx++;
                 });
                 
-                tbody.appendChild(tr);
+                if (isHeader) {
+                    thead.appendChild(tr);
+                } else {
+                    tbody.appendChild(tr);
+                }
+                
+                isFirstRow = false;
             }
             
+            table.appendChild(thead);
             table.appendChild(tbody);
             return table;
         }
@@ -5881,7 +6602,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateNodeContent(node, type, markdown) {
         let line = markdown.trim();
         if (type === 'bullet') {
-            let bulletText = line.replace(/^[•\-\*\u2022\u25CF]\s*/, '').trim();
+            let bulletText = line.replace(/^\s*[•\-\*\u2022\u25CF\u25AA\u25AB➜⭐★]\s*/, '').trim();
+            // Check if list item already has numbering format to hide the bullet icon
+            const hasNumbering = /^\s*(\([0-9a-zA-Z\u0966-\u096f]+\)|[0-9a-zA-Z\u0966-\u096f]+[\.\)])/.test(bulletText);
+            if (hasNumbering) {
+                node.classList.add('no-bullet-icon');
+            } else {
+                node.classList.remove('no-bullet-icon');
+            }
             let formattedText = formatMarkdownText(bulletText);
             node.innerHTML = formattedText;
         } else if (type === 'box') {
@@ -5891,6 +6619,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const tbody = document.createElement('tbody');
             const lines = markdown.split('\n');
             let isFirstRow = true;
+            let firstColIsNo = false;
             
             for (let j = 0; j < lines.length; j++) {
                 const line = lines[j].trim();
@@ -5904,21 +6633,130 @@ document.addEventListener('DOMContentLoaded', () => {
                     .map(c => c.trim())
                     .slice(1, -1);
                 
+                if (isFirstRow && cells.length > 0) {
+                    const firstHeader = (cells[0] || '').replace(/\*/g, '').replace(/\s+/g, '').replace(/\./g, '').toLowerCase().trim();
+                    if (firstHeader === 'no' || firstHeader === 'sno' || firstHeader === 'sr' || firstHeader === 'srno' || firstHeader === '#') {
+                        firstColIsNo = true;
+                    }
+                }
+                
                 const tr = document.createElement('tr');
                 const isHeader = isFirstRow;
                 isFirstRow = false;
                 
+                const dataWidths = node.getAttribute('data-widths');
+                let columnWidths = null;
+                if (dataWidths) {
+                    columnWidths = dataWidths.split(',').map(w => w.trim());
+                }
+
+                let cellIdx = 0;
                 cells.forEach(cellText => {
                     const cell = document.createElement(isHeader ? 'th' : 'td');
                     let formattedText = formatMarkdownText(cellText);
                     cell.innerHTML = formattedText;
+                    
+                    if (cellIdx === 0 && firstColIsNo) {
+                        cell.classList.add('table-col-no');
+                    }
+                    
+                    if (isHeader && columnWidths && columnWidths[cellIdx]) {
+                        cell.style.width = columnWidths[cellIdx];
+                    }
+                    
                     tr.appendChild(cell);
+                    cellIdx++;
                 });
                 
                 tbody.appendChild(tr);
             }
             node.innerHTML = '';
             node.appendChild(tbody);
+        } else if (type === 'bilingual-mcq') {
+            const lines = markdown.split('\n');
+            let contentLines = [];
+            for (let idx = 0; idx < lines.length; idx++) {
+                const trm = lines[idx].trim();
+                if (trm.startsWith('[bilingual-mcq') || trm === '[/bilingual-mcq]') {
+                    continue;
+                }
+                contentLines.push(lines[idx]);
+            }
+            const fullInner = contentLines.join('\n');
+            let hiMarkdown = "";
+            let enMarkdown = "";
+            const hiIndex = fullInner.indexOf('{hi}');
+            const enIndex = fullInner.indexOf('{en}');
+            if (hiIndex !== -1 && enIndex !== -1) {
+                if (hiIndex < enIndex) {
+                    hiMarkdown = fullInner.substring(hiIndex + 4, enIndex).trim();
+                    enMarkdown = fullInner.substring(enIndex + 4).trim();
+                } else {
+                    enMarkdown = fullInner.substring(enIndex + 4, hiIndex).trim();
+                    hiMarkdown = fullInner.substring(hiIndex + 4).trim();
+                }
+            } else if (hiIndex !== -1) {
+                hiMarkdown = fullInner.substring(hiIndex + 4).trim();
+            } else if (enIndex !== -1) {
+                enMarkdown = fullInner.substring(enIndex + 4).trim();
+            } else {
+                hiMarkdown = fullInner.trim();
+            }
+            
+            node.innerHTML = '';
+            const hiCol = document.createElement('div');
+            hiCol.className = 'bilingual-mcq-col bilingual-mcq-hi';
+            const hiBlocks = parseTextToBlocks(hiMarkdown);
+            hiBlocks.forEach(b => {
+                const n = renderBlockToNode(b);
+                if (n) hiCol.appendChild(n);
+            });
+            
+            const enCol = document.createElement('div');
+            enCol.className = 'bilingual-mcq-col bilingual-mcq-en';
+            const enBlocks = parseTextToBlocks(enMarkdown);
+            enBlocks.forEach(b => {
+                const n = renderBlockToNode(b);
+                if (n) enCol.appendChild(n);
+            });
+            
+            node.appendChild(hiCol);
+            node.appendChild(enCol);
+        } else if (type === 'explanation') {
+            const explanationStartMatch = markdown.trim().match(/^\[explanation(?:\s+q=["']?(\d+)["']?)?\]$/i);
+            const qNum = explanationStartMatch ? explanationStartMatch[1] : null;
+            const lines = markdown.split('\n');
+            let contentLines = [];
+            for (let idx = 0; idx < lines.length; idx++) {
+                const trm = lines[idx].trim();
+                if (trm.startsWith('[explanation') || trm === '[/explanation]') {
+                    continue;
+                }
+                contentLines.push(lines[idx]);
+            }
+            node.innerHTML = '';
+            if (qNum) {
+                const qNumEl = document.createElement('div');
+                qNumEl.className = 'explanation-qnum';
+                qNumEl.textContent = `${qNum}.`;
+                node.appendChild(qNumEl);
+            }
+            const card = document.createElement('div');
+            card.className = 'explanation-card';
+            const header = document.createElement('div');
+            header.className = 'explanation-header';
+            header.textContent = 'Explanation';
+            card.appendChild(header);
+            
+            const content = document.createElement('div');
+            content.className = 'explanation-content';
+            const innerBlocks = parseTextToBlocks(contentLines.join('\n'));
+            innerBlocks.forEach(b => {
+                const n = renderBlockToNode(b);
+                if (n) content.appendChild(n);
+            });
+            card.appendChild(content);
+            node.appendChild(card);
         } else if (type === 'empty') {
             node.innerHTML = '&nbsp;';
         } else if (type === 'spacer') {
@@ -6034,12 +6872,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                     return innerHeight + 24; // Inner blocks height + 24px box padding
                 }
+            case 'bilingual-mcq':
+                {
+                    const hiHeight = calculateBlockHeightRaw({ type: 'paragraph', markdown: block.hiMarkdown }, fontSize, lineSpacing, true);
+                    const enHeight = calculateBlockHeightRaw({ type: 'paragraph', markdown: block.enMarkdown }, fontSize, lineSpacing, true);
+                    return Math.max(hiHeight, enHeight) + 16;
+                }
+            case 'explanation':
+                {
+                    const innerBlocks = parseTextToBlocks(block.markdown);
+                    let innerHeight = 0;
+                    innerBlocks.forEach(inner => {
+                        innerHeight += estimateBlockHeight(inner, fontSize, lineSpacing, isTwoCol);
+                    });
+                    const expStyle = customDesignSettings.explanationStyle || 'modern-accent';
+                    let extraHeight = 16; // base padding/margins
+                    if (expStyle === 'classic-header') {
+                        extraHeight += (block.qNum ? 20 : 0) + 28;
+                    } else if (expStyle === 'modern-accent' || expStyle === 'glass-floating') {
+                        extraHeight += (block.qNum ? 20 : 0);
+                    } else if (expStyle === 'editorial-ribbon') {
+                        extraHeight += 25; // padding for ribbon
+                    } else if (expStyle === 'two-tone-split') {
+                        extraHeight += 0; // split column places question number to the side
+                    }
+                    return innerHeight + extraHeight;
+                }
             case 'section':
-                return 55; // 18px font size + padding/margin
+                return 55 * ((block.fontSize || 18) / 18); // 18px font size + padding/margin
             case 'chapter-header':
-                return 85; // 22px font size + ribbon wrapper + margins
+                return 85 * ((block.fontSize || 22) / 22); // adjusted for custom font size if specified
             case 'topic':
-                return 45; // 15px font size + padding/margin
+                return 45 * ((block.fontSize || 15) / 15); // 15px font size + padding/margin
             case 'empty':
                 return lineHeight;
             case 'spacer':
@@ -6056,8 +6920,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 return 220; // conservative estimate for image height
             case 'table':
                 {
-                    const rows = text.split('\n').filter(l => l.trim()).length;
-                    return (rows * 32) + 20; // 32px per row + padding/margin
+                    const linesOfTable = text.split('\n').filter(l => l.trim());
+                    let totalTableHeight = 20; // base padding/margin
+                    
+                    const tblFontSize = parseFloat(customDesignSettings.tableBodyFontSize) || (isTwoCol ? (fontSize - 1.5) : (fontSize - 1));
+                    const tblLineSpacing = isTwoCol ? 1.25 : lineSpacing;
+                    const tblLineHeight = tblFontSize * tblLineSpacing;
+                    const tblCellPadding = isTwoCol ? 8 : 12;
+
+                    linesOfTable.forEach((line, idx) => {
+                        if (idx === 1 && line.replace(/[^|:\-]/g, '').trim() === line) {
+                            return; // skip separator row
+                        }
+                        
+                        const cells = line.split('|').map(c => c.trim()).slice(1, -1);
+                        let maxCellLines = 1;
+                        
+                        cells.forEach(cellText => {
+                            // In 2-Column layouts, cells are very narrow
+                            const cellWidth = isTwoCol ? 110 : 220;
+                            const charsPerLine = Math.max(10, Math.floor(cellWidth / (0.55 * tblFontSize)));
+                            const cellLines = Math.ceil(cellText.length / charsPerLine) || 1;
+                            if (cellLines > maxCellLines) {
+                                maxCellLines = cellLines;
+                            }
+                        });
+                        
+                        totalTableHeight += (maxCellLines * tblLineHeight) + tblCellPadding; // cell height + padding
+                    });
+                    
+                    return totalTableHeight;
                 }
             case 'box':
                 {
@@ -6078,8 +6970,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Helper to detect overflow in single and two-column layouts
+    function checkPageOverflow(contentEl, isTwoCol, maxHeight, ignoreHorizontal = false) {
+        const contentRect = contentEl.getBoundingClientRect();
+        // Fallback if the element is not in DOM or hidden (rect is 0)
+        if (contentRect.width === 0 || contentRect.height === 0) {
+            // Use estimated height check as fallback
+            if (!isTwoCol) {
+                const children = contentEl.children;
+                if (children.length > 0) {
+                    const lastChild = children[children.length - 1];
+                    const contentHeight = lastChild.offsetTop + lastChild.offsetHeight;
+                    return contentHeight > maxHeight;
+                }
+            }
+            return false;
+        }
+
+        const descendants = Array.from(contentEl.querySelectorAll('*'));
+        const directChildren = Array.from(contentEl.children);
+        const allElements = [...directChildren, ...descendants];
+
+        // Use the safety boundary top + maxHeight for vertical overflow check
+        const maxAllowedBottom = contentRect.top + maxHeight;
+
+        if (isTwoCol) {
+            // In 2-column mode, check if any element overflows the content area's right or bottom safety boundaries
+            return allElements.some(child => {
+                const childRect = child.getBoundingClientRect();
+                const style = window.getComputedStyle(child);
+                const isColumnSpanAll = style.columnSpan === 'all' || 
+                                        style.webkitColumnSpan === 'all' || 
+                                        child.classList.contains('chapter-header') || 
+                                        child.closest('.chapter-header') !== null;
+                
+                let horizontalOverflow = false;
+                if (!isColumnSpanAll && !ignoreHorizontal) {
+                    horizontalOverflow = childRect.right > (contentRect.right + 30);
+                }
+                
+                // Check vertical overflow if the element is in Column 2 or has column-span: all
+                let verticalOverflow = false;
+                
+                // Only check vertical overflow if the element's left edge is in Column 2
+                const isInColumn2 = childRect.left > (contentRect.left + (contentRect.width / 2));
+                
+                if (isInColumn2 || isColumnSpanAll) {
+                    verticalOverflow = childRect.bottom > (maxAllowedBottom + 3);
+                }
+                return horizontalOverflow || verticalOverflow;
+            });
+        } else {
+            // In single column mode, check if any element overflows the content area's bottom boundary safety threshold
+            return allElements.some(child => {
+                const childRect = child.getBoundingClientRect();
+                return childRect.bottom > (maxAllowedBottom + 3);
+            });
+        }
+    }
+
+
     // Render right-side actual A4 pages sequentially
-    function renderPreview() {
+    function renderPreview(forceStrictSplit = false) {
         // Save current scroll positions of the preview canvas scroll wrapper to prevent jumping
         const canvasWrapper = document.querySelector('.canvas-wrapper');
         const savedScrollTop = canvasWrapper ? canvasWrapper.scrollTop : 0;
@@ -6090,7 +7042,7 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(renderTimeout);
         }
         // Measure dynamic available height of page content container
-        if (cachedMaxContentHeight === null) {
+        if (cachedMaxContentHeight === null || cachedMaxContentHeight < 500) {
             const tempPageStruct = createContentPageDOM(999, 999);
             tempPageStruct.pageElement.style.position = 'absolute';
             tempPageStruct.pageElement.style.visibility = 'hidden';
@@ -6098,19 +7050,32 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(tempPageStruct.pageElement);
             const measuredHeight = tempPageStruct.contentElement.clientHeight;
             document.body.removeChild(tempPageStruct.pageElement);
-            if (measuredHeight > 0) {
+            // Sanity check: only cache if height is realistic (e.g., above 500px)
+            // to prevent caching buggy heights measured before styles.css fully loads
+            if (measuredHeight > 500) {
                 cachedMaxContentHeight = measuredHeight;
             }
         }
-        MAX_CONTENT_HEIGHT = cachedMaxContentHeight || 910;
+        // Apply a tight 20px safety buffer (breathing room) in preview to fill columns completely and eliminate blank spaces
+        MAX_CONTENT_HEIGHT = (cachedMaxContentHeight ? (cachedMaxContentHeight - 20) : 875);
 
         // Clear canvas
         pagesContainer.innerHTML = '';
 
         // 1. Render Cover Page (Page 1)
-        const coverPageElement = createCoverPageDOM();
-        // Prevent watermark on cover page as per user request
-        pagesContainer.appendChild(coverPageElement);
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+        if (activePageIndex === 0 && !showCover) {
+            activePageIndex = 1;
+        }
+        if (activePageIndex >= pagesData.length) {
+            activePageIndex = pagesData.length - 1;
+        }
+
+        if (showCover) {
+            const coverPageElement = createCoverPageDOM();
+            // Prevent watermark on cover page as per user request
+            pagesContainer.appendChild(coverPageElement);
+        }
 
         // 1.5 Track cursor position in content pages
         const isEditorActive = (activePageIndex > 0 && activePageIndex < pagesData.length) && 
@@ -6147,7 +7112,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         let currentVisualPageNum = 1;
-        let currentPageStruct = createContentPageDOM(2, 1);
+        let currentPageStruct = createContentPageDOM(showCover ? 2 : 1, 1);
         injectWatermark(currentPageStruct.pageElement);
         pagesContainer.appendChild(currentPageStruct.pageElement);
 
@@ -6163,12 +7128,12 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = 0; i < blocks.length; i++) {
             const block = blocks[i];
             if (block.type === 'pagebreak') {
-                currentPageMarkdownLines.push(block.markdown);
+                currentPageMarkdownLines.push(getBlockMarkdown(block));
                 pageContentMarkdownArray.push(currentPageMarkdownLines.join('\n'));
                 currentPageMarkdownLines = [];
                 
                 currentVisualPageNum++;
-                currentPageStruct = createContentPageDOM(currentVisualPageNum + 1, currentVisualPageNum);
+                currentPageStruct = createContentPageDOM(currentVisualPageNum + (showCover ? 1 : 0), currentVisualPageNum);
                 injectWatermark(currentPageStruct.pageElement);
                 pagesContainer.appendChild(currentPageStruct.pageElement);
                 activeBulletListElement = null;
@@ -6210,18 +7175,16 @@ document.addEventListener('DOMContentLoaded', () => {
             currentPageHeight += estHeight;
 
             // Check if page overflows
-            let isOverflow = false;
-            if (isTwoCol) {
-                // In two column layouts, check scrollWidth if the estimated content height is close to the double-column limit
-                // Using MAX_CONTENT_HEIGHT * 2.0 - 180 as threshold to prevent layout thrashing and only check near limits
-                if (currentPageHeight > (MAX_CONTENT_HEIGHT * 2.0 - 180)) {
-                    isOverflow = currentPageStruct.contentElement.scrollWidth > (currentPageStruct.contentElement.clientWidth + 2);
+            const contentEl = currentPageStruct.contentElement;
+            let isOverflow = checkPageOverflow(contentEl, isTwoCol, MAX_CONTENT_HEIGHT);
+            if (!isTwoCol) {
+                const children = contentEl.children;
+                let contentHeight = 0;
+                if (children.length > 0) {
+                    const lastChild = children[children.length - 1];
+                    contentHeight = lastChild.offsetTop + lastChild.offsetHeight;
                 }
-            } else if (currentPageHeight > checkThreshold) {
-                // Only read scrollHeight when estimated height gets close to or exceeds limit
-                const actualHeight = currentPageStruct.contentElement.scrollHeight;
-                currentPageHeight = actualHeight; // Sync running estimate with actual measurement
-                isOverflow = actualHeight > MAX_CONTENT_HEIGHT;
+                currentPageHeight = contentHeight;
             }
 
             if (isOverflow) {
@@ -6253,17 +7216,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         let separator = (block.type === 'table') ? '\n' : '';
                         let testMarkdown = words.slice(0, wordCount).join(separator);
                         updateNodeContent(node, block.type, testMarkdown);
-                        if (isTwoCol) {
-                            return currentPageStruct.contentElement.scrollWidth <= (currentPageStruct.contentElement.clientWidth + 2);
-                        } else {
-                            return currentPageStruct.contentElement.scrollHeight <= MAX_CONTENT_HEIGHT;
-                        }
+                        return !checkPageOverflow(currentPageStruct.contentElement, isTwoCol, MAX_CONTENT_HEIGHT, true);
                     };
 
-                    // Binary search for the maximum number of words/rows that fit
                     let low = 1;
                     if (block.type === 'table') {
-                        low = 3; // Table needs header (0), separator (1), and at least 1 data row (2)
+                        low = 2; // Table needs at least header (0) and separator (1) to split
                     }
                     let high = words.length;
                     let splitIndex = 0;
@@ -6282,12 +7240,34 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
 
                     if (splitIndex > 0 && splitIndex < words.length) {
+                        // Check if splitting here breaks highlights (==) or bold (**) formatting tags
+                        if (block.type !== 'table') {
+                            const checkUnbalanced = (arr) => {
+                                const text = arr.join('');
+                                const equalCount = (text.match(/==/g) || []).length;
+                                const starCount = (text.match(/\*\*/g) || []).length;
+                                return (equalCount % 2 !== 0) || (starCount % 2 !== 0);
+                            };
+                            if (checkUnbalanced(words.slice(0, splitIndex))) {
+                                let tempIndex = splitIndex;
+                                while (tempIndex > 0 && checkUnbalanced(words.slice(0, tempIndex))) {
+                                    tempIndex--;
+                                }
+                                if (tempIndex > 0) {
+                                    splitIndex = tempIndex;
+                                } else {
+                                    // Fallback to not splitting this block at all, moving it to next page
+                                    splitIndex = 0;
+                                }
+                            }
+                        }
+
                         // We found a valid split point!
                         let fitSeparator = (block.type === 'table') ? '\n' : '';
                         let fitMarkdown = words.slice(0, splitIndex).join(fitSeparator);
                         let remainingMarkdown = words.slice(splitIndex).join(fitSeparator);
 
-                        let canSplitTable = (block.type === 'table' && splitIndex >= 3);
+                        let canSplitTable = (block.type === 'table' && splitIndex >= 2);
                         let canSplitText = false;
                         
                         if (block.type !== 'table') {
@@ -6310,6 +7290,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 // For tables, prepend header (0) and separator (1) rows to the remaining table
                                 let headerRow = words[0];
                                 let separatorRow = words[1];
+                                const isSeparator = (str) => str && /^\s*\|(\s*:?-+:?\s*\|)+\s*$/.test(str);
+                                if (!isSeparator(separatorRow)) {
+                                    // If the table lacks a proper markdown separator row, generate a valid one dynamically
+                                    const colCount = Math.max(1, headerRow.split('|').length - 2);
+                                    separatorRow = '|' + '---|'.repeat(colCount);
+                                }
                                 remainingMarkdown = headerRow + '\n' + separatorRow + '\n' + remainingMarkdown;
                             } else if (prefix) {
                                 // If remaining markdown doesn't start with prefix, add it
@@ -6319,13 +7305,13 @@ document.addEventListener('DOMContentLoaded', () => {
                             }
 
                             // Save current page
-                            currentPageMarkdownLines.push(block.markdown);
+                            currentPageMarkdownLines.push(getBlockMarkdown(block));
                             pageContentMarkdownArray.push(currentPageMarkdownLines.join('\n'));
                             currentPageMarkdownLines = [];
 
                             // Start new page
                             currentVisualPageNum++;
-                            currentPageStruct = createContentPageDOM(currentVisualPageNum + 1, currentVisualPageNum);
+                            currentPageStruct = createContentPageDOM(currentVisualPageNum + (showCover ? 1 : 0), currentVisualPageNum);
                             injectWatermark(currentPageStruct.pageElement);
                             pagesContainer.appendChild(currentPageStruct.pageElement);
                             activeBulletListElement = null;
@@ -6335,7 +7321,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             blocks.splice(i + 1, 0, {
                                 type: block.type,
                                 markdown: remainingMarkdown,
-                                id: block.id
+                                id: block.id,
+                                config: block.config,
+                                configFormat: block.configFormat,
+                                isContinuation: true
                             });
 
                             splitSuccess = true;
@@ -6376,7 +7365,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         // Start new page
                         currentVisualPageNum++;
-                        currentPageStruct = createContentPageDOM(currentVisualPageNum + 1, currentVisualPageNum);
+                        currentPageStruct = createContentPageDOM(currentVisualPageNum + (showCover ? 1 : 0), currentVisualPageNum);
                         injectWatermark(currentPageStruct.pageElement);
                         pagesContainer.appendChild(currentPageStruct.pageElement);
                         activeBulletListElement = null;
@@ -6406,7 +7395,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Only push to currentPageMarkdownLines if we didn't already push and clear it in splitSuccess
             if (currentPageStruct.contentElement.contains(node) || (activeBulletListElement && activeBulletListElement.contains(node))) {
-                currentPageMarkdownLines.push(block.markdown);
+                currentPageMarkdownLines.push(getBlockMarkdown(block));
             }
         }
 
@@ -6417,7 +7406,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const coverPage = pagesData[0];
         const newContentPages = pageContentMarkdownArray.map((txt, index) => {
             const oldPage = pagesData[index + 1];
-            const oldLayout = oldPage ? (oldPage.layout || 'single') : 'single';
+            let oldLayout = 'two-column';
+            if (oldPage) {
+                oldLayout = oldPage.layout || 'two-column';
+            } else {
+                // If it is a dynamically generated new page, inherit the layout from the closest preceding page
+                for (let k = index; k >= 1; k--) {
+                    if (pagesData[k] && pagesData[k].layout) {
+                        oldLayout = pagesData[k].layout;
+                        break;
+                    }
+                }
+            }
             return {
                 type: 'content',
                 text: txt,
@@ -6455,10 +7455,7 @@ document.addEventListener('DOMContentLoaded', () => {
         populateCoverPageTOC(sectionInfoList);
 
         // 5. Restore spotlight outline around active edited page
-        let pageSelectorIndex = activePageIndex + 1;
-        if (activePageIndex === pagesData.length) {
-            pageSelectorIndex = pagesData.length; // Spotlight the last content page where the inline thank you box is
-        }
+        let pageSelectorIndex = activePageIndex === 0 ? 1 : activePageIndex + (showCover ? 1 : 0);
         const activeA4Page = document.querySelector(`.a4-page[data-page="${pageSelectorIndex}"]`);
         if (activeA4Page) {
             document.querySelectorAll('.a4-page').forEach(page => {
@@ -6466,6 +7463,33 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             activeA4Page.classList.add('active-page-spotlight');
         }
+
+        // 5.5 Detect and mark overflow states on pages in real-time
+        const renderedPages = pagesContainer.querySelectorAll('.a4-page:not(.cover-page)');
+        renderedPages.forEach(page => {
+            const pageNum = page.getAttribute('data-page');
+            const contentEl = page.querySelector('.page-content');
+            if (!contentEl) return;
+            
+            const isTwoCol = contentEl.classList.contains('layout-two-column');
+            let isOverflow = checkPageOverflow(contentEl, isTwoCol, MAX_CONTENT_HEIGHT);
+            
+            // Remove old badge if any
+            const oldBadge = page.querySelector('.overflow-badge');
+            if (oldBadge) oldBadge.remove();
+            
+            if (isOverflow) {
+                page.classList.add('overflow-detected');
+                
+                // Create a beautiful, blinking overflow warning badge inside the page container
+                const badge = document.createElement('div');
+                badge.className = 'overflow-badge';
+                badge.innerHTML = `⚠️ ओवरफ़्लो (Overflow)`;
+                page.appendChild(badge);
+            } else {
+                page.classList.remove('overflow-detected');
+            }
+        });
 
         // 6. Sync warning states on left page-tabs sidebar
         renderTabsList();
@@ -6489,6 +7513,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             activePageLabel.textContent = activePageIndex;
         }
+        updateIndividualTablesListUI();
     }
 
     // Helper to append gold ornate corners to a page
@@ -6655,6 +7680,15 @@ document.addEventListener('DOMContentLoaded', () => {
         headerCenter.className = 'header-center';
         const centerSpan = document.createElement('span');
         centerSpan.textContent = coverData.subtitle; // Month / Subtitle of magazine
+        
+        // Dynamically shrink font size if header center text is long
+        const subtitleText = coverData.subtitle || '';
+        if (subtitleText.length > 20) {
+            // Default font size is 15px. Gradually shrink it down to a minimum of 9px.
+            const calculatedSize = Math.max(9, 15 - Math.floor((subtitleText.length - 20) / 6));
+            centerSpan.style.fontSize = `${calculatedSize}px`;
+        }
+        
         headerCenter.appendChild(centerSpan);
 
         const headerRight = document.createElement('div');
@@ -6671,8 +7705,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // Content Wrapper
         const content = document.createElement('div');
         content.className = 'page-content';
-        if (visualPageNum !== 999 && pagesData[visualPageNum] && pagesData[visualPageNum].layout === 'two-column') {
-            content.classList.add('layout-two-column');
+        if (visualPageNum !== 999) {
+            let layout = 'two-column';
+            if (pagesData[visualPageNum] && pagesData[visualPageNum].layout) {
+                layout = pagesData[visualPageNum].layout;
+            } else {
+                // Inherit layout from the closest previous page if this page is newly/dynamically generated
+                for (let idx = visualPageNum - 1; idx >= 1; idx--) {
+                    if (pagesData[idx] && pagesData[idx].layout) {
+                        layout = pagesData[idx].layout;
+                        break;
+                    }
+                }
+            }
+            if (layout === 'two-column') {
+                content.classList.add('layout-two-column');
+            }
         }
 
         // Footer
@@ -6895,7 +7943,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 mergedMarkdownParts.push(sec.nameOrig);
             }
             sec.blocks.forEach(b => {
-                mergedMarkdownParts.push(b.markdown);
+                mergedMarkdownParts.push(getBlockMarkdown(b));
             });
             // Spacer between sections
             if (sec.blocks.length > 0 || (sec.nameNorm !== '__intro__' && sec.nameOrig)) {
@@ -6907,8 +7955,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 5. Update content pages (keeping layout configs intact)
         const cover = pagesData[0];
-        const layouts = pagesData.slice(1).map(p => p.layout || 'single');
-        if (layouts.length === 0) layouts.push('single');
+        const layouts = pagesData.slice(1).map(p => p.layout || 'two-column');
+        if (layouts.length === 0) layouts.push('two-column');
         const newPages = layouts.map((lay, idx) => ({
             type: 'content',
             text: (idx === 0) ? unifiedMarkdown : '',
@@ -7156,6 +8204,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (compactSpacingToggle) {
             compactSpacingToggle.checked = !!customDesignSettings.compactMode;
         }
+        if (tightCompactionToggle) {
+            tightCompactionToggle.checked = !!isTightCompaction;
+        }
+        if (showCoverPageToggle) {
+            showCoverPageToggle.checked = (pagesData[0] && pagesData[0].showCoverPage !== false);
+            const coverBtn = document.getElementById('btn-cover-page-toggle');
+            if (coverBtn) coverBtn.classList.toggle('active', showCoverPageToggle.checked);
+        }
         document.body.classList.toggle('compact-mode', !!customDesignSettings.compactMode);
 
         // Dynamically fetch computed theme colors to act as fallbacks instead of hardcoding Maroon/Gold/Blue
@@ -7216,6 +8272,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.style.setProperty('--custom-page-margin-y', `${customDesignSettings.pageMarginY || 6}mm`);
         document.documentElement.style.setProperty('--custom-page-padding-x', `${customDesignSettings.pagePaddingX || 6}mm`);
         document.documentElement.style.setProperty('--custom-page-padding-y', `${customDesignSettings.pagePaddingY || 4}mm`);
+
+        // Table font size variables update
+        document.documentElement.style.setProperty('--table-header-font-size', `${customDesignSettings.tableHeaderFontSize || 12.5}px`);
+        document.documentElement.style.setProperty('--table-body-font-size', `${customDesignSettings.tableBodyFontSize || 11.5}px`);
 
         // End star divider variables
         const esc = customDesignSettings.endStarColor || secondary;
@@ -7325,6 +8385,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (designBulletStyle) {
             designBulletStyle.value = customDesignSettings.bulletStyle || 'classic';
         }
+        if (designExplanationStyle) {
+            designExplanationStyle.value = customDesignSettings.explanationStyle || 'modern-accent';
+        }
+        if (designTableHeaderSize) {
+            designTableHeaderSize.value = customDesignSettings.tableHeaderFontSize || '12.5';
+            if (designTableHeaderSizeVal) designTableHeaderSizeVal.textContent = `${customDesignSettings.tableHeaderFontSize || 12.5}px`;
+        }
+        if (designTableBodySize) {
+            designTableBodySize.value = customDesignSettings.tableBodyFontSize || '11.5';
+            if (designTableBodySizeVal) designTableBodySizeVal.textContent = `${customDesignSettings.tableBodyFontSize || 11.5}px`;
+        }
+        if (designTableColWidths) {
+            designTableColWidths.value = customDesignSettings.tableColWidths || '';
+        }
 
         if (headerLogoPreview && headerLogoPreviewGroup) {
             if (customDesignSettings.headerLogoSrc) {
@@ -7350,8 +8424,8 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 pagesData = state.pagesData || [];
                 lastPageData = state.lastPageData || { title: 'THANK YOU', subtitle: 'Samyak', tagline: 'कोचिंग नहीं क्रांति' };
-                activePageIndex = state.activePageIndex || 0;
-                contentFontSize = state.contentFontSize || 13.5;
+                activePageIndex = (pagesData.length > 1) ? 1 : 0;
+                contentFontSize = state.contentFontSize || 16.1;
                 watermarkSettings = state.watermarkSettings || watermarkSettings;
                 customDesignSettings = state.customDesignSettings || customDesignSettings;
                 if (customDesignSettings.compactMode === undefined) {
@@ -7389,6 +8463,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 if (customDesignSettings.bulletStyle === undefined) {
                     customDesignSettings.bulletStyle = 'classic';
+                }
+                if (customDesignSettings.explanationStyle === undefined) {
+                    customDesignSettings.explanationStyle = 'modern-accent';
                 }
                 if (customDesignSettings.pageMarginX === undefined) {
                     customDesignSettings.pageMarginX = '8';
@@ -7479,7 +8556,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Restore font/spacing inputs
                     if (state.spacingSettings) {
                         globalFontStyleSelect.value = state.spacingSettings.fontStyle || 'modern-sans';
-                        globalFontWeightSelect.value = state.spacingSettings.fontWeight || '700';
+                        globalFontWeightSelect.value = state.spacingSettings.fontWeight || '500';
                         globalLineSpacingSelect.value = state.spacingSettings.lineSpacing || '1.45';
                         globalLetterSpacingSelect.value = state.spacingSettings.letterSpacing || '0px';
                     }
@@ -7541,81 +8618,62 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function clearWorkspaceContent() {
-        // Reset to default theme 'royal-durbar' (Lokbandhu Official) when clearing workspace
-        const activeTheme = 'royal-durbar';
-        localStorage.setItem('samyak-global-theme', activeTheme);
-        applyTheme(activeTheme, false);
-
-        // Keep the cover page metadata as is, enforcing the active theme
-        const currentCover = {
-            type: 'cover',
-            title: '',
-            tagline: '',
-            subtitle: '',
-            theme: activeTheme,
-            coverTheme: 'default',
-            coverBorderPattern: 'solid',
-            coverEmblem: 'none',
-            classification: '',
-            titleSize: 52,
-            classificationSize: 24,
-            taglineSize: 20,
-            subtitleSize: 21,
-            showTOC: true
-        };
-        currentCover.theme = activeTheme;
+        // Keep all styling settings intact, only clear text fields
+        if (pagesData[0]) {
+            pagesData[0].title = '';
+            pagesData[0].tagline = '';
+            pagesData[0].subtitle = '';
+            pagesData[0].classification = '';
+        } else {
+            pagesData[0] = {
+                type: 'cover',
+                title: '',
+                tagline: '',
+                subtitle: '',
+                theme: docThemeInput.value || 'royal-durbar',
+                coverTheme: coverThemeSelect.value || 'default',
+                coverBorderPattern: coverBorderPatternSelect.value || 'solid',
+                coverEmblem: coverEmblemSelect.value || 'none',
+                classification: '',
+                titleSize: parseFloat(coverTitleSizeSlider.value) || 52,
+                classificationSize: parseFloat(coverClassificationSizeSlider.value) || 24,
+                taglineSize: parseFloat(coverTaglineSizeSlider.value) || 20,
+                subtitleSize: parseFloat(coverSubtitleSizeSlider.value) || 21,
+                showTOC: showTocToggle.checked,
+                showCoverPage: showCoverPageToggle.checked
+            };
+        }
 
         pagesData = [
-            currentCover,
+            pagesData[0],
             // Exactly one empty Content Page
             {
                 type: 'content',
                 text: '',
-                layout: 'single'
+                layout: 'two-column'
             }
         ];
         
-        // Reset active index to cover page
-        activePageIndex = 0;
+        // Reset active index to Page 1
+        activePageIndex = 1;
         
-        // Sync values to cover fields in the UI
-        docTitleInput.value = pagesData[0].title;
-        docTaglineInput.value = pagesData[0].tagline;
-        docSubtitleInput.value = pagesData[0].subtitle;
+        // Clear text inputs in the UI
+        docTitleInput.value = '';
+        docTaglineInput.value = '';
+        docSubtitleInput.value = '';
         if (docClassificationInput) {
             docClassificationInput.value = '';
         }
-        if (coverTitleSizeSlider) {
-            coverTitleSizeSlider.value = 52;
-            coverTitleSizeVal.textContent = '52px';
-        }
-        if (coverClassificationSizeSlider) {
-            coverClassificationSizeSlider.value = 24;
-            coverClassificationSizeVal.textContent = '24px';
-        }
-        if (coverTaglineSizeSlider) {
-            coverTaglineSizeSlider.value = 20;
-            coverTaglineSizeVal.textContent = '20px';
-        }
-        if (coverSubtitleSizeSlider) {
-            coverSubtitleSizeSlider.value = 21;
-            coverSubtitleSizeVal.textContent = '21px';
-        }
+        pageContentInput.value = '';
         
-        // Keep user's active theme preserved and trigger change event to sync searchable custom select & save
-        docThemeInput.value = activeTheme;
-        docThemeInput.dispatchEvent(new Event('change'));
-        
-        // Clear uploaded images
-        uploadedImages = {};
-        imageCounter = 1;
-        saveToDB('samyak_uploaded_images', {});
-        saveToDB('samyak_image_counter', 1);
         heightEstimationCache.clear();
         
-        // Switch to Cover Tab
-        switchActivePage(0);
+        // Switch to Page 1 Tab
+        switchActivePage(1);
         switchSidebarTab('panel-pages');
+        
+        // Re-render preview with current settings and cleared text
+        renderPreview();
     }
 
     // 7. INITIAL WORKSPACE POPULATION (10-PAGE DEMONSTRATION CONTENT)
@@ -7798,16 +8856,16 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         activePageIndex = 0;
-        contentFontSize = 13.5;
-        fontSizeValSpan.textContent = `13.5px`;
-        document.documentElement.style.setProperty('--content-font-size', `13.5px`);
+        contentFontSize = 16.1;
+        fontSizeValSpan.textContent = `16.1px`;
+        document.documentElement.style.setProperty('--content-font-size', `16.1px`);
         // Reset dynamic spacing options
         globalFontStyleSelect.value = 'modern-sans';
-        globalFontWeightSelect.value = '700';
+        globalFontWeightSelect.value = '500';
         globalLineSpacingSelect.value = '1.45';
         globalLetterSpacingSelect.value = '0px';
         
-        document.documentElement.style.setProperty('--content-font-weight', '700');
+        document.documentElement.style.setProperty('--content-font-weight', '500');
         document.documentElement.style.setProperty('--content-line-height', '1.45');
         document.documentElement.style.setProperty('--content-letter-spacing', '0px');
         
@@ -7899,6 +8957,28 @@ document.addEventListener('DOMContentLoaded', () => {
         if (designBulletStyle) {
             designBulletStyle.value = 'classic';
         }
+        customDesignSettings.explanationStyle = 'modern-accent';
+        if (designExplanationStyle) {
+            designExplanationStyle.value = 'modern-accent';
+        }
+
+        customDesignSettings.tableHeaderFontSize = '12.5';
+        if (designTableHeaderSize) {
+            designTableHeaderSize.value = '12.5';
+            designTableHeaderSizeVal.textContent = '12.5px';
+        }
+        document.documentElement.style.setProperty('--table-header-font-size', '12.5px');
+
+        customDesignSettings.tableBodyFontSize = '11.5';
+        if (designTableBodySize) {
+            designTableBodySize.value = '11.5';
+            designTableBodySizeVal.textContent = '11.5px';
+        }
+        document.documentElement.style.setProperty('--table-body-font-size', '11.5px');
+        customDesignSettings.tableColWidths = '';
+        if (designTableColWidths) {
+            designTableColWidths.value = '';
+        }
 
         designBorderThick.value = '2';
         designBorderThickVal.textContent = '2px';
@@ -7980,10 +9060,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function findTextIndexInMarkdown(markdown, searchStr) {
+        console.log("findTextIndexInMarkdown called with searchStr:", searchStr);
         if (!markdown || !searchStr) return -1;
         
         // Clean search text to alphanumeric/Devanagari characters, cap at 40 chars for precision matching
         const cleanSearch = searchStr.replace(/[^a-zA-Z0-9\u0900-\u097F]/g, '').trim().substring(0, 40);
+        console.log("cleanSearch:", cleanSearch);
         if (!cleanSearch) return -1;
 
         let cleanMarkdown = "";
@@ -7996,13 +9078,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 indexMap.push(i);
             }
         }
+        console.log("cleanMarkdown substring (first 100):", cleanMarkdown.substring(0, 100));
         
         let cleanMatchIndex = cleanMarkdown.indexOf(cleanSearch);
+        console.log("cleanMatchIndex:", cleanMatchIndex);
         if (cleanMatchIndex === -1) {
             // Try matching a shorter 15 char sequence
             const shortSearch = cleanSearch.substring(0, 15);
+            console.log("Trying shortSearch:", shortSearch);
             if (shortSearch.length >= 5) {
                 cleanMatchIndex = cleanMarkdown.indexOf(shortSearch);
+                console.log("shortSearch match index:", cleanMatchIndex);
                 if (cleanMatchIndex !== -1) {
                     const start = indexMap[cleanMatchIndex];
                     const end = indexMap[cleanMatchIndex + shortSearch.length - 1] + 1;
@@ -8025,8 +9111,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const pageNum = parseInt(pageEl.getAttribute('data-page'), 10);
         if (isNaN(pageNum)) return;
 
-        // 1. Cover Page Redirect
-        if (pageNum === 1) {
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+
+        // 1. Cover Page Redirect (only if showCover is true)
+        if (showCover && pageNum === 1) {
             switchActivePage(0);
             if (e.target.closest('.cover-title')) {
                 docTitleInput.focus();
@@ -8047,10 +9135,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 3. Content Pages Redirect & Substring Sync Highlight
         // Switch editing panel to corresponding content page
-        switchActivePage(pageNum - 1);
+        switchActivePage(showCover ? pageNum - 1 : pageNum);
 
         // Find the specific container block that was clicked
-        const targetBlock = e.target.closest('.section-heading-bar, .topic-container, .bullet-item, .highlight-box, .inserted-image-container, .markdown-table, p.body-text');
+        const targetBlock = e.target.closest('.section-heading-bar, .chapter-header, .chapter-main-title, .chapter-title-group, .topic-container, .bullet-item, .highlight-box, .inserted-image-container, .markdown-table, p.body-text');
         if (!targetBlock) return;
 
         // Special handling for Images
@@ -8074,10 +9162,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     pageContentInput.focus();
                     pageContentInput.setSelectionRange(startOfLine, endPos);
                     
-                    const textBefore = pageContentInput.value.substring(0, startOfLine);
-                    const linesBefore = textBefore.split('\n').length - 1;
-                    const estimatedLineHeight = parseFloat(window.getComputedStyle(pageContentInput).lineHeight) || 22.4;
-                    pageContentInput.scrollTop = Math.max(0, (linesBefore * estimatedLineHeight) - (pageContentInput.clientHeight / 2));
+                    setTimeout(() => {
+                        const textBefore = pageContentInput.value.substring(0, startOfLine);
+                        const linesBefore = textBefore.split('\n').length - 1;
+                        const estimatedLineHeight = parseFloat(window.getComputedStyle(pageContentInput).lineHeight) || 22.4;
+                        pageContentInput.scrollTop = Math.max(0, (linesBefore * estimatedLineHeight) - (pageContentInput.clientHeight / 2));
+                    }, 50);
                 }
             }
             return;
@@ -8094,16 +9184,298 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const searchText = cleanTextForSearch(targetText);
+        console.log("pagesContainer click targetText:", targetText, "searchText:", searchText);
         const range = findTextIndexInMarkdown(pageContentInput.value, searchText);
+        console.log("findTextIndexInMarkdown range result:", range);
         if (range && range !== -1) {
             pageContentInput.focus();
             pageContentInput.setSelectionRange(range.start, range.end);
             
-            // Scroll textarea to the line
-            const textBefore = pageContentInput.value.substring(0, range.start);
-            const linesBefore = textBefore.split('\n').length - 1;
-            const estimatedLineHeight = parseFloat(window.getComputedStyle(pageContentInput).lineHeight) || 22.4;
-            pageContentInput.scrollTop = Math.max(0, (linesBefore * estimatedLineHeight) - (pageContentInput.clientHeight / 2));
+            // Scroll textarea to the line inside a setTimeout to prevent browser focus scroll from overriding it
+            setTimeout(() => {
+                const textBefore = pageContentInput.value.substring(0, range.start);
+                const linesBefore = textBefore.split('\n').length - 1;
+                const estimatedLineHeight = parseFloat(window.getComputedStyle(pageContentInput).lineHeight) || 22.4;
+                pageContentInput.scrollTop = Math.max(0, (linesBefore * estimatedLineHeight) - (pageContentInput.clientHeight / 2));
+            }, 50);
+        }
+    });
+
+    function mapGlobalLineToPageAndLocalLine(globalLine) {
+        let currentGlobalLine = 0;
+        for (let idx = 1; idx < pagesData.length; idx++) {
+            const pageLinesCount = (pagesData[idx].text || '').split('\n').length;
+            if (globalLine >= currentGlobalLine && globalLine < currentGlobalLine + pageLinesCount) {
+                return {
+                    pageIdx: idx,
+                    localLine: globalLine - currentGlobalLine
+                };
+            }
+            currentGlobalLine += pageLinesCount;
+        }
+        return {
+            pageIdx: Math.max(1, pagesData.length - 1),
+            localLine: pagesData[pagesData.length - 1] ? (pagesData[pagesData.length - 1].text || '').split('\n').length - 1 : 0
+        };
+    }
+
+    function updateTableConfigInMarkdown(pageIdx, blockId, widthsStr, ths = null) {
+        let tableIndex = -1;
+        let targetPageIdx = pageIdx;
+
+        if (blockId !== null && blockId !== undefined && !isNaN(blockId) && currentRenderedBlocks && currentRenderedBlocks[blockId]) {
+            const block = currentRenderedBlocks[blockId];
+            if (block.type === 'table') {
+                const mapped = mapGlobalLineToPageAndLocalLine(block.startLine);
+                targetPageIdx = mapped.pageIdx;
+                tableIndex = mapped.localLine;
+            }
+        }
+
+        // Fallback: Heuristic search by matching headers (for nested tables in containers)
+        if (tableIndex === -1 && ths && ths.length > 0) {
+            const headers = ths.map(th => th.textContent.trim());
+            for (let pIdx = 1; pIdx < pagesData.length; pIdx++) {
+                const pageLines = (pagesData[pIdx].text || '').split('\n');
+                for (let i = 0; i < pageLines.length; i++) {
+                    const lineTrim = pageLines[i].trim();
+                    if (lineTrim.startsWith('|') && lineTrim.endsWith('|')) {
+                        const lineCells = lineTrim.split('|').map(c => c.trim()).slice(1, -1);
+                        let matchCount = 0;
+                        if (lineCells.length === headers.length) {
+                            for (let k = 0; k < headers.length; k++) {
+                                const cellClean = lineCells[k].replace(/[\*=_]/g, '').replace(/\s+/g, ' ').toLowerCase().trim();
+                                const headerClean = headers[k].toLowerCase().trim();
+                                if (cellClean === headerClean || cellClean.includes(headerClean) || headerClean.includes(cellClean)) {
+                                    matchCount++;
+                                }
+                            }
+                        }
+                        if (matchCount === headers.length) {
+                            targetPageIdx = pIdx;
+                            tableIndex = i;
+                            break;
+                        }
+                    }
+                }
+                if (tableIndex !== -1) break;
+            }
+        }
+
+        if (tableIndex < 0 || targetPageIdx < 1 || targetPageIdx >= pagesData.length) return;
+
+        const pageText = pagesData[targetPageIdx].text || '';
+        const lines = pageText.split('\n');
+
+        // Check if config line already exists at tableIndex
+        const currentLineText = lines[tableIndex].trim();
+        const hasConfig = (currentLineText.startsWith('<!-- table|') && currentLineText.endsWith('-->')) || 
+                          (currentLineText.startsWith('[table') && currentLineText.endsWith(']'));
+
+        const cleanWidths = widthsStr.replace(/\s+/g, '');
+        const newConfig = `[table cols=${cleanWidths}]`;
+
+        if (hasConfig) {
+            if (cleanWidths === '') {
+                lines.splice(tableIndex, 1);
+            } else {
+                lines[tableIndex] = newConfig;
+            }
+        } else if (cleanWidths !== '') {
+            lines.splice(tableIndex, 0, newConfig);
+        }
+
+        const newText = lines.join('\n');
+        pagesData[targetPageIdx].text = newText;
+
+        if (activePageIndex !== targetPageIdx) {
+            switchActivePage(targetPageIdx);
+        }
+        
+        pageContentInput.value = newText;
+        const inputEvent = new Event('input', { bubbles: true });
+        pageContentInput.dispatchEvent(inputEvent);
+    }
+
+    function updateIndividualTablesListUI() {
+        const section = document.getElementById('individual-tables-section');
+        const listContainer = document.getElementById('individual-tables-list');
+        if (!section || !listContainer) return;
+
+        const tableBlocks = currentRenderedBlocks.filter(b => b.type === 'table');
+
+        if (tableBlocks.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+
+        const activeEl = document.activeElement;
+        const focusedId = (activeEl && activeEl.classList.contains('table-individual-width-input')) ? activeEl.getAttribute('id') : null;
+        const selStart = focusedId ? activeEl.selectionStart : null;
+        const selEnd = focusedId ? activeEl.selectionEnd : null;
+
+        listContainer.innerHTML = '';
+
+        const tableElements = pagesContainer.querySelectorAll('table.markdown-table');
+        const blockToVisualPage = {};
+        tableElements.forEach(tableEl => {
+            const blockId = tableEl.getAttribute('data-block-id');
+            const pageEl = tableEl.closest('.a4-page');
+            if (blockId && pageEl) {
+                const pageNum = pageEl.getAttribute('data-page');
+                if (pageNum) {
+                    blockToVisualPage[blockId] = pageNum;
+                }
+            }
+        });
+
+        tableBlocks.forEach(block => {
+            const blockId = block.id;
+            const mapped = mapGlobalLineToPageAndLocalLine(block.startLine);
+            const editorPageIdx = mapped.pageIdx;
+            const editorPageNum = editorPageIdx + 1;
+            const visualPageNum = blockToVisualPage[blockId] || 'Unknown';
+
+            const lines = block.markdown.split('\n');
+            let headersText = "Table (No Headers)";
+            if (lines.length > 0) {
+                const firstLine = lines[0].trim();
+                if (firstLine.startsWith('|') && firstLine.endsWith('|')) {
+                    const cells = firstLine.split('|').map(c => c.trim()).slice(1, -1);
+                    if (cells.length > 0) {
+                        headersText = cells.join(' | ');
+                        if (headersText.length > 35) {
+                            headersText = headersText.substring(0, 35) + '...';
+                        }
+                    }
+                }
+            }
+
+            let currentWidths = '';
+            if (block.config) {
+                if (block.configFormat === 'square' || (block.config.startsWith('[table') && block.config.endsWith(']'))) {
+                    const configText = block.config.slice(6, -1).trim();
+                    const regex = /cols=([^\s\]]+)/i;
+                    const match = regex.exec(configText);
+                    if (match) {
+                        currentWidths = match[1].replace(/['"]/g, '');
+                    }
+                }
+            }
+
+            const item = document.createElement('div');
+            item.className = 'individual-table-item';
+            item.style.backgroundColor = 'rgba(255, 255, 255, 0.02)';
+            item.style.border = '1px solid var(--ui-border)';
+            item.style.padding = '8px';
+            item.style.borderRadius = 'var(--border-radius-sm)';
+            item.style.display = 'flex';
+            item.style.flexDirection = 'column';
+            item.style.gap = '6px';
+
+            const headerRow = document.createElement('div');
+            headerRow.style.display = 'flex';
+            headerRow.style.justifyContent = 'space-between';
+            headerRow.style.alignItems = 'center';
+            headerRow.style.fontSize = '10px';
+            headerRow.style.color = 'var(--ui-text-muted)';
+
+            const pageLabel = document.createElement('span');
+            pageLabel.innerHTML = `Page <strong>${visualPageNum}</strong> (Ed. Page ${editorPageNum})`;
+
+            const locateBtn = document.createElement('button');
+            locateBtn.className = 'search-action-btn';
+            locateBtn.style.padding = '2px 6px';
+            locateBtn.style.fontSize = '9px';
+            locateBtn.style.borderRadius = '3px';
+            locateBtn.textContent = 'Go to Table';
+            locateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchActivePage(editorPageIdx);
+                const tableEl = pagesContainer.querySelector(`table.markdown-table[data-block-id="${blockId}"]`);
+                if (tableEl) {
+                    safeScrollToElement(tableEl);
+                    tableEl.style.outline = '2px solid var(--ui-accent)';
+                    setTimeout(() => {
+                        tableEl.style.outline = '';
+                    }, 2000);
+                }
+            });
+
+            headerRow.appendChild(pageLabel);
+            headerRow.appendChild(locateBtn);
+
+            const titleDiv = document.createElement('div');
+            titleDiv.style.fontSize = '11px';
+            titleDiv.style.fontWeight = 'bold';
+            titleDiv.style.whiteSpace = 'nowrap';
+            titleDiv.style.overflow = 'hidden';
+            titleDiv.style.textOverflow = 'ellipsis';
+            titleDiv.style.color = '#fff';
+            titleDiv.textContent = `📊 ${headersText}`;
+            titleDiv.title = headersText;
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.id = `table-width-input-${blockId}`;
+            input.className = 'opt-select table-individual-width-input';
+            input.style.width = '100%';
+            input.style.padding = '6px 8px';
+            input.style.fontFamily = 'monospace';
+            input.style.fontSize = '11px';
+            input.style.boxSizing = 'border-box';
+            input.style.backgroundColor = '#1a1a24';
+            input.style.border = '1px solid var(--ui-border)';
+            input.style.color = '#fff';
+            input.style.borderRadius = 'var(--border-radius-sm)';
+            input.value = currentWidths;
+            input.placeholder = 'e.g., 40%, 15%, 45%';
+
+            input.addEventListener('input', (e) => {
+                const newVal = e.target.value;
+                updateTableConfigInMarkdown(editorPageIdx, blockId, newVal, null);
+            });
+
+            item.appendChild(headerRow);
+            item.appendChild(titleDiv);
+            item.appendChild(input);
+
+            listContainer.appendChild(item);
+        });
+
+        if (focusedId) {
+            const restoredInput = document.getElementById(focusedId);
+            if (restoredInput) {
+                restoredInput.focus();
+                if (selStart !== null && selEnd !== null) {
+                    restoredInput.setSelectionRange(selStart, selEnd);
+                }
+            }
+        }
+    }
+
+    pagesContainer.addEventListener('dblclick', (e) => {
+        const tableEl = e.target.closest('.markdown-table');
+        if (!tableEl) return;
+
+        const pageEl = tableEl.closest('.a4-page');
+        if (!pageEl) return;
+
+        const pageNum = parseInt(pageEl.getAttribute('data-page'), 10);
+        if (isNaN(pageNum)) return;
+
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+        switchActivePage(showCover ? pageNum - 1 : pageNum);
+
+        const currentWidths = tableEl.getAttribute('data-widths') || '';
+        const inputWidths = prompt("इस टेबल के कॉलम की चौड़ाई बदलें (उदा. 40%, 15%, 45% या 150px, 60px, auto):\nइसे खाली छोड़ने पर डिफ़ॉल्ट चौड़ाई लागू होगी।", currentWidths);
+        
+        if (inputWidths !== null) {
+            const blockId = parseInt(tableEl.getAttribute('data-block-id'), 10);
+            const ths = Array.from(tableEl.querySelectorAll('thead th'));
+            updateTableConfigInMarkdown(pageNum - 1, blockId, inputWidths, ths);
         }
     });
 
@@ -8328,13 +9700,13 @@ document.addEventListener('DOMContentLoaded', () => {
         blocks.splice(insertIndex, 0, draggedBlock);
         
         // 4. Join back to single markdown string
-        const newMarkdown = blocks.map(b => b.markdown).join('\n');
+        const newMarkdown = blocks.map(b => getBlockMarkdown(b)).join('\n');
         
         // 5. Update pagesData content pages with this unified markdown, preserving all layouts
         const cover = pagesData[0];
-        const layouts = pagesData.slice(1).map(p => p.layout || 'single');
+        const layouts = pagesData.slice(1).map(p => p.layout || 'two-column');
         if (layouts.length === 0) {
-            layouts.push('single');
+            layouts.push('two-column');
         }
         const newPages = layouts.map((lay, idx) => ({
             type: 'content',
@@ -8940,6 +10312,64 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // 1.5 Dashboard Card and Back Navigation Logic for Design Panel
+    const designTabCards = document.querySelectorAll('.design-tab-card');
+    const designTabsGrid = document.querySelector('.design-tabs-grid');
+    const designBackBtn = document.getElementById('design-back-btn');
+    
+    function openDesignSection(targetId) {
+        // Hide the grid of cards
+        designTabsGrid.style.display = 'none';
+        // Show the back button
+        designBackBtn.style.display = 'block';
+        // Show the settings container
+        settingsAccordionContainer.style.display = 'block';
+        
+        // Show only the selected section content
+        collapsibleSections.forEach(section => {
+            const content = section.querySelector('.collapsible-content');
+            if (section.id === targetId) {
+                section.style.display = 'block';
+                if (content) content.style.display = 'block';
+                section.classList.add('active');
+            } else {
+                section.style.display = 'none';
+                if (content) content.style.display = 'none';
+                section.classList.remove('active');
+            }
+        });
+    }
+    
+    function closeDesignSection() {
+        // Hide the settings container & back button
+        settingsAccordionContainer.style.display = 'none';
+        designBackBtn.style.display = 'none';
+        // Show the grid of cards
+        designTabsGrid.style.display = 'grid';
+        
+        // Hide all sections
+        collapsibleSections.forEach(section => {
+            section.style.display = 'none';
+            section.classList.remove('active');
+        });
+    }
+    
+    // Add click listeners to cards
+    designTabCards.forEach(card => {
+        card.addEventListener('click', () => {
+            const targetId = card.getAttribute('data-target');
+            openDesignSection(targetId);
+        });
+    });
+    
+    // Add click listener to back button
+    if (designBackBtn) {
+        designBackBtn.addEventListener('click', closeDesignSection);
+    }
+    
+    // Make sure we start in the grid view (all closed)
+    closeDesignSection();
+
     // 2. HTML5 Drag-and-Drop Reordering
     let draggedElement = null;
 
@@ -9021,4 +10451,648 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Run order restoration instantly
     restoreAccordionOrder();
+
+    // -------------------------------------------------------------
+    // TEXT VISIBILITY / LAYOUT INTEGRITY AUDIT FEATURE
+    // -------------------------------------------------------------
+    const checkVisibilityBtn = document.getElementById('check-visibility-btn');
+    const pdfCheckBtn = document.getElementById('pdf-check-btn');
+    const integrityModal = document.getElementById('integrity-modal');
+    const integrityModalBody = document.getElementById('integrity-modal-body');
+    const closeIntegrityModalBtn = document.getElementById('close-integrity-modal-btn');
+    const closeIntegrityBtn = document.getElementById('close-integrity-btn');
+
+    const handleAuditClick = () => {
+        // Re-render first to ensure layout measurements are fresh
+        renderPreview();
+        
+        // Run the audit
+        runTextVisibilityAudit();
+        
+        // Show modal
+        if (integrityModal) {
+            integrityModal.classList.add('active');
+        }
+    };
+
+    if (checkVisibilityBtn) {
+        checkVisibilityBtn.addEventListener('click', handleAuditClick);
+    }
+    if (pdfCheckBtn) {
+        pdfCheckBtn.addEventListener('click', handleAuditClick);
+    }
+
+    const hideIntegrityModal = () => {
+        if (integrityModal) {
+            integrityModal.classList.remove('active');
+        }
+    };
+
+    if (integrityModal) {
+        if (closeIntegrityModalBtn) closeIntegrityModalBtn.addEventListener('click', hideIntegrityModal);
+        if (closeIntegrityBtn) closeIntegrityBtn.addEventListener('click', hideIntegrityModal);
+
+        integrityModal.addEventListener('click', (e) => {
+            if (e.target === integrityModal) {
+                hideIntegrityModal();
+            }
+        });
+    }
+
+    function runSmartFix() {
+        const maxIterations = 30;
+        let iteration = 0;
+        let fixedCount = 0;
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+
+        while (iteration < maxIterations) {
+            iteration++;
+            // 1. Get current unified markdown
+            let fullContentMarkdown = pagesData.slice(1).map(p => p.text).join('\n');
+            let lines = fullContentMarkdown.split('\n');
+            
+            // Re-parse text to blocks using parseTextToBlocks
+            let blocks = parseTextToBlocks(fullContentMarkdown);
+            
+            // Assign IDs to blocks
+            blocks.forEach((block, idx) => { block.id = idx; });
+            
+            // 2. Find the first page with overflow
+            const renderedPages = pagesContainer.querySelectorAll('.a4-page:not(.cover-page)');
+            let firstOverflowReport = null;
+            
+            for (let page of renderedPages) {
+                const pageNum = parseInt(page.getAttribute('data-page'));
+                const visualPageNum = showCover ? pageNum - 1 : pageNum;
+                const contentEl = page.querySelector('.page-content');
+                if (!contentEl) continue;
+                
+                const isTwoCol = contentEl.classList.contains('layout-two-column');
+                let isOverflow = checkPageOverflow(contentEl, isTwoCol, MAX_CONTENT_HEIGHT);
+                
+                if (isOverflow) {
+                    // Find which block on this page is overflowing
+                    const blockNodes = contentEl.querySelectorAll('[data-block-id]');
+                    const pageRect = contentEl.getBoundingClientRect();
+                    const maxAllowedBottom = pageRect.top + MAX_CONTENT_HEIGHT;
+                    
+                    for (let node of blockNodes) {
+                        const nodeRect = node.getBoundingClientRect();
+                        const blockId = parseInt(node.getAttribute('data-block-id'));
+                        
+                        // In two-column mode, check if node is in column 2/spans all
+                        let isRelevant = true;
+                        let isColumnSpanAll = false;
+                        if (isTwoCol) {
+                            const style = window.getComputedStyle(node);
+                            isColumnSpanAll = style.columnSpan === 'all' || 
+                                              style.webkitColumnSpan === 'all' || 
+                                              node.classList.contains('chapter-header') ||
+                                              node.closest('.chapter-header') !== null;
+                            // We use the same right edge boundary as checkPageOverflow to see if it is in Column 2 or spans all
+                            const hasContentInColumn2 = nodeRect.right > (pageRect.left + (pageRect.width / 2) + 3);
+                            if (!hasContentInColumn2 && !isColumnSpanAll) {
+                                isRelevant = false;
+                            }
+                        }
+                        
+                        if (isRelevant) {
+                            // Check vertical or horizontal overflow
+                            const vert = nodeRect.bottom > (maxAllowedBottom + 3);
+                            const horiz = isTwoCol && !isColumnSpanAll && (nodeRect.right > pageRect.right + 30);
+                            
+                            if (vert || horiz) {
+                                firstOverflowReport = {
+                                    page: visualPageNum,
+                                    blockId: blockId,
+                                    block: blocks[blockId],
+                                    node: node,
+                                    vert,
+                                    horiz
+                                };
+                                break;
+                            }
+                        }
+                    }
+                    if (firstOverflowReport) break;
+                }
+            }
+            
+            if (!firstOverflowReport) {
+                // No more overflows detected!
+                break;
+            }
+            
+            // 3. Fix the first overflow report
+            const report = firstOverflowReport;
+            const block = report.block;
+            if (!block) break;
+            
+            // Check if this block is the first element on the page
+            const dataPageNum = report.page + (showCover ? 1 : 0);
+            const pageDOM = pagesContainer.querySelector(`.a4-page[data-page="${dataPageNum}"]`);
+            const firstNodeOnPage = pageDOM ? pageDOM.querySelector('.page-content [data-block-id]') : null;
+            const isFirstOnPage = firstNodeOnPage && parseInt(firstNodeOnPage.getAttribute('data-block-id')) === report.blockId;
+            
+            if (!isFirstOnPage) {
+                // Scenario A: The overflowing block is not the first block on the page.
+                // We insert a [pagebreak] before this block.
+                const startLineIdx = block.startLine;
+                lines.splice(startLineIdx, 0, '[pagebreak]');
+                fixedCount++;
+            } else {
+                // Scenario B: The block is already the first block on the page, and still overflows.
+                // We must split the block!
+                if (block.type === 'paragraph' || block.type === 'bullet') {
+                    // Let's do a word split:
+                    const words = block.markdown.split(/(\s+)/);
+                    if (words.length > 4) {
+                        // Split it in half
+                        const mid = Math.floor(words.length / 2);
+                        const part1 = words.slice(0, mid).join('');
+                        const part2 = words.slice(mid).join('');
+                        
+                        // Replace the block line with part1, [pagebreak], and part2
+                        const startLineIdx = block.startLine;
+                        let prefix = (block.type === 'bullet') ? (block.markdown.match(/^\s*(•|●|■|▪|▫|[\u2022\u25CF\u25AA\u25AB]|\-|\*|\(\d+\)|\d+\.)\s*/) || [""])[0] : "";
+                        
+                        let cleanPart2 = part2.trimStart();
+                        if (prefix && !cleanPart2.startsWith(prefix.trim())) {
+                            cleanPart2 = prefix + cleanPart2;
+                        }
+                        
+                        lines.splice(startLineIdx, 1, part1, '[pagebreak]', cleanPart2);
+                        fixedCount++;
+                    } else {
+                        // Too short to split, just insert a pagebreak before it anyway
+                        const startLineIdx = block.startLine;
+                        lines.splice(startLineIdx, 0, '[pagebreak]');
+                        fixedCount++;
+                    }
+                } else {
+                    // If it is not a paragraph or bullet (e.g. a large box or heading), we can't easily split it.
+                    // Just insert a pagebreak before it to be safe.
+                    const startLineIdx = block.startLine;
+                    lines.splice(startLineIdx, 0, '[pagebreak]');
+                    fixedCount++;
+                }
+            }
+            
+            // 4. Save the new markdown back to pagesData
+            const updatedText = lines.join('\n');
+            pagesData = [pagesData[0], { type: 'content', text: updatedText, layout: pagesData[1].layout || 'two-column' }];
+            
+            // Re-render preview
+            renderPreview(true); // forceStrictSplit
+        }
+        
+        if (fixedCount > 0) {
+            saveWorkspaceToLocalStorage();
+            if (activePageIndex > 0 && activePageIndex < pagesData.length) {
+                pageContentInput.value = pagesData[activePageIndex].text;
+            }
+        }
+        
+        return fixedCount;
+    }
+
+    function runTextVisibilityAudit() {
+        const fullContentMarkdown = pagesData.slice(1).map(p => p.text).join('\n');
+        const blocks = parseTextToBlocks(fullContentMarkdown);
+        
+        const renderedBlockIds = new Set();
+        const clippedReports = [];
+        const missingReports = [];
+        
+        const contentPages = pagesContainer.querySelectorAll('.a4-page:not(.cover-page)');
+        
+        contentPages.forEach(page => {
+            const pageNum = page.getAttribute('data-page');
+            const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+            const visualPageNum = pageNum ? (showCover ? (parseInt(pageNum) - 1) : parseInt(pageNum)) : 1;
+            const contentEl = page.querySelector('.page-content');
+            if (!contentEl) return;
+            
+            const contentRect = contentEl.getBoundingClientRect();
+            // Use the pagination safety MAX_CONTENT_HEIGHT for consistent overflow reporting in PDF Check
+            const pageHeight = MAX_CONTENT_HEIGHT;
+            
+            // Find all nodes with data-block-id on this page
+            const isTwoCol = contentEl.classList.contains('layout-two-column');
+            const blockNodes = contentEl.querySelectorAll('[data-block-id]');
+            
+            blockNodes.forEach(node => {
+                const blockId = parseInt(node.getAttribute('data-block-id'));
+                renderedBlockIds.add(blockId);
+                
+                const nodeRect = node.getBoundingClientRect();
+                
+                // In two-column mode, verify if the block is actually in Column 2, wraps into Column 2, or spans all columns
+                let shouldCheckVerticalOverflow = true;
+                if (isTwoCol) {
+                    const style = window.getComputedStyle(node);
+                    const isColumnSpanAll = style.columnSpan === 'all' || 
+                                            style.webkitColumnSpan === 'all' || 
+                                            node.classList.contains('chapter-header') ||
+                                            node.closest('.chapter-header') !== null;
+                    // A node is in Column 2 (or wraps into Column 2) if its right edge is past the divider (mid-point of page content width)
+                    const isInColumn2OrWraps = nodeRect.right > (contentRect.left + (contentRect.width / 2) + 2);
+                    
+                    if (!isInColumn2OrWraps && !isColumnSpanAll) {
+                        shouldCheckVerticalOverflow = false;
+                    }
+                }
+                
+                if (shouldCheckVerticalOverflow) {
+                    const relativeTop = nodeRect.top - contentRect.top;
+                    const relativeBottom = nodeRect.bottom - contentRect.top;
+                    
+                    // Check if element extends past the page safety boundary
+                    // We use a 3px tolerance for consistent layout checks matching checkPageOverflow
+                    if (relativeBottom > pageHeight + 3) {
+                        const isCompletelyHidden = (relativeTop >= pageHeight - 3);
+                        const block = blocks[blockId];
+                        if (block) {
+                            clippedReports.push({
+                                page: visualPageNum,
+                                lineStart: block.startLine + 1,
+                                lineEnd: block.endLine + 1,
+                                type: block.type,
+                                text: node.textContent.trim(),
+                                severity: isCompletelyHidden ? 'completely-hidden' : 'partially-clipped'
+                            });
+                        }
+                    }
+                }
+            });
+        });
+        
+        // Find completely unrendered blocks (e.g. if skipped due to pagination errors)
+        blocks.forEach((block, idx) => {
+            // Ignore pagebreak, empty spacers, column breaks etc. that don't have text
+            if (block.type !== 'pagebreak' && block.type !== 'empty' && block.type !== 'columnbreak' && block.type !== 'spacer') {
+                // If the block is not in the set of rendered block IDs
+                if (!renderedBlockIds.has(idx)) {
+                    if (block.type !== 'thankyou') {
+                        missingReports.push({
+                            lineStart: block.startLine + 1,
+                            lineEnd: block.endLine + 1,
+                            type: block.type,
+                            text: block.markdown || ''
+                        });
+                    }
+                }
+            }
+        });
+
+        // Populate modal with results
+        renderAuditReport(clippedReports, missingReports);
+    }
+
+    function renderAuditReport(clipped, missing) {
+        if (!integrityModalBody) return;
+        integrityModalBody.innerHTML = '';
+        
+        const container = document.createElement('div');
+        container.className = 'audit-results-container';
+        
+        const totalIssues = clipped.length + missing.length;
+        
+        if (totalIssues === 0) {
+            // All clear screen
+            container.innerHTML = `
+                <div class="audit-success-box">
+                    <div class="success-icon" style="font-size: 48px; margin-bottom: 12px;">✨</div>
+                    <h4 style="margin: 0 0 8px 0; color: #4ade80;">सब कुछ सुरक्षित है! (All Clear)</h4>
+                    <p style="margin: 0 0 16px 0; color: var(--ui-text-muted); font-size: 13px;">लाइव प्रिव्यू और सेव की गई PDF 100% मैच करेगी। कोई भी लाइन नीचे से नहीं कटेगी।</p>
+                    <button id="modal-print-pdf-btn" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 600; padding: 10px 20px;">
+                        🖨️ PDF सेव करें (Print & Save PDF)
+                    </button>
+                </div>
+            `;
+        } else {
+            // Issues found screen
+            let issuesHtml = `
+                <div class="audit-issues-header" style="margin-bottom: 14px;">
+                    <h4 style="margin: 0 0 6px 0; color: #f87171;">⚠️ कुल ${totalIssues} ओवरफ़्लो समस्याएँ मिलीं! (Issues Found)</h4>
+                    <p style="margin: 0; color: var(--ui-text-muted); font-size: 12px;">निम्नलिखित पेजों पर कुछ लाइनें नीचे से कट रही हैं जो PDF में नहीं दिखेंगी:</p>
+                </div>
+                <div class="audit-cards-grid" style="display: flex; flex-direction: column; gap: 10px; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+            `;
+            
+            // Add clipped elements reports
+            clipped.forEach(item => {
+                const severityLabel = item.severity === 'completely-hidden' ? 'पूर्णतः गायब (Hidden)' : 'आंशिक रूप से कटा (Clipped)';
+                const badgeClass = item.severity === 'completely-hidden' ? 'badge-danger' : 'badge-warning';
+                const severityClass = item.severity === 'completely-hidden' ? 'severity-completely-hidden' : 'severity-partially-clipped';
+                
+                // Create a snippet of the text
+                let textSnippet = item.text;
+                if (textSnippet.length > 150) {
+                    textSnippet = textSnippet.substring(0, 150) + '...';
+                }
+                
+                issuesHtml += `
+                    <div class="audit-card ${severityClass}" style="border: 1px solid rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.03); padding: 10px; border-radius: 6px;">
+                        <div class="audit-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span class="audit-page-tag" style="font-weight: 700; color: #fca5a5;">📄 पेज ${item.page}</span>
+                            <span class="audit-badge ${badgeClass}" style="background: rgba(239, 68, 68, 0.2); color: #fca5a5; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">${severityLabel}</span>
+                        </div>
+                        <div class="audit-card-meta" style="font-size: 11px; color: var(--ui-text-muted); display: flex; gap: 12px; margin-bottom: 6px;">
+                            <span>✏️ लाइन: ${item.lineStart === item.lineEnd ? item.lineStart : item.lineStart + ' - ' + item.lineEnd}</span>
+                            <span>📦 प्रकार: ${item.type.toUpperCase()}</span>
+                        </div>
+                        <div class="audit-card-body" style="font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.15); padding: 6px; border-radius: 4px; color: #eee; word-break: break-all;">
+                            <code>${escapeHtml(textSnippet)}</code>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            // Add missing elements reports
+            missing.forEach(item => {
+                let textSnippet = item.text;
+                if (textSnippet.length > 150) {
+                    textSnippet = textSnippet.substring(0, 150) + '...';
+                }
+                
+                issuesHtml += `
+                    <div class="audit-card severity-unrendered" style="border: 1px solid rgba(245, 158, 11, 0.2); background: rgba(245, 158, 11, 0.03); padding: 10px; border-radius: 6px;">
+                        <div class="audit-card-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span class="audit-page-tag" style="font-weight: 700; color: #fde047;">🚫 प्रिव्यू में गायब</span>
+                            <span class="audit-badge badge-missing" style="background: rgba(245, 158, 11, 0.2); color: #fde047; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600;">गायब (Missing)</span>
+                        </div>
+                        <div class="audit-card-meta" style="font-size: 11px; color: var(--ui-text-muted); display: flex; gap: 12px; margin-bottom: 6px;">
+                            <span>✏️ लाइन: ${item.lineStart === item.lineEnd ? item.lineStart : item.lineStart + ' - ' + item.lineEnd}</span>
+                            <span>📦 प्रकार: ${item.type.toUpperCase()}</span>
+                        </div>
+                        <div class="audit-card-body" style="font-family: monospace; font-size: 11px; background: rgba(0,0,0,0.15); padding: 6px; border-radius: 4px; color: #eee; word-break: break-all;">
+                            <code>${escapeHtml(textSnippet)}</code>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            issuesHtml += `</div>`;
+            
+            // Append resolution box and warning save button
+            issuesHtml += `
+                <div class="audit-resolution-box">
+                    <h5 style="margin: 0 0 10px 0; color: #fde047; font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px;">💡 ऑटो-फ़िक्स विकल्प (Auto-Fix Solutions)</h5>
+                    <p style="margin: 0 0 12px 0; font-size: 11px; color: var(--ui-text-muted);">निम्नलिखित विकल्पों का उपयोग करके आप ओवरफ़्लो को स्वतः ठीक कर सकते हैं:</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button id="modal-smart-fix-overflows-btn" class="btn-audit-action fix-overflow" title="Smart Fix Overflows: स्वतः पेज ब्रेक या स्प्लिट जोड़कर ओवरफ़्लो ठीक करें">✨ Smart Fix Overflows</button>
+                        <button id="modal-smart-shrink-btn" class="btn-audit-action shrink" title="Smart Shrink: स्वतः स्पेस/फ़ॉन्ट छोटा करके फिट करें">🪄 Smart Shrink</button>
+                        <button id="modal-font-decrease-btn" class="btn-audit-action font-dec" title="Font Decrease: मैन्युअल फ़ॉन्ट साइज -0.5px छोटा करें">➖ फ़ॉन्ट छोटा करें</button>
+                        <button id="modal-remove-gaps-btn" class="btn-audit-action gaps" title="Remove Gaps: पेजों से खाली लाइनें और स्पेसिंग हटाएं">🗜️ गैप हटाएँ</button>
+                    </div>
+                    <div id="modal-fix-feedback" class="inline-feedback" style="display: none; margin-top: 10px; font-size: 12px; font-weight: 600; color: #4ade80;"></div>
+                </div>
+                <div class="audit-footer-actions" style="margin-top: 14px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="modal-print-warning-btn" class="btn btn-primary" style="background-color: #ef4444; border-color: #ef4444; color: white; font-weight: 600; font-size: 12px; padding: 8px 16px;">
+                        ⚠️ फिर भी PDF सेव करें (Print Anyway)
+                    </button>
+                </div>
+            `;
+            
+            container.innerHTML = issuesHtml;
+        }
+        
+        integrityModalBody.appendChild(container);
+        
+        // Bind actions to dynamically generated buttons inside the modal
+        const mPrintPdfBtn = document.getElementById('modal-print-pdf-btn');
+        const mPrintWarningBtn = document.getElementById('modal-print-warning-btn');
+        const mSmartFixOverflowsBtn = document.getElementById('modal-smart-fix-overflows-btn');
+        const mSmartShrinkBtn = document.getElementById('modal-smart-shrink-btn');
+        const mFontDecreaseBtn = document.getElementById('modal-font-decrease-btn');
+        const mRemoveGapsBtn = document.getElementById('modal-remove-gaps-btn');
+        const mFixFeedback = document.getElementById('modal-fix-feedback');
+        
+        const updateFeedback = (msg, isSuccess = true) => {
+            if (mFixFeedback) {
+                mFixFeedback.style.display = 'block';
+                mFixFeedback.style.color = isSuccess ? '#4ade80' : '#f87171';
+                mFixFeedback.textContent = msg;
+            }
+        };
+
+        if (mPrintPdfBtn) {
+            mPrintPdfBtn.addEventListener('click', () => {
+                hideIntegrityModal();
+                triggerPrintSequence();
+            });
+        }
+        if (mPrintWarningBtn) {
+            mPrintWarningBtn.addEventListener('click', () => {
+                hideIntegrityModal();
+                triggerPrintSequence();
+            });
+        }
+        if (mSmartFixOverflowsBtn) {
+            mSmartFixOverflowsBtn.addEventListener('click', () => {
+                mSmartFixOverflowsBtn.disabled = true;
+                mSmartFixOverflowsBtn.textContent = 'डिजिटल फ़िक्सिंग...';
+                
+                // Use setTimeout to allow the browser to paint the 'डिजिटल फ़िक्सिंग...' state
+                setTimeout(() => {
+                    const fixedCount = runSmartFix();
+                    
+                    mSmartFixOverflowsBtn.disabled = false;
+                    mSmartFixOverflowsBtn.textContent = '✨ Smart Fix Overflows';
+                    
+                    if (fixedCount > 0) {
+                        runTextVisibilityAudit();
+                        updateFeedback(`✨ ${fixedCount} ओवरफ़्लो सफलतापूर्वक ठीक किए गए!`);
+                    } else {
+                        updateFeedback('कोई ओवरफ़्लो समस्या नहीं मिली या ठीक नहीं की जा सकी।', false);
+                    }
+                }, 50);
+            });
+        }
+        if (mSmartShrinkBtn) {
+            mSmartShrinkBtn.addEventListener('click', async () => {
+                mSmartShrinkBtn.disabled = true;
+                mSmartShrinkBtn.textContent = 'प्रक्रिया जारी है...';
+                
+                const success = await performSmartShrink(false);
+                
+                mSmartShrinkBtn.disabled = false;
+                mSmartShrinkBtn.textContent = '🪄 Smart Shrink';
+                
+                if (success) {
+                    runTextVisibilityAudit();
+                    updateFeedback('🪄 Smart Shrink सफलतापूर्वक लागू किया गया!');
+                } else {
+                    updateFeedback('Smart Shrink विफल रहा। फ़ॉन्ट 13px से कम नहीं किया जा सकता।', false);
+                }
+            });
+        }
+        if (mFontDecreaseBtn) {
+            mFontDecreaseBtn.addEventListener('click', () => {
+                if (contentFontSize > 11) {
+                    contentFontSize = Math.max(11, Math.round((contentFontSize - 0.5) * 10) / 10);
+                    document.documentElement.style.setProperty('--content-font-size', `${contentFontSize}px`);
+                    fontSizeValSpan.textContent = `${contentFontSize}px`;
+                    cachedMaxContentHeight = null;
+                    renderPreview();
+                    saveWorkspaceToLocalStorage();
+                    
+                    runTextVisibilityAudit();
+                    updateFeedback(`फ़ॉन्ट साइज छोटा करके ${contentFontSize}px किया गया।`);
+                } else {
+                    updateFeedback('फ़ॉन्ट साइज को 11px से छोटा नहीं किया जा सकता।', false);
+                }
+            });
+        }
+        if (mRemoveGapsBtn) {
+            mRemoveGapsBtn.addEventListener('click', () => {
+                const result = performRemoveDocumentGaps(true, false);
+                if (result && result.success) {
+                    runTextVisibilityAudit();
+                    updateFeedback(`गैप हटाए गए! empty lines: ${result.emptyLinesRemoved}, spacers: ${result.spacersRemoved}`);
+                } else {
+                    updateFeedback('कोई गैप या खाली लाइन्स नहीं मिले जिन्हें हटाया जा सके।', false);
+                }
+            });
+        }
+    }
+
+    // Helper to escape HTML tags in text snippets
+    function escapeHtml(text) {
+        if (!text) return '';
+        return text
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // Clear height cache and re-render preview once all stylesheets and fonts are fully loaded
+    const triggerInitialRender = () => {
+        cachedMaxContentHeight = null;
+        renderPreview();
+    };
+
+    if (document.readyState === 'complete') {
+        triggerInitialRender();
+    } else {
+        window.addEventListener('load', triggerInitialRender);
+    }
+
+    // Handle web font loading race conditions to clear false overflow warnings
+    if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+            triggerInitialRender();
+        });
+    }
+
+    // --- Ribbon Tabs Switcher & Collapse Logic (Microsoft Word Style) ---
+    const ribbonContainer = document.querySelector('.ribbon-container');
+    const ribbonTabBtns = document.querySelectorAll('.ribbon-tab-btn');
+    const ribbonPanels = document.querySelectorAll('.ribbon-panel');
+    const ribbonMinimizeBtn = document.getElementById('ribbon-minimize-btn');
+
+    if (ribbonContainer && ribbonTabBtns && ribbonPanels) {
+        // Read saved minimize preference
+        let isRibbonMinimized = localStorage.getItem('samyak_ribbon_minimized') === 'true';
+        
+        // Function to set minimized state
+        function setRibbonMinimizedState(minimize) {
+            if (minimize) {
+                ribbonContainer.classList.add('minimized');
+                ribbonTabBtns.forEach(b => b.classList.remove('active'));
+                if (ribbonMinimizeBtn) ribbonMinimizeBtn.textContent = '▼';
+                localStorage.setItem('samyak_ribbon_minimized', 'true');
+            } else {
+                ribbonContainer.classList.remove('minimized');
+                // Make sure at least one tab is active when expanding
+                let activeBtn = document.querySelector('.ribbon-tab-btn.active');
+                if (!activeBtn && ribbonTabBtns.length > 0) {
+                    ribbonTabBtns[0].classList.add('active');
+                    const targetTabId = ribbonTabBtns[0].getAttribute('data-tab');
+                    ribbonPanels.forEach(panel => {
+                        if (panel.id === targetTabId) panel.classList.add('active');
+                        else panel.classList.remove('active');
+                    });
+                }
+                if (ribbonMinimizeBtn) ribbonMinimizeBtn.textContent = '▲';
+                localStorage.setItem('samyak_ribbon_minimized', 'false');
+            }
+        }
+
+        // Apply initial minimized state
+        if (isRibbonMinimized) {
+            setRibbonMinimizedState(true);
+        } else {
+            // Ensure first tab is active if not minimized
+            let activeBtn = document.querySelector('.ribbon-tab-btn.active');
+            if (!activeBtn && ribbonTabBtns.length > 0) {
+                ribbonTabBtns[0].classList.add('active');
+                const targetTabId = ribbonTabBtns[0].getAttribute('data-tab');
+                ribbonPanels.forEach(panel => {
+                    if (panel.id === targetTabId) panel.classList.add('active');
+                    else panel.classList.remove('active');
+                });
+            }
+        }
+
+        // Tab click listeners
+        ribbonTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTabId = btn.getAttribute('data-tab');
+                const isCurrentlyActive = btn.classList.contains('active');
+                const isCurrentlyMinimized = ribbonContainer.classList.contains('minimized');
+                
+                if (isCurrentlyActive && !isCurrentlyMinimized) {
+                    // Click active tab again -> minimize
+                    setRibbonMinimizedState(true);
+                } else {
+                    // Switch tab and ensure it is expanded
+                    setRibbonMinimizedState(false);
+                    
+                    // Toggle active class on buttons
+                    ribbonTabBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Toggle active class on panels
+                    ribbonPanels.forEach(panel => {
+                        if (panel.id === targetTabId) {
+                            panel.classList.add('active');
+                        } else {
+                            panel.classList.remove('active');
+                        }
+                    });
+                }
+            });
+
+            // Double click on tab header -> toggle minimize
+            btn.addEventListener('dblclick', () => {
+                const isCurrentlyMinimized = ribbonContainer.classList.contains('minimized');
+                setRibbonMinimizedState(!isCurrentlyMinimized);
+                if (!isCurrentlyMinimized) {
+                    btn.classList.add('active');
+                }
+            });
+        });
+
+        // Minimize button click listener
+        if (ribbonMinimizeBtn) {
+            ribbonMinimizeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isCurrentlyMinimized = ribbonContainer.classList.contains('minimized');
+                setRibbonMinimizedState(!isCurrentlyMinimized);
+            });
+        }
+
+        // Keyboard Shortcut: Ctrl + F1 (MS Word default to toggle ribbon)
+        window.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'F1') {
+                e.preventDefault();
+                const isCurrentlyMinimized = ribbonContainer.classList.contains('minimized');
+                setRibbonMinimizedState(!isCurrentlyMinimized);
+            }
+        });
+    }
 });

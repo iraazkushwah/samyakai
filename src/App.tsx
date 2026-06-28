@@ -23,6 +23,12 @@ import {
 } from "lucide-react";
 import { FileData, OCRResult, OCRAlert } from "./types";
 
+// ==========================================================================
+// 💡 CONFIGURATION: अपना नया OCR Backend URL यहाँ डालें (e.g., "https://your-backend.com/api/ocr")
+// यदि इसे खाली ("") छोड़ेंगे, तो यह स्थानीय /api/ocr पाथ का उपयोग करेगा।
+// ==========================================================================
+const OCR_BACKEND_URL = "https://untitled-1038614782118.asia-southeast1.run.app/api/ocr";
+
 // Standard English translations mapping conforming to English-only UI request
 const TRANSLATIONS = {
   en: {
@@ -77,6 +83,10 @@ export default function App() {
   const [editableMarkdown, setEditableMarkdown] = useState<string>("");
   const [copiedMessage, setCopiedMessage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Table font size styling options
+  const [tableHeaderFontSize, setTableHeaderFontSize] = useState<number>(12);
+  const [tableBodyFontSize, setTableBodyFontSize] = useState<number>(11);
 
   // Stats helper to parse human readable size
   const formatBytes = (bytes: number): string => {
@@ -159,7 +169,8 @@ export default function App() {
     setUploadedFile(prev => prev ? { ...prev, status: "processing", error: undefined } : null);
 
     try {
-      const response = await fetch("/api/ocr", {
+      const backendUrl = OCR_BACKEND_URL || "/api/ocr";
+      const response = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -220,13 +231,94 @@ export default function App() {
     document.body.removeChild(element);
   };
 
+  // Render table with Solid Grid styling (both horizontal and vertical borders clearly visible)
+  const renderTable = (rows: string[], tableIdx: number) => {
+    const parsedRows = rows.map(row => {
+      const cells = row.split("|").map(cell => cell.trim());
+      if (row.startsWith("|")) cells.shift();
+      if (row.endsWith("|")) cells.pop();
+      return cells;
+    });
+
+    if (parsedRows.length === 0) return null;
+
+    const headerCells = parsedRows[0];
+    let bodyRows = parsedRows.slice(1);
+
+    // Skip the markdown separator row (e.g. |---|---|)
+    if (bodyRows.length > 0 && bodyRows[0].every(cell => /^[ \t]*:?-+:?[ \t]*$/.test(cell))) {
+      bodyRows = bodyRows.slice(1);
+    }
+
+    return (
+      <div key={`table-${tableIdx}`} className="my-6 overflow-x-auto rounded-lg border border-slate-700 shadow-md">
+        <table className="w-full text-xs md:text-sm border-collapse text-left">
+          <thead>
+            <tr className="bg-slate-800/80 border-b border-slate-700">
+              {headerCells.map((cell, colIdx) => (
+                <th 
+                  key={colIdx} 
+                  style={{ fontSize: `${tableHeaderFontSize}px` }}
+                  className="px-4 py-3 font-semibold text-slate-100 border-r border-slate-700 last:border-r-0 whitespace-nowrap break-normal"
+                >
+                  {parseInlineHighlights(cell)}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-700 bg-slate-900/40">
+            {bodyRows.map((rowCells, rowIdx) => (
+              <tr key={rowIdx} className="hover:bg-slate-800/50 transition-colors">
+                {rowCells.map((cell, colIdx) => (
+                  <td 
+                    key={colIdx} 
+                    style={{ fontSize: `${tableBodyFontSize}px` }}
+                    className="px-4 py-3 text-slate-350 border-r border-slate-700 last:border-r-0 leading-relaxed font-sans break-normal"
+                  >
+                    {parseInlineHighlights(cell || "")}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
   // Custom UI Parser to beautifully format headings, bullets, and Exception warning highlights
   const renderFormattedMarkdownToReact = (text: string) => {
     if (!text) return null;
 
     const lines = text.split("\n");
+    const parsedBlocks: ({ type: "table"; rows: string[] } | { type: "line"; content: string; originalIndex: number })[] = [];
+    let currentTableRows: string[] = [];
 
-    return lines.map((line, idx) => {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const trimmed = line.trim();
+
+      if (trimmed.startsWith("|")) {
+        currentTableRows.push(line);
+      } else {
+        if (currentTableRows.length > 0) {
+          parsedBlocks.push({ type: "table", rows: currentTableRows });
+          currentTableRows = [];
+        }
+        parsedBlocks.push({ type: "line", content: line, originalIndex: i });
+      }
+    }
+    if (currentTableRows.length > 0) {
+      parsedBlocks.push({ type: "table", rows: currentTableRows });
+    }
+
+    return parsedBlocks.map((block, blockIdx) => {
+      if (block.type === "table") {
+        return renderTable(block.rows, blockIdx);
+      }
+
+      const { content: line, originalIndex: idx } = block;
+
       // Preserve alignment spacing/indentation by rendering padding dynamically
       const indentMatch = line.match(/^(\s+)/);
       const indentPadding = indentMatch ? indentMatch[1].length * 8 : 0;
@@ -271,9 +363,10 @@ export default function App() {
       // List spacing & highlights
       if (cleanLine.startsWith("- ") || cleanLine.startsWith("• ")) {
         const listText = cleanLine.substring(2);
+        const hasNumbering = /^\s*(\([0-9a-zA-Z\u0966-\u096f]+\)|[0-9a-zA-Z\u0966-\u096f]+[\.\)])/.test(listText);
         return (
-          <div key={idx} style={{ paddingLeft: `${indentPadding + 16}px` }} className="flex items-start gap-2.5 my-1.5 text-slate-300 font-sans leading-relaxed">
-            <span className="text-indigo-400 font-bold mt-1">•</span>
+          <div key={idx} style={{ paddingLeft: `${indentPadding + (hasNumbering ? 0 : 16)}px` }} className="flex items-start gap-2.5 my-1.5 text-slate-300 font-sans leading-relaxed">
+            {!hasNumbering && <span className="text-indigo-400 font-bold mt-1">•</span>}
             <div className="flex-1">{parseInlineHighlights(listText)}</div>
           </div>
         );
@@ -563,6 +656,41 @@ export default function App() {
                     autoStructuringEnabled ? "translate-x-4" : "translate-x-0"
                   }`} />
                 </button>
+              </div>
+
+              {/* Table Font Settings */}
+              <div className="space-y-2 border-t border-slate-800 pt-3">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-350 font-bold">Table Header Font:</span>
+                  <span className="font-mono text-[10px] text-indigo-400 font-bold bg-indigo-950/60 border border-indigo-900/40 px-1 py-0.5 rounded">
+                    {tableHeaderFontSize}px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="8"
+                  max="18"
+                  value={tableHeaderFontSize}
+                  onChange={(e) => setTableHeaderFontSize(parseInt(e.target.value))}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-slate-350 font-bold">Table Body Font:</span>
+                  <span className="font-mono text-[10px] text-indigo-400 font-bold bg-indigo-950/60 border border-indigo-900/40 px-1 py-0.5 rounded">
+                    {tableBodyFontSize}px
+                  </span>
+                </div>
+                <input
+                  type="range"
+                  min="8"
+                  max="18"
+                  value={tableBodyFontSize}
+                  onChange={(e) => setTableBodyFontSize(parseInt(e.target.value))}
+                  className="w-full h-1 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                />
               </div>
             </div>
 

@@ -13,6 +13,30 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+// Enable CORS manually to support decoupled architecture
+app.use((req: any, res: any, next: any) => {
+  const origin = req.headers.origin;
+  // Echo the Origin dynamically to support credentialed cross-origin requests
+  if (origin) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+  } else {
+    res.setHeader("Access-Control-Allow-Origin", "*");
+  }
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS,PUT,PATCH,DELETE");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Credentials", "true");
+
+  // Handle preflight OPTIONS request
+  if (req.method === "OPTIONS") {
+    res.sendStatus(200);
+    return;
+  }
+  next();
+});
+
 // Healthy Check Endpoint
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", time: new Date().toISOString() });
@@ -86,6 +110,18 @@ Your task is to analyze the provided page or document image/PDF and convert it i
 
 4. **Illegible Words / Bad Handwriting Handling**:
    - If some handwritten words are entirely illegible, fuzzy, or cut-off, mark them inline with: \`==⚠️ High Alert: [illegible word]==\` (or if the surrounding text is Hindi, use: \`==⚠️ High Alert: [अस्पष्ट शब्द]==\`). Add these instances to the 'alerts' array with appropriate context.
+
+5. **Strict Markdown Table Formatting (CRITICAL)**:
+   - If the document contains any tables, tabular lists, or column-wise layouts, you MUST convert them into a Markdown Table.
+   - **Single-Line Rows**: Every table row MUST be written on a single, continuous physical line in the output. Hitting a newline (\`\n\`) or inserting line breaks inside a row is strictly prohibited.
+   - **Cell Line Breaks**: If a cell contains multiple paragraphs, list items, or line breaks, you MUST use HTML \`<br>\` or \`<br><br>\` tags instead of actual newlines.
+   - **Row Boundaries**: Every table row must start with a pipe symbol \`|\` and end with a pipe symbol \`|\`.
+   - **Header Separator**: You must include a table header separator row (e.g., \`|---|---|---|\`) immediately after the header row.
+   - **Example format**:
+     | Serial No. | Method | Main Points |
+     |---|---|---|
+     | 1 | **By Renunciation** | * Point A <br><br> * Point B |
+     | 2 | **By Termination** | * Point C <br><br> * Point D |
 
 Please format your response strictly as valid JSON matching the specified responseSchema. Only return the JSON object, do not markdown-wrap the JSON.
     `;
@@ -177,8 +213,11 @@ Please format your response strictly as valid JSON matching the specified respon
     if (parsedOCRResult && typeof parsedOCRResult.markdown === "string") {
       // 1. Replaces line-isolated section break dividers (---) with simple double newlines to make sure they display as a continuous text stream
       parsedOCRResult.markdown = parsedOCRResult.markdown.replace(/^[ \t]*-{3,}[ \t]*$/gm, "\n");
-      // 2. Replaces any remaining consecutive hyphens (3 or more) anywhere in the text with empty string or single spaces so they never segment or break documents
-      parsedOCRResult.markdown = parsedOCRResult.markdown.replace(/---+/g, " ");
+      // 2. Replaces any remaining consecutive hyphens (3 or more) anywhere in the text with empty string or single spaces so they never segment or break documents, except in table lines containing '|'
+      parsedOCRResult.markdown = parsedOCRResult.markdown
+        .split("\n")
+        .map(line => (line.includes("|") ? line : line.replace(/---+/g, " ")))
+        .join("\n");
 
       // 3. Join bullet points and paragraphs that were split across multiple lines
       const lines = parsedOCRResult.markdown.split("\n");
@@ -227,12 +266,7 @@ Please format your response strictly as valid JSON matching the specified respon
             }
 
             const isNextHeading = trimmedNext.startsWith("#");
-            const isNextBullet = trimmedNext.startsWith("•") || 
-                                 trimmedNext.startsWith("-") || 
-                                 trimmedNext.startsWith("*") || 
-                                 /^[🔶🔷🔸🔹♦️💎]/u.test(trimmedNext) || 
-                                 /^\(\d+\)/.test(trimmedNext) || 
-                                 /^\d+\./.test(trimmedNext);
+            const isNextBullet = /^\s*(?:[•\u2022\u25CF\u25AA\u25AB➜⭐★]\s*|[-\*]\s+|🔶|🔷|🔸|🔹|♦️|💎|\d+[\.\)]|\(\d+\)|[a-zA-Z][\.\)]|\([a-zA-Z]\)|[ivxIVX]+[\.\)]|\([ivxIVX]+\))/i.test(trimmedNext);
             const isNextQuote = trimmedNext.startsWith(">");
             const isNextBox = trimmedNext.startsWith("[box") || trimmedNext.startsWith("[/box]");
             const isNextChapter = trimmedNext.startsWith("[chapter");

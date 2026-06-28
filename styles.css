@@ -32,11 +32,14 @@
     
     --transition-smooth: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
     
-    --content-font-size: 13.5px;
+    --content-font-size: 16.1px;
+    --content-font-weight: 500;
     --content-line-height: 1.45;
     --content-letter-spacing: 0px;
+    --table-header-font-size: 12.5px;
+    --table-body-font-size: 11.5px;
     
-    --font-ui: 'Outfit', 'Poppins', 'Noto Sans Devanagari', sans-serif;
+    --font-ui: 'DM Sans', 'Outfit', 'Poppins', 'Noto Sans Devanagari', sans-serif;
     --font-heading: 'Mukta', 'Poppins', sans-serif;
     --font-body: 'Mukta', 'Poppins', sans-serif;
     --font-cover: 'Yatra One', cursive;
@@ -534,9 +537,9 @@ sub {
 /* Editor Panel (Left Sidebar) */
 .editor-panel {
     position: relative;
-    width: calc(100vw - 860px); /* Dynamically set to maximize editor space while keeping A4 preview perfectly visible */
+    width: 210mm; /* Sized exactly to A4 page width */
     min-width: 380px;
-    max-width: calc(100vw - 860px); /* Hard limit to prevent A4 preview from overflowing horizontally */
+    max-width: 210mm;
     flex-shrink: 0;
     background: rgba(12, 12, 20, 0.45);
     backdrop-filter: blur(12px);
@@ -639,15 +642,17 @@ sub {
 
 .sidebar-tabs-nav {
     display: flex;
+    justify-content: center;
     background-color: rgba(0, 0, 0, 0.2);
     border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 4px;
-    gap: 4px;
+    padding: 6px 4px;
+    gap: 8px;
     flex-shrink: 0;
 }
 
 .sidebar-tab-btn {
-    flex: 1;
+    flex: 0 1 auto;
+    min-width: 100px;
     background: none;
     border: none;
     outline: none;
@@ -655,14 +660,14 @@ sub {
     font-family: var(--font-ui);
     font-size: 11px;
     font-weight: 600;
-    padding: 8px 6px;
+    padding: 8px 16px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
     transition: var(--transition-smooth);
-    border-radius: var(--border-radius-sm);
+    border-radius: 20px;
     position: relative;
 }
 
@@ -702,6 +707,210 @@ sub {
 
 .sidebar-panel.active {
     display: flex;
+}
+
+/* Dynamic Design Tab Grid & Dashboard Card Styles */
+#panel-design {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+#panel-design .settings-section {
+    height: calc(100% - 15px);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.design-tabs-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(5, 1fr);
+    gap: 4px;
+    padding: 4px;
+    flex-grow: 1;
+    box-sizing: border-box;
+    max-height: 360px; /* Prevent cards from over-stretching on tall screens */
+}
+
+.design-tab-card {
+    /* Compact capsule shape — fills full grid cell */
+    width: 100%;
+    height: 100%;
+    border-radius: 16px;
+    place-self: stretch;
+    min-height: 56px; /* Ensure a decent touch target */
+    max-height: 72px; /* Cap the height so they stay compact */
+
+    /* Zinc-dark theme matching the app's cyber-slate palette */
+    background: linear-gradient(
+        170deg,
+        #1e1e22 0%,
+        #141417 55%,
+        #0e0e10 100%
+    );
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    /* Amber gold subtle border — matches --ui-accent #f59e0b */
+    border: 1px solid rgba(245, 158, 11, 0.18);
+
+    /* Deep 3D zinc shadows with amber inner warmth */
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.5),
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.5),
+        inset 0 1px 14px rgba(245, 158, 11, 0.04);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 4px;
+    cursor: pointer;
+    outline: none;
+    flex-shrink: 0;
+    text-align: center;
+    box-sizing: border-box;
+    transition: all 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    overflow: hidden;
+    /* Mobile: instant tap, no 300ms delay */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Top gloss sheen pseudo-element — warm white glint */
+.design-tab-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    width: 80%;
+    height: 38%;
+    background: linear-gradient(
+        180deg,
+        rgba(255, 248, 220, 0.09) 0%,
+        rgba(255, 255, 255, 0.0) 100%
+    );
+    border-radius: 16px 16px 60% 60%;
+    pointer-events: none;
+}
+
+.design-tab-card:hover {
+    background: linear-gradient(
+        170deg,
+        #232320 0%,
+        #18180f 55%,
+        #111109 100%
+    );
+    /* Amber gold glow border on hover */
+    border-color: rgba(245, 158, 11, 0.55);
+    transform: translateY(-3px) scale(1.04);
+    box-shadow:
+        0 10px 26px rgba(245, 158, 11, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.45),
+        inset 0 2px 0 rgba(255, 248, 200, 0.12),
+        inset 0 -2px 6px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(245, 158, 11, 0.25);
+}
+
+.design-tab-card:active {
+    transform: translateY(2px) scale(0.97);
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06),
+        inset 0 3px 10px rgba(0, 0, 0, 0.5);
+}
+
+.design-tab-card .card-icon {
+    font-size: 22px;
+    filter:
+        drop-shadow(0 0 4px rgba(245, 158, 11, 0.25))
+        drop-shadow(0 2px 3px rgba(0, 0, 0, 0.55));
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    z-index: 1;
+    line-height: 1;
+}
+
+.design-tab-card:hover .card-icon {
+    transform: scale(1.18) translateY(-1px);
+    filter:
+        drop-shadow(0 0 10px rgba(245, 158, 11, 0.65))
+        drop-shadow(0 2px 6px rgba(0, 0, 0, 0.5));
+}
+
+.design-tab-card .card-label {
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 700;
+    /* Muted warm zinc text — matches --ui-text-muted #a1a1aa */
+    color: rgba(161, 161, 170, 0.9);
+    letter-spacing: 0.2px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    transition: color 0.2s ease;
+    width: 90%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+}
+
+.design-tab-card:hover .card-label {
+    /* Warm amber-white on hover */
+    color: rgba(255, 240, 190, 1);
+    text-shadow: 0 0 8px rgba(245, 158, 11, 0.4), 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.design-back-btn {
+    width: 100%;
+    background: rgba(79, 70, 229, 0.12);
+    border: 1px solid var(--ui-accent);
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.design-back-btn:hover {
+    background: var(--ui-accent);
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.35);
+}
+
+/* Hide the old collapsible headers */
+#panel-design .collapsible-header {
+    display: none !important;
+}
+
+/* Reset collapsible-section borders and styling so it renders as a clean integrated panel */
+#panel-design .collapsible-section {
+    border: none !important;
+    background: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    animation: none !important;
+    transform: none !important;
+}
+
+#panel-design .collapsible-content {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
 /* Custom premium scrollbar for sidebar panels */
@@ -1532,7 +1741,9 @@ body.light-mode .header-stats {
 }
 
 .preview-header {
-    padding: 12px 30px;
+    height: 42px !important;
+    padding: 0 16px !important;
+    box-sizing: border-box !important;
     background-color: var(--ui-sidebar-bg);
     border-bottom: 1px solid var(--ui-border);
     display: flex;
@@ -1606,8 +1817,8 @@ body.light-mode .header-stats {
    5. REAL A4 PRINT-PERFECT CSS LAYOUT
    ========================================================================== */
 .a4-page {
-    width: 8.5in;
-    height: 11in;
+    width: 210mm;
+    height: 297mm;
     background-color: var(--page-bg);
     color: var(--text-color);
     box-shadow: var(--shadow-page);
@@ -1684,7 +1895,7 @@ body.light-mode .header-stats {
     bottom: var(--custom-page-margin-y, 6mm);
     left: var(--custom-page-margin-x, 8mm);
     right: var(--custom-page-margin-x, 8mm);
-    border: var(--custom-inner-border-thickness) solid var(--custom-inner-border-color); /* Dynamically customized inner border */
+    border: var(--custom-inner-border-thickness) var(--custom-inner-border-style, solid) var(--custom-inner-border-color); /* Dynamically customized inner border */
     padding: var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm) var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm); /* Core internal margins */
     box-sizing: border-box;
     display: flex;
@@ -1708,6 +1919,9 @@ body.light-mode .header-stats {
     pointer-events: none;
     z-index: 100;
     transition: var(--transition-smooth);
+    display: var(--custom-corner-display, block);
+    opacity: var(--custom-corner-opacity, 1);
+    visibility: var(--custom-corner-visibility, visible);
 }
 .top-left {
     top: calc(var(--custom-page-margin-y, 6mm) - 1mm);
@@ -1783,6 +1997,7 @@ body.light-mode .header-stats {
     max-width: 50%;
     text-align: center;
     margin: 0 auto;
+    overflow: hidden;
 }
 
 .header-center span {
@@ -1791,6 +2006,11 @@ body.light-mode .header-stats {
     color: #000000;
     font-family: var(--font-body);
     line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+    max-width: 100%;
 }
 
 .header-right {
@@ -1812,6 +2032,7 @@ body.light-mode .header-stats {
 }
 
 .page-content {
+    position: relative;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
@@ -1825,7 +2046,7 @@ body.light-mode .header-stats {
     justify-content: space-between;
     align-items: center;
     border-top: 1px solid rgba(0, 0, 0, 0.08);
-    padding-top: 5px;
+    padding-top: 14px;
     margin-top: auto; /* Push footer to the absolute page bottom */
     width: 100%;
     z-index: 102;
@@ -2110,6 +2331,42 @@ a.footer-social-link:hover {
     top: 1px;
 }
 
+/* ==========================================
+   NESTED SUB-BULLET STYLES (STAR & ARROW)
+   ========================================== */
+
+/* 1. Indentation for Nested Sub-Bullets */
+.bullet-list .bullet-item-nested {
+    margin-left: 20px !important;
+    padding-left: 15px !important;
+}
+
+/* Multi-level indentation classes if needed */
+.bullet-list .bullet-indent-2 {
+    margin-left: 40px !important;
+}
+.bullet-list .bullet-indent-3 {
+    margin-left: 60px !important;
+}
+
+/* 2. Sub-Bullet Arrow Icon Style */
+.bullet-list .bullet-item-nested::before {
+    content: "➜" !important;
+    font-size: 11px !important;
+    top: 2px !important;
+    left: 2px !important;
+    color: var(--secondary-color, #c5a353) !important;
+}
+
+/* 3. Automatic Star Icon for Parent Bullets (when nested bullets are present in the list) */
+.bullet-list:has(.bullet-item-nested) .bullet-item:not(.bullet-item-nested)::before {
+    content: "★" !important;
+    font-size: 13px !important;
+    top: 1px !important;
+    left: 2px !important;
+    color: var(--primary-color, #850f0f) !important;
+}
+
 /* Highlight boxes */
 .highlight-box {
     background: rgba(197, 163, 83, 0.08);
@@ -2342,15 +2599,28 @@ strong {
     border-collapse: collapse;
     margin: 8px 0;
     font-family: var(--font-body);
-    font-size: calc(var(--content-font-size) - 1px);
+    font-size: var(--table-body-font-size, calc(var(--content-font-size) - 1px));
     font-weight: var(--content-font-weight, 700);
     color: var(--text-dark);
+    border: 1.5px solid var(--primary-color);
+}
+
+.table-continuation thead {
+    display: none !important;
 }
 
 .markdown-table th, .markdown-table td {
     padding: 6px 10px;
     text-align: left;
     vertical-align: top;
+    border: 1px solid var(--primary-color);
+    word-break: normal;
+    overflow-wrap: break-word;
+}
+
+.markdown-table td {
+    font-size: var(--table-body-font-size, calc(var(--content-font-size) - 1px));
+    white-space: normal;
 }
 
 .markdown-table th {
@@ -2360,10 +2630,8 @@ strong {
     border-top: 2px solid var(--primary-color);
     border-bottom: 2px solid var(--primary-color);
     font-family: var(--font-heading);
-}
-
-.markdown-table td {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    font-size: var(--table-header-font-size, calc(var(--content-font-size) - 1px));
+    white-space: nowrap;
 }
 
 .markdown-table tr:nth-child(even) td {
@@ -2526,8 +2794,48 @@ strong {
         margin: 0 !important;
         padding: 0 !important;
     }
+
+    /* Explicitly force all A4 text to black for high-contrast print legibility regardless of dark active themes */
+    .a4-page {
+        color: #000000 !important;
+        --text-color: #000000 !important;
+        --text-dark: #000000 !important;
+    }
+
+    .a4-page p, .a4-page span:not(.diamond):not(.ocr-dash-card-badge), .a4-page li, .a4-page td, .a4-page div:not(.section-heading-bar):not(.chapter-num-main-bg):not(.chapter-num-accent-bg) {
+        color: #000000 !important;
+    }
+
+    /* Overwrite bright yellow high alert text color to dark, legible amber for white paper printing */
+    .high-alert-highlight {
+        color: #78350f !important;
+        background-color: rgba(245, 158, 11, 0.15) !important;
+        border: 1px solid rgba(245, 158, 11, 0.45) !important;
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    /* Force page-footer and border to black in print and shift down */
+    .page-footer {
+        border-top: 1px solid var(--custom-inner-border-color, var(--secondary-color)) !important;
+        color: #000000 !important;
+        padding-top: 14px !important;
+    }
+
+    /* Print footer social links and SVGs in their matching theme color (primary-color) rather than blue or black */
+    .footer-social-link, .footer-social-link *, .social-svg-icon {
+        color: var(--primary-color) !important;
+        fill: var(--primary-color) !important;
+        text-decoration: none !important;
+    }
+
+    /* General standard links in text can remain black and clean in print */
+    a:not(.footer-social-link), a:not(.footer-social-link) * {
+        color: #000000 !important;
+        text-decoration: none !important;
+    }
     
-    .app-container {
+    .app-container, .main-workspace {
         display: block !important;
         height: auto !important;
         width: auto !important;
@@ -2536,7 +2844,7 @@ strong {
         padding: 0 !important;
     }
     
-    .editor-panel, .preview-header, .floating-stats, .floating-editor-controls, .fab-container, .fab-trigger-btn, .fab-sub-btn, .resize-handle, .sidebar-toggle-btn, .mobile-preview-toggle-btn, .mobile-preview-close-btn {
+    .editor-panel, .preview-header, .floating-stats, .floating-editor-controls, .fab-container, .fab-trigger-btn, .fab-sub-btn, .resize-handle, .sidebar-toggle-btn, .mobile-preview-toggle-btn, .mobile-preview-close-btn, .ribbon-container {
         display: none !important;
     }
 
@@ -2578,8 +2886,8 @@ strong {
     }
     
     .a4-page {
-        width: 8.5in !important;
-        height: 11in !important;
+        width: 210mm !important;
+        height: 297mm !important;
         margin: 0 !important;
         padding: 0 !important;
         box-shadow: none !important;
@@ -2620,7 +2928,7 @@ strong {
         bottom: var(--custom-page-margin-y, 6mm) !important;
         left: var(--custom-page-margin-x, 8mm) !important;
         right: var(--custom-page-margin-x, 8mm) !important;
-        border: var(--custom-inner-border-thickness) solid var(--custom-inner-border-color) !important;
+        border: var(--custom-inner-border-thickness) var(--custom-inner-border-style, solid) var(--custom-inner-border-color) !important;
         padding: var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm) var(--custom-page-padding-y, 4mm) var(--custom-page-padding-x, 6mm) !important;
         box-sizing: border-box !important;
         display: flex !important;
@@ -2640,6 +2948,9 @@ strong {
         pointer-events: none !important;
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
+        display: var(--custom-corner-display, block) !important;
+        opacity: var(--custom-corner-opacity, 1) !important;
+        visibility: var(--custom-corner-visibility, visible) !important;
     }
     .top-left { 
         top: calc(var(--custom-page-margin-y, 6mm) - 1mm) !important; 
@@ -2676,7 +2987,7 @@ strong {
 
     /* Remove default headers/footers */
     @page {
-        size: letter;
+        size: a4;
         margin: 0 !important;
     }
     
@@ -3363,7 +3674,8 @@ body.light-mode .search-replace-panel {
     column-count: 2;
     column-gap: 20px;
     column-rule: none !important; /* Disable standard rule to allow persistent pseudo-element divider */
-    height: 100% !important; /* Enforce full height to make sure it fills the parent container */
+    flex-grow: 1 !important; /* Allow the flex container to control its height instead of hardcoding 100% */
+    height: auto !important;
     column-fill: auto;
     position: relative;
 }
@@ -3392,7 +3704,7 @@ body.light-mode .search-replace-panel {
     top: calc(100% + 20px); /* Starts below the box (100% height + 20px bottom margin) */
     left: calc(50% - (var(--custom-divider-thickness, 1.5px) / 2));
     width: 0;
-    height: 800px; /* Extends to the bottom, clipped by overflow:hidden on container */
+    height: 1500px; /* Extends to the bottom, clipped by overflow:hidden on container */
     border-left: var(--custom-divider-thickness, 1.5px) var(--custom-divider-style, dashed) var(--custom-divider-color, var(--secondary-color));
     pointer-events: none;
     z-index: 10;
@@ -3403,14 +3715,99 @@ body.light-mode .search-replace-panel {
     break-inside: avoid-column; /* Prevent elements from splitting halfway across columns */
 }
 
-/* Allow paragraphs and bullet lists to break across columns to fill gaps and look compact */
+/* Allow paragraphs, bullet lists, and tables to break across columns to fill gaps and look compact */
 .page-content.layout-two-column > p.body-text,
-.page-content.layout-two-column > .bullet-list {
+.page-content.layout-two-column > .bullet-list,
+.page-content.layout-two-column > .markdown-table {
     break-inside: auto;
 }
 
+/* Tables in two-column layouts are styled compactly to prevent excessive height inflation */
+.page-content.layout-two-column .markdown-table {
+    font-size: var(--table-body-font-size, calc(var(--content-font-size) - 2px));
+    line-height: 1.25;
+    margin: 6px 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed; /* Force table to strictly respect column width */
+}
+.page-content.layout-two-column .markdown-table th {
+    font-size: var(--table-header-font-size, calc(var(--content-font-size) - 2px));
+}
+.page-content.layout-two-column .markdown-table td {
+    font-size: var(--table-body-font-size, calc(var(--content-font-size) - 2px));
+}
+.page-content.layout-two-column .markdown-table th,
+.page-content.layout-two-column .markdown-table td {
+    padding: 4px 8px;
+    word-break: break-word; /* Allow long words to break and wrap */
+    overflow-wrap: break-word;
+}
+.page-content.layout-two-column .markdown-table th {
+    white-space: normal; /* Allow header text to wrap */
+}
+.page-content.layout-two-column .markdown-table td {
+    white-space: normal;
+}
+.markdown-table th.table-col-no,
+.markdown-table td.table-col-no,
+.page-content.layout-two-column .markdown-table th.table-col-no,
+.page-content.layout-two-column .markdown-table td.table-col-no {
+    white-space: nowrap !important;
+    text-align: center;
+    min-width: 45px;
+}
+.page-content.layout-two-column .markdown-table tr {
+    break-inside: auto;
+}
+
+.markdown-table tr {
+    break-inside: avoid;
+}
+
+.page-content.layout-two-column .bullet-list {
+    display: block !important;
+}
+
 .page-content.layout-two-column .bullet-list > .bullet-item {
-    break-inside: avoid-column; /* Keep individual list items whole so a single bullet isn't split across columns */
+    break-inside: auto; /* Allow individual list items to break across columns to fill gaps */
+    display: block !important;
+    margin-bottom: 5px;
+}
+
+/* Tight Compaction Mode: Removes all column break restrictions to eliminate blank spaces */
+body.tight-compaction .page-content.layout-two-column > * {
+    break-inside: auto !important;
+    break-after: auto !important;
+    break-before: auto !important;
+}
+
+body.tight-compaction .topic-container {
+    break-after: auto !important;
+    break-inside: auto !important;
+}
+
+body.tight-compaction .topic-container + .bullet-list,
+body.tight-compaction .topic-container + p.body-text,
+body.tight-compaction .topic-container + .highlight-box,
+body.tight-compaction .topic-container + .inserted-image-container,
+body.tight-compaction .topic-container + .markdown-table {
+    break-before: auto !important;
+}
+
+body.tight-compaction .page-content.layout-two-column .bullet-list > .bullet-item {
+    break-inside: auto !important;
+}
+
+body.tight-compaction .highlight-box,
+body.tight-compaction .premium-box,
+body.tight-compaction .personality-feature-card,
+body.tight-compaction .stats-callout-grid,
+body.tight-compaction .quick-facts-grid,
+body.tight-compaction .announcement-alert-box {
+    break-inside: auto !important;
+    break-after: auto !important;
+    break-before: auto !important;
 }
 
 .page-content.layout-two-column .section-heading-bar {
@@ -4751,13 +5148,14 @@ body.light-mode .personality-description {
     transform: translateY(-1px);
 }
 
-#smart-space-btn {
+
+#remove-gaps-btn {
     border: 1px dashed var(--ui-accent);
     color: var(--ui-accent);
-    background-color: rgba(99, 102, 241, 0.08);
+    background-color: rgba(16, 185, 129, 0.08);
     transition: var(--transition-smooth);
 }
-#smart-space-btn:hover {
+#remove-gaps-btn:hover {
     background-color: var(--ui-accent);
     color: white;
     transform: translateY(-1px);
@@ -6279,6 +6677,43 @@ body.theme-raaz-compact .page-content p.body-text {
         transform: none !important;
         margin-left: 8px !important;
     }
+
+    /* ── Design Tab Cards: Mobile Responsive ── */
+    .design-tabs-grid {
+        /* On narrow screens, 3 columns may be too tight — keep 3 but tighten gap */
+        gap: 4px !important;
+        padding: 4px 3px !important;
+    }
+
+    .design-tab-card {
+        /* Ensure minimum touch target of 44px (Apple/Google HIG guidelines) */
+        min-width: 44px;
+        min-height: 44px;
+        /* Slightly reduce border-radius on small screens */
+        border-radius: 22px !important;
+        gap: 3px !important;
+        /* Hover effects should not fire on touch (use active instead) */
+        transform: none !important;
+    }
+
+    .design-tab-card:active {
+        /* Tactile press feedback on touch */
+        transform: scale(0.93) !important;
+        box-shadow:
+            0 2px 6px rgba(0, 0, 0, 0.6),
+            inset 0 1px 0 rgba(255, 255, 255, 0.06),
+            inset 0 3px 10px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    .design-tab-card .card-icon {
+        /* Slightly smaller icon on very narrow screens */
+        font-size: 24px !important;
+    }
+
+    .design-tab-card .card-label {
+        font-size: 10px !important;
+        letter-spacing: 0 !important;
+    }
 }
 
 /* Mobile/Tablet Landscape Side-by-Side Override */
@@ -7596,7 +8031,7 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
 .page-thumbnail-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 8.5 / 11; /* Letter aspect ratio */
+    aspect-ratio: 210 / 297; /* A4 aspect ratio */
     background: #ffffff;
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 6px;
@@ -8874,7 +9309,4207 @@ body.light-mode .premium-slider-group input[type="range"]::-webkit-slider-thumb 
     line-height: 1.2;
 }
 
+/* Fullscreen OCR mode styling */
+.app-container.ocr-mode .editor-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+}
+
+.app-container.ocr-mode .resize-handle {
+    display: none !important;
+}
+
+.app-container.ocr-mode .preview-panel {
+    display: none !important;
+}
+
+.app-container.ocr-mode .floating-editor-controls {
+    display: none !important;
+}
+
+.app-container.ocr-mode .mobile-preview-toggle-btn {
+    display: none !important;
+}
+
+/* Custom Bullet Item adjustments when list items already start with numbering */
+.bullet-item.no-bullet-icon::before {
+    content: none !important;
+    display: none !important;
+}
+.bullet-item.no-bullet-icon {
+    padding-left: 0 !important;
+}
+
+/* --- Test Series Custom Components (Bilingual MCQ & Explanations) --- */
+
+/* Bilingual MCQ Container */
+.bilingual-mcq-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+.bilingual-mcq-col {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.bilingual-mcq-hi {
+    border-right: 1px dashed var(--ui-border, rgba(255, 255, 255, 0.15));
+    padding-right: 10px;
+}
+
+.bilingual-mcq-en {
+    padding-left: 10px;
+}
+
+/* Ensure paragraph margins inside bilingual MCQ columns are clean */
+.bilingual-mcq-col p, 
+.bilingual-mcq-col .body-text {
+    margin: 2px 0;
+    line-height: 1.4;
+}
+
+.bilingual-mcq-col .bullet-list {
+    margin-top: 4px;
+}
+
+/* Detailed Solution/Explanation Card */
+.explanation-wrapper {
+    width: 100%;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.explanation-qnum {
+    font-weight: bold;
+    font-size: 14px;
+    color: var(--ui-accent, #cfac62);
+    margin-bottom: 4px;
+    font-family: 'Poppins', 'Outfit', sans-serif;
+}
+
+.explanation-card {
+    border: 1px solid color-mix(in srgb, var(--text-color, #000) 12%, transparent) !important;
+    border-radius: 6px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--text-color, #000) 2%, transparent) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+}
+
+.explanation-header {
+    background: color-mix(in srgb, var(--text-color, #000) 6%, transparent) !important;
+    color: var(--text-color, #000) !important;
+    font-weight: bold;
+    padding: 6px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border-bottom: 1px solid color-mix(in srgb, var(--text-color, #000) 12%, transparent) !important;
+    font-family: 'Poppins', 'Outfit', sans-serif;
+    user-select: none;
+}
+
+.explanation-content {
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--text-color, #000) !important;
+}
+
+.explanation-content .bullet-item {
+    margin: 4px 0;
+}
+
+.explanation-content p {
+    margin: 4px 0;
+}
+
+/* --- Text Visibility Audit Styles --- */
+
+.audit-results-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.audit-success-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 30px 20px;
+    background: rgba(46, 125, 50, 0.12) !important;
+    border: 1px solid rgba(46, 125, 50, 0.3) !important;
+    border-radius: 8px;
+    gap: 10px;
+}
+
+.audit-success-box .success-icon {
+    font-size: 40px;
+    animation: success-bounce 1s infinite alternate;
+}
+
+@keyframes success-bounce {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(-5px) scale(1.05); }
+}
+
+.audit-success-box h4 {
+    margin: 0;
+    font-size: 16px;
+    color: #81c784;
+}
+
+.audit-success-box p {
+    margin: 0;
+    color: #e8f5e9;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.audit-issues-header {
+    background: rgba(229, 57, 53, 0.08) !important;
+    border-left: 4px solid #ef5350 !important;
+    padding: 10px 14px;
+    border-radius: 4px;
+}
+
+.audit-issues-header h4 {
+    margin: 0 0 4px 0;
+    color: #ef5350;
+    font-size: 14px;
+}
+
+.audit-issues-header p {
+    margin: 0;
+    font-size: 12px;
+    color: #ffcdd2;
+}
+
+.audit-cards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.audit-card {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--ui-border, rgba(255, 255, 255, 0.12)) !important;
+    border-radius: 6px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.audit-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+.audit-card.severity-completely-hidden {
+    border-left: 4px solid #ef5350 !important;
+}
+
+.audit-card.severity-partially-clipped {
+    border-left: 4px solid #ff9800 !important;
+}
+
+.audit-card.severity-unrendered {
+    border-left: 4px solid #ab47bc !important;
+}
+
+.audit-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.audit-page-tag {
+    font-weight: 700;
+    font-size: 12px;
+    color: var(--ui-accent, #cfac62);
+    font-family: 'Poppins', 'Outfit', sans-serif;
+}
+
+.audit-badge {
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.audit-badge.badge-danger {
+    background: #c62828 !important;
+    color: #ffffff !important;
+}
+
+.audit-badge.badge-warning {
+    background: #ef6c00 !important;
+    color: #ffffff !important;
+}
+
+.audit-badge.badge-missing {
+    background: #6a1b9a !important;
+    color: #ffffff !important;
+}
+
+.audit-card-meta {
+    display: flex;
+    gap: 15px;
+    font-size: 11px;
+    color: var(--ui-text-muted, #cbd5e1);
+}
+
+.audit-card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.audit-card-body {
+    background: rgba(0, 0, 0, 0.2) !important;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.audit-card-body code {
+    font-family: monospace;
+    font-size: 12px;
+    color: #e0e0e0;
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+
+/* ==========================================================================
+   EXPLANATION CARD DESIGN STYLES
+   ========================================================================== */
+
+/* Resets/Hiders for non-classic styles */
+.explanation-wrapper.style-modern-accent .explanation-header,
+.explanation-wrapper.style-editorial-ribbon .explanation-header,
+.explanation-wrapper.style-glass-floating .explanation-header,
+.explanation-wrapper.style-two-tone-split .explanation-header {
+    display: none !important;
+}
+
+/* 1. Modern Accent Style (Left border highlight) */
+.explanation-wrapper.style-modern-accent {
+    margin-top: 8px;
+}
+.explanation-wrapper.style-modern-accent .explanation-qnum {
+    background: var(--ui-accent, #cfac62) !important;
+    color: #000000 !important;
+    padding: 3px 10px !important;
+    border-radius: 20px !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    display: inline-block !important;
+    width: max-content !important;
+    margin-bottom: 6px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.explanation-wrapper.style-modern-accent .explanation-card {
+    border: none !important;
+    border-left: 4px solid var(--ui-accent, #cfac62) !important;
+    background: color-mix(in srgb, var(--ui-accent, #cfac62) 6%, transparent) !important;
+    border-radius: 0 6px 6px 0 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+}
+.explanation-wrapper.style-modern-accent .explanation-content {
+    padding: 10px 14px !important;
+}
+
+/* 2. Editorial Ribbon Style (Overlapping badge) */
+.explanation-wrapper.style-editorial-ribbon {
+    position: relative;
+    padding-top: 18px;
+    margin-top: 10px;
+}
+.explanation-wrapper.style-editorial-ribbon .explanation-qnum {
+    position: absolute;
+    top: 5px;
+    left: 15px;
+    background: var(--secondary-color, #c5a353) !important;
+    color: #ffffff !important;
+    padding: 4px 12px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    border-radius: 3px !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25) !important;
+    z-index: 10 !important;
+    font-family: 'Poppins', 'Outfit', sans-serif;
+}
+.explanation-wrapper.style-editorial-ribbon .explanation-card {
+    border: 1px solid var(--ui-border, rgba(255, 255, 255, 0.08)) !important;
+    border-radius: 8px !important;
+    background: rgba(255, 255, 255, 0.01) !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1) !important;
+}
+.explanation-wrapper.style-editorial-ribbon .explanation-content {
+    padding: 18px 14px 12px 14px !important; /* Top padding to accommodate ribbon */
+}
+
+/* 3. Glassmorphism Card Style (Tech frosted glass) */
+.explanation-wrapper.style-glass-floating {
+    margin-top: 8px;
+}
+.explanation-wrapper.style-glass-floating .explanation-qnum {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    color: var(--ui-text, #ffffff) !important;
+    padding: 2px 8px !important;
+    border-radius: 4px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    display: inline-block !important;
+    width: max-content !important;
+    margin-bottom: 6px !important;
+}
+.explanation-wrapper.style-glass-floating .explanation-card {
+    background: rgba(255, 255, 255, 0.03) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2) !important;
+    position: relative;
+}
+.explanation-wrapper.style-glass-floating .explanation-card::after {
+    content: "📖";
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    font-size: 14px;
+    opacity: 0.4;
+    pointer-events: none;
+}
+.explanation-wrapper.style-glass-floating .explanation-content {
+    padding: 12px 14px !important;
+}
+
+/* 4. Two-Tone Split Column Style */
+.explanation-wrapper.style-two-tone-split {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 15px !important;
+    margin-top: 12px;
+    width: 100%;
+}
+.explanation-wrapper.style-two-tone-split .explanation-qnum {
+    width: 50px !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    padding-top: 8px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: var(--ui-accent, #cfac62) !important;
+    border-right: 1.5px solid var(--ui-border, rgba(255, 255, 255, 0.12)) !important;
+    height: auto !important;
+    margin-bottom: 0 !important;
+    font-family: 'Poppins', 'Outfit', sans-serif;
+}
+.explanation-wrapper.style-two-tone-split .explanation-qnum::after {
+    content: "हल";
+    font-size: 9px;
+    font-weight: 500;
+    color: var(--ui-text-muted, #cbd5e1);
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.explanation-wrapper.style-two-tone-split .explanation-card {
+    flex-grow: 1 !important;
+    border: none !important;
+    background: none !important;
+    box-shadow: none !important;
+}
+.explanation-wrapper.style-two-tone-split .explanation-content {
+    padding: 4px 0 !important;
+}
+
+/* Live Style Toggle Button in Preview */
+.explanation-wrapper {
+    position: relative;
+}
+
+.explanation-style-toggle {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--ui-accent, #cfac62) !important;
+    color: #000000 !important;
+    border: 1px solid rgba(0,0,0,0.15) !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1), transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 105;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    outline: none;
+    padding: 0;
+}
+
+.explanation-wrapper:hover .explanation-style-toggle {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.explanation-style-toggle:hover {
+    transform: scale(1.15) !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+/* Hide toggle button in print layouts completely */
+@media print {
+    .explanation-style-toggle {
+        display: none !important;
+    }
+}
+
+/* 15. PDF CHECK BUTTON & MODAL EXTENSIONS */
+.preview-header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 101;
+}
+
+.pdf-check-btn {
+    background-color: rgba(79, 70, 229, 0.15);
+    color: #a5b4fc;
+    border: 1px solid rgba(79, 70, 229, 0.4);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    font-family: var(--font-ui);
+    outline: none;
+}
+
+.pdf-check-btn:hover {
+    background-color: var(--ui-accent, #4f46e5);
+    color: white;
+    box-shadow: 0 0 10px rgba(79, 70, 229, 0.4);
+    border-color: var(--ui-accent, #4f46e5);
+}
+
+body.light-mode .pdf-check-btn {
+    background-color: #f1f5f9;
+    color: #4f46e5;
+    border: 1px solid #e2e8f0;
+}
+
+body.light-mode .pdf-check-btn:hover {
+    background-color: #4f46e5;
+    color: white;
+    border-color: #4f46e5;
+}
+
+/* Save PDF button styling */
+.pdf-print-btn {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    transition: all 0.2s ease;
+    font-family: var(--font-ui);
+    outline: none;
+}
+
+.pdf-print-btn:hover {
+    background-color: #10b981;
+    color: white;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    border-color: #10b981;
+}
+
+body.light-mode .pdf-print-btn {
+    background-color: #f1f5f9;
+    color: #10b981;
+    border: 1px solid #e2e8f0;
+}
+
+body.light-mode .pdf-print-btn:hover {
+    background-color: #10b981;
+    color: white;
+    border-color: #10b981;
+}
+
+/* Responsive styles to hide text on mobile screen */
+@media (max-width: 600px) {
+    .pdf-check-btn .btn-text, .pdf-print-btn .btn-text {
+        display: none !important;
+    }
+    .pdf-check-btn, .pdf-print-btn {
+        padding: 6px 10px;
+    }
+    .preview-header-right {
+        gap: 6px;
+    }
+}
+
+/* Modal audit details styling */
+.audit-resolution-box {
+    margin-top: 16px;
+    padding: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+body.light-mode .audit-resolution-box {
+    border: 1px dashed rgba(0, 0, 0, 0.12);
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Success box formatting updates */
+.audit-success-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 16px;
+}
+
+/* Inline feedback classes for modal */
+.inline-feedback {
+    animation: fadeInSlide 0.3s ease-out forwards;
+    margin-bottom: 12px !important;
+}
+
+@keyframes fadeInSlide {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-audit-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.btn-audit-action.shrink {
+    background: rgba(79, 70, 229, 0.2);
+    border-color: rgba(79, 70, 229, 0.4);
+    color: #a5b4fc;
+}
+.btn-audit-action.shrink:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+.btn-audit-action.font-dec {
+    background: rgba(234, 179, 8, 0.1);
+    border-color: rgba(234, 179, 8, 0.3);
+    color: #fef08a;
+}
+.btn-audit-action.font-dec:hover {
+    background: #eab308;
+    color: black;
+}
+
+.btn-audit-action.gaps {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+.btn-audit-action.gaps:hover {
+    background: #ef4444;
+    color: white;
+}
+
+body.light-mode .btn-audit-action.shrink {
+    background: rgba(79, 70, 229, 0.1);
+    color: #4f46e5;
+    border-color: rgba(79, 70, 229, 0.2);
+}
+body.light-mode .btn-audit-action.shrink:hover {
+    background: #4f46e5;
+    color: white;
+}
+
+body.light-mode .btn-audit-action.font-dec {
+    background: rgba(234, 179, 8, 0.08);
+    color: #854d0e;
+    border-color: rgba(234, 179, 8, 0.18);
+}
+body.light-mode .btn-audit-action.font-dec:hover {
+    background: #eab308;
+    color: black;
+}
+
+body.light-mode .btn-audit-action.gaps {
+    background: rgba(239, 68, 68, 0.08);
+    color: #991b1b;
+    border-color: rgba(239, 68, 68, 0.18);
+}
+body.light-mode .btn-audit-action.gaps:hover {
+    background: #ef4444;
+    color: white;
+}
+
+.btn-audit-action.fix-overflow {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #a7f3d0;
+}
+.btn-audit-action.fix-overflow:hover {
+    background: #10b981;
+    color: white;
+}
+body.light-mode .btn-audit-action.fix-overflow {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    border-color: rgba(16, 185, 129, 0.2);
+}
+body.light-mode .btn-audit-action.fix-overflow:hover {
+    background: #10b981;
+    color: white;
+}
+
+/* Drag to resize table columns handle styles */
+.markdown-table th {
+    position: relative !important;
+}
+.table-resize-handle {
+    position: absolute;
+    top: 0;
+    right: -8px; /* Center it on the border */
+    width: 16px; /* Much wider target area for easy hovering even when zoomed */
+    height: 100%;
+    cursor: col-resize;
+    user-select: none;
+    z-index: 9999; /* Ensure it stays on top */
+    pointer-events: auto !important;
+}
+.table-resize-handle::after {
+    content: "";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 7px; /* Center of the 16px wide handle */
+    width: 2px;
+    height: 100%;
+    background-color: transparent;
+    transition: background-color 0.15s ease;
+}
+.markdown-table th:hover .table-resize-handle::after {
+    background-color: rgba(133, 15, 15, 0.25); /* Faint highlight when hovering the header cell */
+}
+.table-resize-handle:hover::after,
+.table-resize-handle.active::after {
+    background-color: var(--ui-accent, #c5a353) !important; /* Golden/accent color on direct hover/drag */
+}
+
+/* Red Highlight Color */
+.text-highlight.highlight-red {
+    background-color: rgba(239, 68, 68, 0.45); /* Soft Red */
+}
+
+/* ==========================================================================
+   MICROSOFT WORD-STYLE RIBBON UI
+   ========================================================================== */
+
+/* Outer structure adjustment */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--ui-bg);
+}
+
+.main-workspace {
+    display: flex;
+    flex: 1;
+    height: 0;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Simplified Editor Panel */
+.main-workspace .editor-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Make textarea take maximum available height */
+.main-workspace .editor-core {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    height: 100%;
+}
+
+.main-workspace #content-editor-zone {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.main-workspace .textarea-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 10px;
+    height: 100%;
+}
+
+.main-workspace .textarea-wrapper textarea {
+    flex: 1;
+    resize: none;
+    height: 100% !important;
+}
+
+/* --- Ribbon Container Styles --- */
+.ribbon-container {
+    background-color: #1f1f23; /* Word-like Dark Slate */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    flex-shrink: 0;
+    font-family: 'DM Sans', 'Outfit', 'Segoe UI', sans-serif;
+}
+
+/* Title Bar (Logo, Tabs, and Global Actions) */
+.ribbon-title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 16px;
+    background-color: #18181b; /* Top window line is darker */
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: nowrap;
+    height: 38px;
+}
+
+.ribbon-logo-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ribbon-logo-group img {
+    height: 18px;
+    width: 18px;
+}
+
+.ribbon-logo-group .logo-text {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ui-accent, #c5a353);
+    letter-spacing: 0.5px;
+}
+
+/* Tabs Navigation */
+.ribbon-tabs-nav {
+    display: flex;
+    gap: 2px;
+    margin-left: 20px;
+    flex: 1;
+    height: 100%;
+    align-items: flex-end;
+}
+
+.ribbon-tab-btn {
+    background: transparent;
+    border: none;
+    color: #a1a1aa;
+    padding: 6px 16px 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border-radius: 4px 4px 0 0;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin-bottom: -1px;
+}
+
+.ribbon-tab-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.ribbon-tab-btn.active {
+    background-color: #1f1f23; /* Merges with panel color */
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.12);
+    border-bottom: 1px solid #1f1f23;
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+}
+
+/* Global Actions */
+.ribbon-global-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ribbon-global-actions .header-action-btn {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.ribbon-global-actions .header-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.ribbon-global-actions .author-credit {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #a1a1aa;
+    margin-left: 8px;
+}
+
+.ribbon-global-actions .author-avatar-mini {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Panels Content */
+.ribbon-panels-content {
+    min-height: 98px;
+    height: 98px;
+    background-color: #1f1f23;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 6px 12px;
+    box-sizing: border-box;
+    align-items: stretch;
+}
+
+.ribbon-panel {
+    display: none;
+    align-items: stretch;
+    gap: 12px;
+    height: 100%;
+}
+
+.ribbon-panel.active {
+    display: flex;
+}
+
+/* Ribbon Group (Columns like Paragraph, Font in Word) */
+.ribbon-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding-right: 12px;
+    margin-right: 4px;
+    height: 100%;
+    flex-shrink: 0;
+}
+
+.ribbon-group:last-child {
+    border-right: none;
+    padding-right: 0;
+    margin-right: 0;
+}
+
+.ribbon-group-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.ribbon-group-label {
+    font-size: 9px;
+    color: #71717a;
+    text-align: center;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    user-select: none;
+}
+
+/* Control elements */
+.ribbon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: #e4e4e7;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px 8px;
+    min-width: 48px;
+    height: 60px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.ribbon-btn:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.ribbon-btn-icon {
+    font-size: 18px;
+    line-height: 1;
+    margin-bottom: 2px;
+}
+
+.ribbon-btn-label {
+    font-size: 9.5px;
+    font-weight: 500;
+}
+
+/* Select element */
+.ribbon-select {
+    background-color: #16161e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f4f4f5;
+    padding: 4px 6px;
+    font-size: 11px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    height: 26px;
+    max-width: 140px;
+}
+
+.ribbon-select:hover {
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ribbon-select:focus {
+    border-color: var(--ui-accent);
+}
+
+/* Compact Ribbon Control Item (Label + Input stacked vertically or horizontally) */
+.ribbon-control-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    justify-content: center;
+}
+
+.ribbon-control-item label {
+    font-size: 9px;
+    color: #a1a1aa;
+    font-weight: 500;
+}
+
+/* Text Input in Ribbon */
+.ribbon-text-input {
+    background-color: #16161e;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f4f4f5;
+    padding: 4px 8px;
+    font-size: 11px;
+    border-radius: 4px;
+    outline: none;
+    height: 26px;
+    box-sizing: border-box;
+    width: 110px;
+}
+
+.ribbon-text-input:focus {
+    border-color: var(--ui-accent);
+}
+
+/* Slider in Ribbon */
+.ribbon-slider-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 110px;
+}
+
+.ribbon-slider-item label {
+    font-size: 9px;
+    color: #a1a1aa;
+    display: flex;
+    justify-content: space-between;
+}
+
+.ribbon-slider-item input[type="range"] {
+    width: 100%;
+    height: 3px;
+    accent-color: var(--ui-accent);
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+}
+
+/* Checkbox in Ribbon */
+.ribbon-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.ribbon-checkbox-item input[type="checkbox"] {
+    accent-color: var(--ui-accent);
+    width: 13px;
+    height: 13px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.ribbon-checkbox-item label {
+    font-size: 10.5px;
+    color: #e4e4e7;
+    cursor: pointer;
+    line-height: 1;
+}
+
+/* Color Item in Ribbon */
+.ribbon-color-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.ribbon-color-item label {
+    font-size: 9px;
+    color: #a1a1aa;
+}
+
+.ribbon-color-item input[type="color"] {
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+}
+
+/* Font size adjust button in Ribbon */
+.ribbon-font-adjust-btn {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #fff;
+    width: 24px;
+    height: 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.ribbon-font-adjust-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* File Input in Ribbon */
+.ribbon-file-input {
+    font-size: 9px;
+    width: 100px;
+    background: rgba(255,255,255,0.02);
+    border: 1px dashed rgba(255,255,255,0.12);
+    color: #a1a1aa;
+    padding: 2px;
+    border-radius: 3px;
+}
+
+.ribbon-action-btn {
+    background-color: var(--ui-accent, #c5a353);
+    color: #000;
+    border: none;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.ribbon-action-btn:hover {
+    background-color: var(--ui-accent-hover, #a4833a);
+}
+
+/* Quick Page Navigation layout inside Editor */
+.quick-page-navigation-bar {
+    background-color: #121215 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-sizing: border-box;
+}
+
+/* Adjust scrollbar for Ribbon */
+.ribbon-panels-content::-webkit-scrollbar {
+    height: 4px;
+}
+.ribbon-panels-content::-webkit-scrollbar-track {
+    background: #18181b;
+}
+.ribbon-panels-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 2px;
+}
+.ribbon-panels-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Override existing editor-toolbar styles when hosted inside the Ribbon */
+.ribbon-container .editor-toolbar {
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+    overflow: visible !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    width: auto !important;
+    opacity: 1 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.ribbon-container .editor-toolbar.collapsed {
+    max-height: none !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+/* --- Collapsible Ribbon Transition & Minimized Layouts --- */
+.ribbon-container .ribbon-panels-content {
+    transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), padding 0.25s ease, opacity 0.15s ease, border-top-color 0.25s ease;
+    max-height: 98px;
+    opacity: 1;
+}
+
+.ribbon-container.minimized .ribbon-panels-content {
+    max-height: 0 !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-top-color: transparent !important;
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+/* Hide Ribbon Minimize toggle button in print styles completely */
+@media print {
+    #ribbon-minimize-btn {
+        display: none !important;
+    }
+}
+
+/* ==========================================================================
+   16. PROFESSIONAL ENTERPRISE-GRADE RIBBON UI VISUAL UPGRADE
+   ========================================================================== */
+   
+/* Dark Matte Palette & Smooth Borders */
+.ribbon-container {
+    background-color: #0e0e12 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.ribbon-title-bar {
+    background-color: #0e0e12 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    height: 40px !important;
+    padding: 0 16px !important;
+}
+
+.ribbon-panels-content {
+    background-color: #141419 !important; /* Soft premium dark charcoal slate */
+    border-top: none !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 8px 16px !important;
+    min-height: 88px !important;
+    height: 88px !important;
+}
+
+/* Tab buttons - Clean & Modern (Word style) */
+.ribbon-tab-btn {
+    color: #94a3b8 !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    padding: 8px 16px !important;
+    height: calc(100% - 2px) !important;
+    border: none !important;
+    border-radius: 4px 4px 0 0 !important;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    margin-right: 2px !important;
+}
+
+.ribbon-tab-btn:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-tab-btn.active {
+    background-color: #141419 !important; /* Blends perfectly with active panel */
+    color: var(--ui-accent, #c5a059) !important;
+    font-weight: 700 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 2px solid #141419 !important; /* Cover bottom border overlap */
+    box-shadow: none !important;
+}
+
+/* Ribbon Group Structure */
+.ribbon-group {
+    border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding-right: 14px !important;
+    margin-right: 8px !important;
+    height: 100% !important;
+}
+
+.ribbon-group-label {
+    font-size: 8px !important;
+    font-weight: 700 !important;
+    color: #4b5563 !important; /* Soft grey letter spacing */
+    letter-spacing: 1px !important;
+    text-transform: uppercase !important;
+    margin-top: 4px !important;
+}
+
+/* Universal Button Overrides - Eliminating Cheap Toy Border/Bg Color Clutter */
+.ribbon-container .ribbon-btn {
+    background: rgba(255, 255, 255, 0.01) !important;
+    border: 1px solid rgba(255, 255, 255, 0.04) !important;
+    border-radius: 6px !important;
+    color: #cbd5e1 !important; /* Consistent, highly legible soft gray */
+    padding: 6px 8px !important;
+    min-width: 54px !important;
+    height: 58px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: none !important;
+}
+
+.ribbon-container .ribbon-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    transform: none !important; /* Zero cheap bounce animations */
+}
+
+/* Give formatting tools specific subtle accent when active/hovered */
+.ribbon-container .ribbon-btn.tool-btn:hover {
+    background: rgba(197, 160, 89, 0.05) !important;
+    border-color: rgba(197, 160, 89, 0.18) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-container .ribbon-btn:active {
+    background: rgba(197, 160, 89, 0.1) !important;
+    border-color: rgba(197, 160, 89, 0.3) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+/* Button Labels under Icons */
+.ribbon-container .ribbon-btn-label {
+    font-size: 9.5px !important;
+    font-weight: 500 !important;
+    color: #64748b !important; /* Subtle slate labels */
+    margin-top: 3px !important;
+}
+
+.ribbon-container .ribbon-btn:hover .ribbon-btn-label {
+    color: #cbd5e1 !important;
+}
+
+/* Fix Font Size Adjuster - Single Line Layout */
+.font-adjuster {
+    flex-direction: row !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px !important;
+    padding: 2px 6px !important;
+    height: 26px !important;
+    width: auto !important;
+    min-width: 90px !important;
+    box-sizing: border-box !important;
+}
+
+.font-adjuster span {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #f1f5f9 !important;
+    min-width: 44px !important;
+    text-align: center !important;
+    margin: 0 4px !important;
+}
+
+.font-adjuster button {
+    background: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ffffff !important;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 3px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    line-height: 1 !important;
+    transition: all 0.1s ease !important;
+}
+
+.font-adjuster button:hover {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Polished Select Fields in Ribbon */
+.ribbon-select {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    border-radius: 4px !important;
+    padding: 0 8px !important;
+    height: 26px !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    outline: none !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
+    max-width: 160px !important;
+}
+
+.ribbon-select:hover {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-select option {
+    background-color: #141419 !important;
+    color: #f1f5f9 !important;
+    padding: 6px !important;
+}
+
+/* Checkbox Style Alignment */
+.ribbon-checkbox-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    background: rgba(255, 255, 255, 0.01) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 4px 10px !important;
+    border-radius: 4px !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+}
+
+.ribbon-checkbox-item input[type="checkbox"] {
+    accent-color: var(--ui-accent, #c5a059) !important;
+    cursor: pointer !important;
+    width: 13px !important;
+    height: 13px !important;
+    margin: 0 !important;
+}
+
+.ribbon-checkbox-item label {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+    cursor: pointer !important;
+    user-select: none !important;
+}
+
+/* Global Actions Alignment & Polish */
+.ribbon-global-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+}
+
+.ribbon-global-actions .header-action-btn {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    color: #e2e8f0 !important;
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+    gap: 4px !important;
+    transition: all 0.15s ease !important;
+}
+
+.ribbon-global-actions .header-action-btn:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-global-actions .author-credit {
+    margin-left: 4px !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 3px 8px !important;
+    border-radius: 20px !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+}
+
+/* --- Microsoft Word-Style Ribbon Settings Alignment Overrides --- */
+
+/* Align control items vertically centered */
+.ribbon-control-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    justify-content: center !important;
+    height: 100% !important;
+}
+
+.ribbon-control-item label {
+    font-size: 9px !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    text-transform: none !important;
+}
+
+/* Polished Range Sliders in Ribbon */
+.ribbon-slider-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    min-width: 110px !important;
+    justify-content: center !important;
+    height: 100% !important;
+}
+
+.ribbon-slider-item label {
+    font-size: 9px !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+}
+
+.ribbon-slider-item input[type="range"] {
+    width: 100% !important;
+    height: 3px !important;
+    accent-color: var(--ui-accent, #c5a059) !important;
+    cursor: pointer !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 2px !important;
+    outline: none !important;
+}
+
+/* Polished Text Inputs in Ribbon */
+.ribbon-text-input {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    padding: 0 8px !important;
+    font-size: 11px !important;
+    border-radius: 4px !important;
+    outline: none !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+    width: 120px !important;
+    transition: all 0.15s ease !important;
+}
+
+.ribbon-text-input:focus {
+    border-color: var(--ui-accent, #c5a059) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Premium Color swatch selectors */
+.ribbon-color-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+    align-self: center !important;
+}
+
+.ribbon-color-item label {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+    margin: 0 !important;
+}
+
+.ribbon-color-item input[type="color"] {
+    width: 26px !important;
+    height: 26px !important;
+    padding: 0 !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px !important;
+    background: none !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+}
+
+/* Premium Action Buttons in Ribbon Groups */
+.ribbon-container .ribbon-action-btn {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    padding: 0 10px !important;
+    border-radius: 4px !important;
+    height: 26px !important;
+    box-sizing: border-box !important;
+    transition: all 0.15s ease !important;
+    align-self: center !important;
+}
+
+.ribbon-container .ribbon-action-btn:hover {
+    background-color: rgba(197, 160, 89, 0.08) !important;
+    border-color: rgba(197, 160, 89, 0.25) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+/* Custom Ribbon File Input to replace native browser file inputs */
+.ribbon-file-input {
+    font-size: 11px !important;
+    width: 100px !important;
+    color: transparent !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    height: 20px !important;
+    position: relative !important;
+    outline: none !important;
+}
+
+.ribbon-file-input::-webkit-file-upload-button {
+    visibility: hidden !important;
+    display: none !important;
+}
+
+.ribbon-file-input::before {
+    content: '📤 Upload Image' !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px !important;
+    padding: 0 10px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    font-weight: 600 !important;
+    font-size: 10px !important;
+    color: #cbd5e1 !important;
+    box-sizing: border-box !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all 0.15s ease !important;
+}
+
+.ribbon-file-input:hover::before {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-file-input:active::before {
+    background: rgba(197, 160, 89, 0.08) !important;
+    border-color: rgba(197, 160, 89, 0.25) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+/* ==========================================================================
+   17. MS WORD-STYLE HORIZONTAL RIBBON PANEL SYSTEM
+   ========================================================================== */
+
+/* Lock the Ribbon top container to grow dynamically with tabs and panel */
+.ribbon-container {
+    background-color: #0e0e12 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    position: relative !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    height: auto !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Make ribbon panels content relative and push content down */
+.ribbon-panels-content {
+    background-color: #141419 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+    padding: 8px 16px !important;
+    min-height: 104px !important;
+    box-sizing: border-box !important;
+    display: block !important;
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    z-index: 1 !important;
+}
+
+/* Style ribbon panel as a horizontal stretch bar */
+.ribbon-panel {
+    display: none !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: stretch !important;
+    gap: 16px !important;
+    width: max-content !important;
+    max-width: none !important;
+    position: static !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    background: transparent !important;
+    animation: none !important;
+    backdrop-filter: none !important;
+}
+
+.ribbon-panel.active {
+    display: flex !important;
+}
+
+/* Style active tab button to melt into active panel */
+.ribbon-tab-btn.active {
+    background-color: #141419 !important; /* Blends perfectly with panel */
+    color: var(--ui-accent, #c5a059) !important;
+    font-weight: 700 !important;
+    border-left: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-bottom: 2px solid #141419 !important; /* Overlaps container border */
+    border-radius: 4px 4px 0 0 !important;
+    box-shadow: none !important;
+    z-index: 1001 !important;
+    position: relative !important;
+    bottom: -1px !important; /* Moves down 1px to cover the container border */
+}
+
+/* Ribbon Group inside horizontal panel */
+.ribbon-panel .ribbon-group {
+    border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-bottom: none !important;
+    padding-right: 16px !important;
+    margin-right: 8px !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    height: auto !important;
+    width: auto !important;
+}
+
+.ribbon-panel .ribbon-group:last-child {
+    border-right: none !important;
+}
+
+.ribbon-panel .ribbon-group-controls {
+    display: grid !important;
+    grid-template-rows: repeat(3, 24px) !important;
+    grid-auto-flow: column !important; /* Lay items out column by column, filling rows first! */
+    gap: 4px 12px !important;
+    align-items: center !important;
+    width: auto !important;
+}
+
+.ribbon-panel .ribbon-group-label {
+    order: 1 !important;
+    text-align: center !important;
+    font-size: 8.5px !important;
+    font-weight: 600 !important;
+    color: #8899b0 !important;
+    letter-spacing: 0.8px !important;
+    text-transform: uppercase !important;
+    margin: 4px 0 0 0 !important;
+}
+
+/* Style editor toolbar when inside the ribbon to lay out cleanly in horizontal row */
+.ribbon-container .editor-toolbar:not(.rl-tall-row) {
+    display: grid !important;
+    grid-template-rows: repeat(3, 24px) !important;
+    grid-auto-flow: column !important;
+    gap: 4px 12px !important;
+    align-items: center !important;
+    width: auto !important;
+    height: auto !important;
+    max-height: none !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.ribbon-container .ribbon-btn {
+    display: inline-flex !important;
+    flex-direction: row !important; /* Icon on left, label on right */
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 6px !important;
+    height: 22px !important;
+    min-width: 80px !important; /* Compact width */
+    padding: 2px 8px !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 4px !important;
+    box-sizing: border-box !important;
+    grid-row: span 1 !important; /* Takes 1 row! */
+    color: #cbd5e1 !important;
+    transition: all 0.15s ease !important;
+    box-shadow: none !important;
+}
+
+.ribbon-container .ribbon-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    transform: none !important;
+}
+
+.ribbon-container .ribbon-btn.tool-btn:hover {
+    background: rgba(197, 160, 89, 0.05) !important;
+    border-color: rgba(197, 160, 89, 0.18) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-container .ribbon-btn:active {
+    background: rgba(197, 160, 89, 0.1) !important;
+    border-color: rgba(197, 160, 89, 0.3) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+/* Button Icons and Labels under 3-row layout */
+.ribbon-container .ribbon-btn-icon {
+    font-size: 11px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.ribbon-container .ribbon-btn-label {
+    font-size: 9.5px !important;
+    font-weight: 500 !important;
+    color: #cbd5e1 !important;
+    margin-top: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+}
+
+.ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn {
+    display: inline-flex !important;
+    flex-direction: row !important; /* Icon on left, label on right */
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-width: 80px !important;
+    width: auto !important;
+    height: 22px !important;
+    padding: 2px 8px !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    border-radius: 4px !important;
+    color: #cbd5e1 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+    grid-row: span 1 !important;
+}
+
+.ribbon-container .editor-toolbar .tool-btn:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+}
+
+/* Horizontal Alignment of Label & Dropdown Select inside Grid Rows */
+.ribbon-control-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 24px !important;
+    grid-row: span 1 !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+}
+
+.ribbon-control-item label {
+    font-size: 9px !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+}
+
+/* Horizontal Checkbox layouts */
+.ribbon-checkbox-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 24px !important;
+    grid-row: span 1 !important;
+    box-sizing: border-box !important;
+}
+
+.ribbon-checkbox-item label {
+    font-size: 9.5px !important;
+    font-weight: 600 !important;
+    color: #cbd5e1 !important;
+    white-space: nowrap !important;
+}
+
+.ribbon-checkbox-item input[type="checkbox"] {
+    margin: 0 !important;
+    cursor: pointer !important;
+    accent-color: var(--ui-accent, #c5a059) !important;
+}
+
+/* Large Range Sliders spanning all 3 rows (Full Height) */
+.ribbon-slider-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    min-width: 120px !important;
+    justify-content: center !important;
+    height: 76px !important; /* Full height of 3 rows */
+    grid-row: span 3 !important; /* Span 3 rows! */
+    border-left: 1px solid rgba(255, 255, 255, 0.04) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+    padding: 0 8px !important;
+    box-sizing: border-box !important;
+    margin: 0 4px !important;
+}
+
+.ribbon-slider-item label {
+    font-size: 9px !important;
+    color: #94a3b8 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.2px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-bottom: 2px !important;
+}
+
+.ribbon-slider-item input[type="range"] {
+    width: 100% !important;
+    height: 3px !important;
+    accent-color: var(--ui-accent, #c5a059) !important;
+    cursor: pointer !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 2px !important;
+    outline: none !important;
+}
+
+/* Compact Text Inputs in Grid Rows */
+.ribbon-text-input {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    padding: 0 6px !important;
+    font-size: 10px !important;
+    border-radius: 4px !important;
+    outline: none !important;
+    height: 22px !important;
+    box-sizing: border-box !important;
+    width: 90px !important;
+    grid-row: span 1 !important;
+}
+
+.ribbon-text-input:focus {
+    border-color: var(--ui-accent, #c5a059) !important;
+    background-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Color swatch selectors in Grid Rows */
+.ribbon-color-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
+    grid-row: span 1 !important;
+    padding: 0 2px !important;
+}
+
+.ribbon-color-item label {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: #cbd5e1 !important;
+    margin: 0 !important;
+    white-space: nowrap !important;
+    min-width: 50px !important;
+}
+
+.ribbon-color-item input[type="color"] {
+    width: 24px !important;
+    height: 20px !important;
+    padding: 1px !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 4px !important;
+    background: none !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+}
+
+/* Single line Font Size Adjuster in Grid Rows */
+.font-adjuster {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 24px !important;
+    grid-row: span 1 !important;
+    gap: 4px !important;
+}
+
+.font-adjuster button {
+    height: 20px !important;
+    width: 20px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 10px !important;
+}
+
+.font-adjuster span {
+    font-size: 10px !important;
+    min-width: 44px !important;
+    text-align: center !important;
+}
+
+/* Custom upload buttons inside Grid Rows */
+.ribbon-file-input {
+    font-size: 10px !important;
+    width: 90px !important;
+    color: transparent !important;
+    background: none !important;
+    border: none !important;
+    cursor: pointer !important;
+    height: 20px !important;
+    position: relative !important;
+    grid-row: span 1 !important;
+}
+
+.ribbon-file-input::-webkit-file-upload-button {
+    visibility: hidden !important;
+    display: none !important;
+}
+
+.ribbon-file-input::before {
+    content: '📤 Upload File' !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 4px !important;
+    padding: 0 6px !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    font-weight: 600 !important;
+    font-size: 9.5px !important;
+    color: #cbd5e1 !important;
+    box-sizing: border-box !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all 0.15s ease !important;
+}
+
+.ribbon-file-input:hover::before {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+}
+
+.ribbon-file-input:active::before {
+    background: rgba(197, 160, 89, 0.08) !important;
+    border-color: rgba(197, 160, 89, 0.25) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+/* Minimize Toggle Button */
+#ribbon-minimize-btn {
+    display: inline-flex !important;
+}
+
+/* Custom dropdown arrows */
+.ribbon-select {
+    padding-right: 20px !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 6px center !important;
+    background-repeat: no-repeat !important;
+    background-size: 14px !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+}
+
+/* Ultimate Print Overrides to ensure all editing UI is hidden when exporting to PDF */
+@media print {
+    .ribbon-container,
+    .ribbon-panels-content,
+    .ribbon-panel,
+    .editor-panel,
+    .preview-header,
+    .floating-stats,
+    .floating-editor-controls,
+    .fab-container,
+    .fab-trigger-btn,
+    .fab-sub-btn,
+    .resize-handle,
+    .sidebar-toggle-btn,
+    .mobile-preview-toggle-btn,
+    .mobile-preview-close-btn {
+        display: none !important;
+        height: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+}
+
+/* --- Ribbon Light Mode Overrides --- */
+body.light-mode .ribbon-container {
+    background-color: #f8fafc !important; /* Premium Slate 50 */
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .ribbon-panels-content {
+    background-color: #f1f5f9 !important; /* Premium Slate 100 */
+    border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+body.light-mode .ribbon-tab-btn {
+    color: #475569 !important; /* Slate 600 */
+}
+
+body.light-mode .ribbon-tab-btn:hover {
+    color: #0f172a !important; /* Slate 900 */
+    background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+body.light-mode .ribbon-tab-btn.active {
+    background-color: #f1f5f9 !important; /* Blends with panel */
+    color: var(--ui-accent, #c5a059) !important;
+    border-left: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    border-bottom: 2px solid #f1f5f9 !important;
+}
+
+body.light-mode .ribbon-panel .ribbon-group {
+    border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-mode .ribbon-panel .ribbon-group-label {
+    color: #64748b !important; /* Slate 500 */
+}
+
+body.light-mode .ribbon-container .ribbon-btn,
+body.light-mode .ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-container .ribbon-btn:hover,
+body.light-mode .ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn:hover {
+    background: #f8fafc !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+    color: #0f172a !important;
+}
+
+body.light-mode .ribbon-container .ribbon-btn:active,
+body.light-mode .ribbon-container .editor-toolbar:not(.rl-tall-row) .tool-btn:active {
+    background: rgba(197, 160, 89, 0.08) !important;
+    border-color: rgba(197, 160, 89, 0.25) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+body.light-mode .ribbon-container .ribbon-btn-label {
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-control-item label,
+body.light-mode .ribbon-slider-item label {
+    color: #475569 !important;
+}
+
+body.light-mode .ribbon-select {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-checkbox-item label {
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-slider-item {
+    border-left: 1px solid rgba(0, 0, 0, 0.06) !important;
+    border-right: 1px solid rgba(0, 0, 0, 0.06) !important;
+}
+
+body.light-mode .ribbon-slider-item input[type="range"] {
+    background: rgba(0, 0, 0, 0.08) !important;
+}
+
+body.light-mode .ribbon-text-input {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-color-item label {
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-color-item input[type="color"] {
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+body.light-mode .font-adjuster span {
+    color: #334155 !important;
+}
+
+body.light-mode .font-adjuster button {
+    background-color: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-file-input::before {
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    color: #334155 !important;
+}
+
+body.light-mode .ribbon-file-input:hover::before {
+    background: #f8fafc !important;
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.light-mode #ribbon-minimize-btn {
+    color: #475569 !important;
+}
+
+body.light-mode #ribbon-minimize-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    color: #0f172a !important;
+}
+
+/* ===== COLOR SWATCH CLEANUP ===== */
+/* Remove browser default white border/padding inside color inputs */
+.ribbon-color-item input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0 !important;
+}
+.ribbon-color-item input[type="color"]::-webkit-color-swatch {
+    border: none !important;
+    border-radius: 4px !important;
+}
+
+/* ===== TYPOGRAPHY TAB - IMPROVED LAYOUT ===== */
+/* Chapter Typography group - make font selects wider */
+#ribbon-tab-fonts .ribbon-group .ribbon-control-item select.ribbon-select {
+    min-width: 110px;
+    max-width: 150px;
+    font-size: 10px;
+}
+
+/* Color items & select controls in typography and decorators tabs - compact horizontal layout */
+#ribbon-tab-fonts .ribbon-color-item,
+#ribbon-tab-fonts .ribbon-control-item,
+#ribbon-tab-decorators .ribbon-color-item,
+#ribbon-tab-decorators .ribbon-control-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 22px !important;
+    padding: 0 2px !important;
+    min-width: 145px !important;
+    max-width: 175px !important;
+    box-sizing: border-box !important;
+}
+
+#ribbon-tab-fonts .ribbon-color-item label,
+#ribbon-tab-fonts .ribbon-control-item label,
+#ribbon-tab-decorators .ribbon-color-item label,
+#ribbon-tab-decorators .ribbon-control-item label {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    color: var(--ribbon-text, #cbd5e1) !important;
+    white-space: nowrap !important;
+    min-width: 75px !important;
+    max-width: 105px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    user-select: none !important;
+}
+
+#ribbon-tab-fonts .ribbon-color-item input[type="color"],
+#ribbon-tab-decorators .ribbon-color-item input[type="color"] {
+    width: 24px !important;
+    height: 20px !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    padding: 1px !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+}
+
+#ribbon-tab-fonts .ribbon-select,
+#ribbon-tab-decorators .ribbon-select {
+    height: 20px !important;
+    font-size: 10.5px !important;
+    padding: 0 4px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    border-radius: 3px !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    box-sizing: border-box !important;
+}
+
+#ribbon-tab-fonts .ribbon-select:hover,
+#ribbon-tab-decorators .ribbon-select:hover {
+    border-color: rgba(197,160,89,0.4) !important;
+}
+
+#ribbon-tab-fonts .ribbon-select:focus,
+#ribbon-tab-decorators .ribbon-select:focus {
+    border-color: rgba(197,160,89,0.7) !important;
+}
+
+/* Light mode overrides */
+body.light-mode #ribbon-tab-fonts .ribbon-color-item label,
+body.light-mode #ribbon-tab-fonts .ribbon-control-item label,
+body.light-mode #ribbon-tab-decorators .ribbon-color-item label,
+body.light-mode #ribbon-tab-decorators .ribbon-control-item label {
+    color: #475569 !important;
+}
+
+body.light-mode #ribbon-tab-fonts .ribbon-color-item input[type="color"],
+body.light-mode #ribbon-tab-decorators .ribbon-color-item input[type="color"] {
+    border-color: rgba(0,0,0,0.15) !important;
+}
+
+body.light-mode #ribbon-tab-fonts .ribbon-select,
+body.light-mode #ribbon-tab-decorators .ribbon-select {
+    background-color: #fff !important;
+    border-color: #d1d5db !important;
+    color: #1e293b !important;
+}
+
+body.light-mode #ribbon-tab-fonts .ribbon-select:hover,
+body.light-mode #ribbon-tab-decorators .ribbon-select:hover {
+    border-color: #c5a059 !important;
+}
+
+
+/* ============================================================
+   WORD-STYLE PAGE LAYOUT RIBBON — rl-* components
+   ============================================================ */
+
+/* Override the grid layout for rl-thumb-group — use flex row */
+.ribbon-group-controls.rl-thumb-group {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-end !important;
+    gap: 4px !important;
+    grid-template-rows: none !important;
+    height: auto !important;
+}
+
+/* Column thumbnail buttons */
+.rl-thumb-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 4px !important;
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 4px !important;
+    padding: 5px 6px 4px !important;
+    cursor: pointer !important;
+    transition: background 0.15s, border-color 0.15s !important;
+    color: #94a3b8 !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    min-width: 42px !important;
+}
+.rl-thumb-btn:hover {
+    background: rgba(197,160,89,0.1) !important;
+    border-color: rgba(197,160,89,0.3) !important;
+    color: #c5a059 !important;
+}
+.rl-thumb-btn.active {
+    background: rgba(197,160,89,0.12) !important;
+    border-color: #c5a059 !important;
+    color: #c5a059 !important;
+}
+
+/* Visual preview box for column layouts */
+.rl-thumb-preview {
+    width: 36px !important;
+    height: 46px !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 2px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    padding: 4px !important;
+    gap: 3px !important;
+    box-sizing: border-box !important;
+}
+.rl-thumb-col {
+    flex: 1 !important;
+    background: rgba(255,255,255,0.15) !important;
+    border-radius: 1px !important;
+}
+.rl-thumb-btn.active .rl-thumb-preview {
+    border-color: rgba(197,160,89,0.4) !important;
+    background: rgba(197,160,89,0.06) !important;
+}
+.rl-thumb-btn.active .rl-thumb-col {
+    background: rgba(197,160,89,0.5) !important;
+}
+
+/* Margin preset buttons */
+.rl-margin-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 3px !important;
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 4px !important;
+    padding: 5px 5px 4px !important;
+    cursor: pointer !important;
+    transition: background 0.15s, border-color 0.15s !important;
+    color: #94a3b8 !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3px !important;
+    min-width: 46px !important;
+}
+.rl-margin-btn:hover {
+    background: rgba(197,160,89,0.1) !important;
+    border-color: rgba(197,160,89,0.3) !important;
+    color: #c5a059 !important;
+}
+.rl-margin-btn.active {
+    background: rgba(197,160,89,0.12) !important;
+    border-color: #c5a059 !important;
+    color: #c5a059 !important;
+}
+
+/* Margin page preview */
+.rl-margin-preview {
+    width: 36px !important;
+    height: 46px !important;
+    padding: 3px !important;
+    box-sizing: border-box !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 2px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.rl-margin-page {
+    width: 100% !important;
+    height: 100% !important;
+    border: 1px dashed rgba(255,255,255,0.2) !important;
+    border-radius: 1px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    padding: 5px !important;
+}
+.rl-margin-content {
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(255,255,255,0.18) !important;
+    border-radius: 1px !important;
+}
+.rl-margin-narrow-prev .rl-margin-page { padding: 2px !important; }
+.rl-margin-wide-prev .rl-margin-page   { padding: 9px !important; }
+
+.rl-margin-btn.active .rl-margin-preview {
+    border-color: rgba(197,160,89,0.4) !important;
+    background: rgba(197,160,89,0.06) !important;
+}
+.rl-margin-btn.active .rl-margin-page {
+    border-color: rgba(197,160,89,0.5) !important;
+}
+.rl-margin-btn.active .rl-margin-content {
+    background: rgba(197,160,89,0.4) !important;
+}
+
+/* Checkbox in Page Layout tab */
+#ribbon-tab-layout .ribbon-checkbox-item {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    height: 22px !important;
+    font-size: 10px !important;
+    color: #94a3b8 !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+}
+#ribbon-tab-layout .ribbon-checkbox-item input[type="checkbox"] {
+    accent-color: #c5a059 !important;
+    width: 13px !important;
+    height: 13px !important;
+    cursor: pointer !important;
+}
+#ribbon-tab-layout .ribbon-checkbox-item label {
+    cursor: pointer !important;
+    font-size: 10px !important;
+    color: inherit !important;
+}
+
+/* Light mode for rl-* components */
+body.light-mode .rl-thumb-btn,
+body.light-mode .rl-margin-btn {
+    background: #ffffff !important;
+    border-color: #d1d5db !important;
+    color: #475569 !important;
+}
+body.light-mode .rl-thumb-btn:hover,
+body.light-mode .rl-margin-btn:hover {
+    background: #fef9ee !important;
+    border-color: #c5a059 !important;
+    color: #92740a !important;
+}
+body.light-mode .rl-thumb-btn.active,
+body.light-mode .rl-margin-btn.active {
+    background: #fef3c7 !important;
+    border-color: #d97706 !important;
+    color: #92400e !important;
+}
+body.light-mode .rl-thumb-preview,
+body.light-mode .rl-margin-preview {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+}
+body.light-mode .rl-thumb-col {
+    background: #94a3b8 !important;
+}
+body.light-mode .rl-thumb-btn.active .rl-thumb-col {
+    background: #d97706 !important;
+}
+body.light-mode .rl-margin-page { border-color: #94a3b8 !important; }
+body.light-mode .rl-margin-content { background: #94a3b8 !important; }
+body.light-mode #ribbon-tab-layout .ribbon-checkbox-item { color: #475569 !important; }
+
+/* ============================================================
+   COMPACT MARGIN SPINNERS — rl-spinner-* components
+   ============================================================ */
+
+/* 2x2 grid container for 4 spinners */
+.ribbon-group-controls.rl-spinner-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: auto auto !important;
+    gap: 5px 8px !important;
+    grid-template-rows: none !important;
+    align-items: start !important;
+    width: auto !important;
+    min-width: 160px !important;
+    height: auto !important;
+}
+
+/* Each spinner row: label above, controls below */
+.rl-spinner-item {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+}
+
+.rl-spinner-label {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    color: #64748b !important;
+    letter-spacing: 0.3px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}
+
+/* [−] [8mm] [+] control row */
+.rl-spinner-ctrl {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    height: 22px !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 5px !important;
+    overflow: hidden !important;
+    background: rgba(255,255,255,0.03) !important;
+}
+
+/* − and + buttons */
+.rl-spin-btn {
+    background: rgba(255,255,255,0.05) !important;
+    border: none !important;
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    width: 20px !important;
+    height: 100% !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.12s, color 0.12s !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+    padding: 0 !important;
+    outline: none !important;
+}
+
+.rl-spin-btn:hover {
+    background: rgba(197,160,89,0.2) !important;
+    color: #c5a059 !important;
+}
+
+.rl-spin-btn:active {
+    background: rgba(197,160,89,0.35) !important;
+}
+
+/* Value display in the middle */
+.rl-spin-val {
+    flex: 1 !important;
+    text-align: center !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    color: #e2e8f0 !important;
+    letter-spacing: 0.2px !important;
+    white-space: nowrap !important;
+    pointer-events: none !important;
+    user-select: none !important;
+}
+
+/* Light mode */
+body.light-mode .rl-spinner-label {
+    color: #64748b !important;
+}
+
+body.light-mode .rl-spinner-ctrl {
+    background: #ffffff !important;
+    border-color: #d1d5db !important;
+}
+
+body.light-mode .rl-spin-btn {
+    background: #f8fafc !important;
+    color: #475569 !important;
+}
+
+body.light-mode .rl-spin-btn:hover {
+    background: #fef9ee !important;
+    color: #92400e !important;
+}
+
+body.light-mode .rl-spin-val {
+    color: #1e293b !important;
+}
+
+/* ============================================================
+   HOME TAB — VISUAL INSERT THUMBNAIL BUTTONS
+   rl-insert-btn & rl-prev-* preview components
+   ============================================================ */
+
+/* Base button */
+.rl-insert-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 5px !important;
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 5px !important;
+    padding: 6px 7px 5px !important;
+    cursor: pointer !important;
+    transition: background 0.15s, border-color 0.15s, transform 0.1s !important;
+    color: #94a3b8 !important;
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.4px !important;
+    min-width: 50px !important;
+    text-transform: uppercase !important;
+}
+
+.rl-insert-btn:hover {
+    background: rgba(197,160,89,0.08) !important;
+    border-color: rgba(197,160,89,0.35) !important;
+    color: #c5a059 !important;
+    transform: translateY(-1px) !important;
+}
+
+.rl-insert-btn:active {
+    transform: translateY(0) !important;
+    background: rgba(197,160,89,0.15) !important;
+}
+
+/* Preview box - the mini canvas */
+.rl-insert-preview {
+    width: 46px !important;
+    height: 48px !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 5px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+}
+
+/* Shared line utility */
+.rl-prev-line {
+    height: 3px !important;
+    background: rgba(255,255,255,0.18) !important;
+    border-radius: 2px !important;
+    width: 100% !important;
+}
+.rl-prev-line.w80 { width: 80% !important; }
+.rl-prev-line.w70 { width: 70% !important; }
+.rl-prev-line.w65 { width: 65% !important; }
+.rl-prev-line.w60 { width: 60% !important; }
+.rl-prev-line.w55 { width: 55% !important; }
+.rl-prev-line.w50 { width: 50% !important; }
+.rl-prev-line.mt2 { margin-top: 3px !important; }
+
+/* ── SECTION preview: maroon bar + text lines below ── */
+.rl-prev-section {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+}
+
+.rl-prev-section-bar {
+    height: 10px !important;
+    background: linear-gradient(90deg, #850f0f, #a01515) !important;
+    border-radius: 2px !important;
+    width: 100% !important;
+}
+
+.rl-prev-lines {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    width: 100% !important;
+}
+
+/* ── CHAPTER preview: golden number badge + title lines ── */
+.rl-prev-chapter {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 5px !important;
+    width: 100% !important;
+}
+
+.rl-prev-ch-num {
+    background: linear-gradient(135deg, #c5a059, #e8c87a) !important;
+    color: #1a1005 !important;
+    font-size: 8px !important;
+    font-weight: 800 !important;
+    border-radius: 3px !important;
+    width: 18px !important;
+    height: 22px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    letter-spacing: -0.5px !important;
+}
+
+.rl-prev-ch-lines {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    flex: 1 !important;
+}
+
+/* ── TOPIC preview: blue diamond icon + heading lines ── */
+.rl-prev-topic {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    width: 100% !important;
+    border-left: 2px solid #1d6ea5 !important;
+    padding-left: 4px !important;
+}
+
+.rl-prev-topic-head {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+}
+
+.rl-prev-diamond {
+    color: #f97316 !important;
+    font-size: 7px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+/* ── BULLET preview: 3 dot + line rows ── */
+.rl-prev-bullets {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+    width: 100% !important;
+}
+
+.rl-prev-bullet-row {
+    display: flex !important;
+    align-items: center !important;
+    gap: 3px !important;
+}
+
+.rl-prev-bullet-row span {
+    color: #c5a059 !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+}
+
+/* ── NOTE preview: amber left-border highlight box ── */
+.rl-prev-note {
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(251,191,36,0.08) !important;
+    border-left: 3px solid #f59e0b !important;
+    border-radius: 0 3px 3px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 4px !important;
+    box-sizing: border-box !important;
+}
+
+.rl-prev-note-inner {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 3px !important;
+    width: 100% !important;
+}
+
+/* ── Color select inside Insert group ── */
+.rl-color-select {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 5px !important;
+    color: #94a3b8 !important;
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+    cursor: pointer !important;
+    outline: none !important;
+    text-align: center !important;
+    height: 32px !important;
+    align-self: flex-end !important;
+    margin-bottom: 14px !important;
+}
+
+.rl-color-select:hover {
+    border-color: rgba(197,160,89,0.35) !important;
+    background: rgba(197,160,89,0.06) !important;
+    color: #c5a059 !important;
+}
+
+/* ── Hover: brighten preview lines on button hover ── */
+.rl-insert-btn:hover .rl-prev-line {
+    background: rgba(255,255,255,0.28) !important;
+}
+
+.rl-insert-btn:hover .rl-insert-preview {
+    border-color: rgba(197,160,89,0.25) !important;
+    background: rgba(197,160,89,0.04) !important;
+}
+
+/* ── Light mode overrides ── */
+body.light-mode .rl-insert-btn {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #475569 !important;
+}
+
+body.light-mode .rl-insert-btn:hover {
+    background: #fef9ee !important;
+    border-color: #c5a059 !important;
+    color: #92400e !important;
+}
+
+body.light-mode .rl-insert-preview {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+}
+
+body.light-mode .rl-prev-line {
+    background: #94a3b8 !important;
+}
+
+body.light-mode .rl-insert-btn:hover .rl-prev-line {
+    background: #64748b !important;
+}
+
+body.light-mode .rl-prev-section-bar {
+    background: linear-gradient(90deg, #850f0f, #a01515) !important;
+}
+
+body.light-mode .rl-color-select {
+    background: #ffffff !important;
+    border-color: #d1d5db !important;
+    color: #475569 !important;
+}
+
+/* ============================================================
+   HOME TAB — COMPACT VERTICAL INSERT COLUMN
+   rl-insert-col, rl-vbtn, rl-vi-* icon badges
+   ============================================================ */
+
+/* Container: vertical flex column */
+.ribbon-group-controls.rl-insert-col {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    grid-template-rows: none !important;
+    width: auto !important;
+    height: auto !important;
+    align-items: stretch !important;
+}
+
+/* Each button: horizontal row — [icon badge] [label] */
+.rl-vbtn {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 7px !important;
+    height: 22px !important;
+    padding: 0 8px 0 4px !important;
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid transparent !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: background 0.12s, border-color 0.12s !important;
+    text-align: left !important;
+    min-width: 110px !important;
+    outline: none !important;
+}
+
+.rl-vbtn:hover {
+    background: rgba(197,160,89,0.1) !important;
+    border-color: rgba(197,160,89,0.3) !important;
+}
+
+.rl-vbtn:active {
+    background: rgba(197,160,89,0.2) !important;
+}
+
+/* Label text */
+.rl-vbtn-label {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #cbd5e1 !important;
+    letter-spacing: 0.1px !important;
+    white-space: nowrap !important;
+}
+
+.rl-vbtn:hover .rl-vbtn-label {
+    color: #e2c97e !important;
+}
+
+/* Icon badge — base */
+.rl-vbtn-icon {
+    width: 28px !important;
+    height: 16px !important;
+    border-radius: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 7px !important;
+    font-weight: 800 !important;
+    flex-shrink: 0 !important;
+    letter-spacing: 0 !important;
+    line-height: 1 !important;
+    overflow: hidden !important;
+}
+
+/* SECTION — maroon gradient bar */
+.rl-vi-section {
+    background: linear-gradient(90deg, #850f0f, #b01c1c) !important;
+    border-left: 2px solid #ff4444 !important;
+}
+
+/* CHAPTER — golden number badge */
+.rl-vi-chapter {
+    background: linear-gradient(135deg, #c5a059, #e8c87a) !important;
+    color: #1a1005 !important;
+    font-size: 8px !important;
+    font-weight: 900 !important;
+}
+
+/* TOPIC — blue with orange diamond */
+.rl-vi-topic {
+    background: rgba(29,110,165,0.25) !important;
+    border: 1px solid #1d6ea5 !important;
+    color: #f97316 !important;
+    font-size: 9px !important;
+}
+
+/* BULLET — dark with golden dots */
+.rl-vi-bullet {
+    background: rgba(197,160,89,0.12) !important;
+    border: 1px solid rgba(197,160,89,0.3) !important;
+    color: #c5a059 !important;
+    font-size: 7px !important;
+    letter-spacing: -1px !important;
+}
+
+/* NOTE — amber left border */
+.rl-vi-note {
+    background: rgba(251,191,36,0.1) !important;
+    border-left: 3px solid #f59e0b !important;
+    font-size: 10px !important;
+}
+
+/* Color select — compact full-width at bottom */
+.rl-insert-col .rl-color-select {
+    height: 22px !important;
+    margin-bottom: 0 !important;
+    align-self: stretch !important;
+    width: 100% !important;
+    font-size: 10px !important;
+    padding: 0 6px !important;
+    text-align: left !important;
+}
+
+/* Light mode */
+body.light-mode .rl-vbtn {
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+body.light-mode .rl-vbtn:hover {
+    background: #fef9ee !important;
+    border-color: #e8c87a !important;
+}
+
+body.light-mode .rl-vbtn-label {
+    color: #374151 !important;
+}
+
+body.light-mode .rl-vbtn:hover .rl-vbtn-label {
+    color: #92400e !important;
+}
+
+/* ============================================================
+   HOME TAB — 2×3 INSERT ICON GRID  (rl-grid-*)
+   ============================================================ */
+
+.ribbon-group-controls.rl-grid-insert {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: repeat(3, 1fr) !important;
+    gap: 3px !important;
+    width: auto !important;
+    height: auto !important;
+    grid-auto-flow: column !important;
+    align-items: stretch !important;
+}
+
+/* Each grid button: stacked icon + label */
+.rl-grid-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 2px !important;
+    background: rgba(255,255,255,0.03) !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 4px !important;
+    padding: 3px 4px !important;
+    cursor: pointer !important;
+    transition: background 0.12s, border-color 0.12s !important;
+    min-width: 48px !important;
+    height: 100% !important;
+    outline: none !important;
+}
+
+.rl-grid-btn:hover {
+    background: rgba(197,160,89,0.1) !important;
+    border-color: rgba(197,160,89,0.35) !important;
+}
+
+.rl-grid-btn:active {
+    background: rgba(197,160,89,0.2) !important;
+}
+
+/* Icon badge inside grid button */
+.rl-gb-icon {
+    width: 32px !important;
+    height: 22px !important;
+    border-radius: 3px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 9px !important;
+    font-weight: 800 !important;
+    flex-shrink: 0 !important;
+    line-height: 1 !important;
+}
+
+/* Label under icon */
+.rl-gb-lbl {
+    font-size: 8px !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+    letter-spacing: 0.2px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+}
+
+.rl-grid-btn:hover .rl-gb-lbl {
+    color: #e2c97e !important;
+}
+
+/* Icon color variants */
+.rl-gb-section {
+    background: linear-gradient(90deg, #850f0f, #b01c1c) !important;
+    color: #fff !important;
+    font-size: 11px !important;
+    font-weight: 900 !important;
+}
+.rl-gb-chapter {
+    background: linear-gradient(135deg, #c5a059, #e8c87a) !important;
+    color: #1a1005 !important;
+    font-weight: 900 !important;
+}
+.rl-gb-topic {
+    background: rgba(29,110,165,0.2) !important;
+    border: 1px solid #1d6ea5 !important;
+    color: #f97316 !important;
+    font-size: 11px !important;
+}
+.rl-gb-bullet {
+    background: rgba(197,160,89,0.12) !important;
+    border: 1px solid rgba(197,160,89,0.3) !important;
+    color: #c5a059 !important;
+    font-size: 14px !important;
+    letter-spacing: -2px !important;
+}
+.rl-gb-note {
+    background: rgba(251,191,36,0.1) !important;
+    border-left: 3px solid #f59e0b !important;
+    font-size: 12px !important;
+}
+
+/* Color select in 2×3 grid — fills the 6th cell */
+.rl-grid-insert .rl-gb-color {
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-radius: 4px !important;
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    outline: none !important;
+    width: 100% !important;
+    height: 100% !important;
+    padding: 0 !important;
+}
+
+.rl-grid-insert .rl-gb-color:hover {
+    border-color: rgba(197,160,89,0.35) !important;
+    background: rgba(197,160,89,0.06) !important;
+}
+
+/* ============================================================
+   HOME TAB — TALL FULL-HEIGHT TOOL BUTTONS  (rl-tall-*)
+   ============================================================ */
+
+/* Container: single horizontal flex row, full ribbon height */
+.ribbon-group-controls.rl-tall-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 2px !important;
+    height: 100% !important;
+    width: auto !important;
+    grid-template-rows: none !important;
+}
+
+/* =========================================
+   Tools Group — single horizontal row (matches Insert section)
+   ========================================= */
+.ribbon-group-controls.rl-tools-grid {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 2px !important;
+    height: 100% !important;
+    width: auto !important;
+}
+
+.rl-tool-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    height: 100% !important;
+    min-width: 52px !important;
+    padding: 5px 8px !important;
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid transparent !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: background 0.12s, border-color 0.12s, color 0.12s !important;
+    color: #cbd5e1 !important;
+    white-space: nowrap !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    flex-shrink: 0 !important;
+}
+
+.rl-tool-btn:hover {
+    background: rgba(197,160,89,0.09) !important;
+    border-color: rgba(197,160,89,0.25) !important;
+    color: #fff !important;
+}
+
+.rl-tool-btn:hover .rl-tool-lbl {
+    color: #e2c97e !important;
+}
+
+.rl-tool-btn:active {
+    background: rgba(197,160,89,0.18) !important;
+    border-color: rgba(197,160,89,0.45) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+.rl-tool-btn.rl-tool-danger:hover {
+    background: rgba(239,68,68,0.1) !important;
+    border-color: rgba(239,68,68,0.3) !important;
+    color: #fca5a5 !important;
+}
+
+/* Icon — fixed 24x24 container for visual uniformity across all emoji */
+.rl-tool-icon {
+    font-size: 18px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+}
+
+.rl-tool-lbl {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    color: #bfcfe0 !important;
+    letter-spacing: 0.2px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+}
+
+/* Light mode overrides for tools grid */
+body.light-mode .rl-tool-btn {
+    background: #ffffff !important;
+    border: 1px solid rgba(0,0,0,0.09) !important;
+    color: #334155 !important;
+}
+
+body.light-mode .rl-tool-btn:hover {
+    background: #fef9ee !important;
+    border-color: #c5a059 !important;
+    color: #92400e !important;
+}
+
+body.light-mode .rl-tool-btn:active {
+    background: rgba(197,160,89,0.12) !important;
+    border-color: rgba(197,160,89,0.35) !important;
+    color: var(--ui-accent, #c5a059) !important;
+}
+
+body.light-mode .rl-tool-btn.rl-tool-danger:hover {
+    background: rgba(239,68,68,0.08) !important;
+    border-color: rgba(239,68,68,0.28) !important;
+    color: #dc2626 !important;
+}
+
+/* Each tall button: icon on top, label below */
+.rl-tall-btn {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    padding: 5px 8px !important;
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid transparent !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: background 0.12s, border-color 0.12s !important;
+    min-width: 52px !important;
+    height: 100% !important;
+    outline: none !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.rl-tall-btn:hover {
+    background: rgba(197,160,89,0.09) !important;
+    border-color: rgba(197,160,89,0.25) !important;
+}
+
+.rl-tall-btn:active {
+    background: rgba(197,160,89,0.18) !important;
+}
+
+/* Active State with highlight borders and colors */
+.rl-tall-btn.active {
+    background: rgba(197,160,89,0.12) !important;
+    border-color: rgba(197,160,89,0.45) !important;
+    box-shadow: 0 0 8px rgba(197, 160, 89, 0.12) !important;
+}
+
+.rl-tall-btn.active .rl-tall-lbl {
+    color: var(--ui-accent, #c5a059) !important;
+    font-weight: 600 !important;
+}
+
+.rl-tall-btn.active .rl-tall-icon {
+    transform: scale(1.08) !important;
+}
+
+/* Status Indicator Dot (Top-Right Badge) - Restricted to Cover Toggle or toggle buttons */
+#btn-cover-page-toggle {
+    position: relative !important;
+}
+
+#btn-cover-page-toggle::after {
+    content: '' !important;
+    position: absolute !important;
+    top: 4px !important;
+    right: 4px !important;
+    width: 6px !important;
+    height: 6px !important;
+    border-radius: 50% !important;
+    background-color: #ef4444 !important; /* Red for Inactive/OFF */
+    box-shadow: 0 0 4px rgba(239, 68, 68, 0.5) !important;
+    transition: background-color 0.15s, box-shadow 0.15s !important;
+}
+
+#btn-cover-page-toggle.active::after {
+    background-color: #10b981 !important; /* Green for Active/ON */
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.7) !important;
+}
+
+/* Danger variant (Clear All) */
+.rl-tall-btn.rl-tall-danger:hover {
+    background: rgba(239,68,68,0.1) !important;
+    border-color: rgba(239,68,68,0.3) !important;
+}
+
+/* Icon — fixed container size for visual uniformity across all emoji */
+.rl-tall-icon {
+    font-size: 18px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 24px !important;
+    height: 24px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Label */
+.rl-tall-lbl {
+    font-size: 9px !important;
+    font-weight: 600 !important;
+    color: #bfcfe0 !important;
+    letter-spacing: 0.2px !important;
+    text-transform: uppercase !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    line-height: 1.2 !important;
+}
+
+.rl-tall-btn:hover .rl-tall-lbl {
+    color: #e2c97e !important;
+}
+
+.rl-tall-btn.rl-tall-danger:hover .rl-tall-lbl {
+    color: #fca5a5 !important;
+}
+
+/* Light mode */
+body.light-mode .rl-grid-btn {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+body.light-mode .rl-grid-btn:hover {
+    background: #fef9ee !important;
+    border-color: #c5a059 !important;
+}
+body.light-mode .rl-gb-lbl { color: #475569 !important; }
+body.light-mode .rl-grid-btn:hover .rl-gb-lbl { color: #92400e !important; }
+
+body.light-mode .rl-tall-btn { background: #ffffff !important; border: 1px solid rgba(0, 0, 0, 0.08) !important; }
+body.light-mode .rl-tall-btn:hover { background: #fef9ee !important; border-color: #c5a059 !important; }
+body.light-mode .rl-tall-lbl { color: #475569 !important; }
+body.light-mode .rl-tall-btn:hover .rl-tall-lbl { color: #92400e !important; }
+
+body.light-mode .rl-tall-btn.active {
+    background: #fffbeb !important;
+    border-color: rgba(197, 160, 89, 0.6) !important;
+}
+body.light-mode .rl-tall-btn.active .rl-tall-lbl {
+    color: #b45309 !important;
+}
+
+/* ============================================================
+   HOME TAB — 2×3 COLOUR SWATCH GRID  (rl-swatch-*)
+   ============================================================ */
+
+/* 2-col × 2-row grid for 4 swatches */
+.ribbon-group-controls.rl-color-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: repeat(2, 1fr) !important;
+    gap: 3px !important;
+    width: 60px !important;
+    height: 100% !important;
+    overflow: hidden !important;
+    align-items: stretch !important;
+    grid-auto-flow: row !important;
+}
+
+/* Each swatch button — label hata diya, sirf circle center mein */
+.rl-swatch-btn {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0 !important;
+    padding: 2px !important;
+    background: rgba(255,255,255,0.02) !important;
+    border: 1px solid rgba(255,255,255,0.06) !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    transition: background 0.12s, border-color 0.12s !important;
+    outline: none !important;
+    overflow: hidden !important;
+}
+
+.rl-swatch-btn:hover {
+    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(255,255,255,0.2) !important;
+}
+
+.rl-swatch-btn:active {
+    transform: scale(0.96) !important;
+}
+
+.rl-swatch-btn.active {
+    border-color: #c5a059 !important;
+    background: rgba(197,160,89,0.1) !important;
+    box-shadow: 0 0 0 1px rgba(197,160,89,0.4) inset !important;
+}
+
+/* Colour circle */
+.rl-swatch-circle {
+    width: 14px !important;
+    height: 14px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    display: block !important;
+    border: 1.5px solid rgba(0,0,0,0.15) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2) !important;
+}
+
+.rl-swatch-btn:hover .rl-swatch-circle {
+    transform: scale(1.15) !important;
+    transition: transform 0.12s !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3) !important;
+}
+
+.rl-swatch-btn.active .rl-swatch-circle {
+    box-shadow: 0 0 0 2px #c5a059, 0 1px 4px rgba(0,0,0,0.3) !important;
+}
+
+/* Label beside circle */
+.rl-swatch-lbl {
+    font-size: 8.5px !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
+    white-space: nowrap !important;
+    letter-spacing: 0.1px !important;
+    text-transform: capitalize !important;
+    overflow: hidden !important;
+}
+
+.rl-swatch-btn:hover .rl-swatch-lbl {
+    color: #e2e8f0 !important;
+}
+
+/* Light mode */
+body.light-mode .rl-swatch-btn {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+body.light-mode .rl-swatch-btn:hover {
+    background: #f8fafc !important;
+    border-color: #94a3b8 !important;
+}
+body.light-mode .rl-swatch-lbl { color: #475569 !important; }
+body.light-mode .rl-swatch-btn:hover .rl-swatch-lbl { color: #1e293b !important; }
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ============================================================
+   DOCUMENT TYPOGRAPHY -- Premium Labeled Control Cards
+   ============================================================ */
+
+.ribbon-group-controls.typo-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    height: 100% !important;
+}
+
+.typo-ctrl {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 3px !important;
+    background: rgba(255,255,255,0.025) !important;
+    border: 1px solid rgba(255,255,255,0.07) !important;
+    border-radius: 6px !important;
+    padding: 4px 8px !important;
+    min-width: 0 !important;
+    transition: border-color 0.15s, background 0.15s !important;
+}
+
+.typo-ctrl:hover {
+    background: rgba(197,160,89,0.06) !important;
+    border-color: rgba(197,160,89,0.25) !important;
+}
+
+.typo-ctrl-label {
+    font-size: 8.5px !important;
+    font-weight: 700 !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.4px !important;
+    white-space: nowrap !important;
+    line-height: 1 !important;
+    user-select: none !important;
+}
+
+.typo-ctrl:hover .typo-ctrl-label {
+    color: #c5a059 !important;
+}
+
+.ribbon-select.typo-select {
+    background: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #e2e8f0 !important;
+    outline: none !important;
+    cursor: pointer !important;
+    max-width: 130px !important;
+    line-height: 1.3 !important;
+}
+
+.ribbon-select.typo-select:focus {
+    color: #fff !important;
+}
+
+.typo-stepper {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+.typo-step-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 20px !important;
+    height: 20px !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 4px !important;
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    transition: all 0.12s !important;
+    padding: 0 !important;
+}
+
+.typo-step-btn:hover {
+    background: rgba(197,160,89,0.18) !important;
+    border-color: rgba(197,160,89,0.5) !important;
+    color: #c5a059 !important;
+}
+
+.typo-step-val {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #f1f5f9 !important;
+    min-width: 36px !important;
+    text-align: center !important;
+    letter-spacing: 0.2px !important;
+}
+
+body.light-mode .typo-ctrl { background: #ffffff !important; border-color: #e2e8f0 !important; }
+body.light-mode .typo-ctrl:hover { background: #fef9ee !important; border-color: #c5a059 !important; }
+body.light-mode .typo-ctrl-label { color: #94a3b8 !important; }
+body.light-mode .typo-ctrl:hover .typo-ctrl-label { color: #92400e !important; }
+body.light-mode .ribbon-select.typo-select { color: #1e293b !important; }
+body.light-mode .typo-step-btn { background: #f8fafc !important; border-color: #e2e8f0 !important; color: #334155 !important; }
+body.light-mode .typo-step-btn:hover { background: #fef9ee !important; border-color: #c5a059 !important; color: #92400e !important; }
+body.light-mode .typo-step-val { color: #1e293b !important; }
+
+/* ============================================================
+   DOCUMENT TYPOGRAPHY -- Microsoft Word Style (2-row layout)
+   ============================================================ */
+
+/* Outer container: single horizontal row, full height */
+.ribbon-group-controls.typo-controls {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 4px !important;
+    height: 100% !important;
+    width: auto !important;
+}
+
+/* Each row */
+.typo-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* Each field: full height, label + control centered together */
+.typo-field {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    height: 100% !important;
+    padding: 0 2px !important;
+    box-sizing: border-box !important;
+}
+
+/* Wide field (Font Style takes more space) */
+.typo-field--wide {
+    min-width: 120px !important;
+}
+
+/* Tiny label above control -- Word style */
+.typo-lbl {
+    font-size: 7.5px !important;
+    font-weight: 700 !important;
+    color: #8899b0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+    user-select: none !important;
+    padding-left: 2px !important;
+}
+
+/* Shared select -- Word-style */
+.typo-select {
+    appearance: auto !important;
+    -webkit-appearance: auto !important;
+    background-color: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 3px !important;
+    color: #e2e8f0 !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    height: 26px !important;
+    padding: 0 4px !important;
+    outline: none !important;
+    cursor: pointer !important;
+    width: 100% !important;
+    min-width: 70px !important;
+    transition: border-color 0.12s, background 0.12s !important;
+    box-sizing: border-box !important;
+}
+
+.typo-select:hover {
+    background-color: rgba(255,255,255,0.08) !important;
+    border-color: rgba(197,160,89,0.4) !important;
+    color: #fff !important;
+}
+
+.typo-select:focus {
+    border-color: rgba(197,160,89,0.7) !important;
+    background-color: rgba(255,255,255,0.08) !important;
+    color: #fff !important;
+}
+
+.typo-select option {
+    background-color: #1e1e24 !important;
+    color: #e2e8f0 !important;
+}
+
+/* Font Size box -- Word style number input with +/- */
+.typo-size-box {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    height: 22px !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 3px !important;
+    overflow: hidden !important;
+    transition: border-color 0.12s !important;
+}
+
+.typo-size-box:hover {
+    border-color: rgba(197,160,89,0.4) !important;
+}
+
+.typo-size-btn {
+    width: 18px !important;
+    height: 100% !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: none !important;
+    border-right: 1px solid rgba(255,255,255,0.08) !important;
+    color: #94a3b8 !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    transition: background 0.1s, color 0.1s !important;
+    flex-shrink: 0 !important;
+}
+
+.typo-size-btn:last-child {
+    border-right: none !important;
+    border-left: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.typo-size-btn:hover {
+    background: rgba(197,160,89,0.2) !important;
+    color: #c5a059 !important;
+}
+
+.typo-size-val {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: #e2e8f0 !important;
+    min-width: 34px !important;
+    text-align: center !important;
+    padding: 0 2px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+/* Light mode */
+body.light-mode .typo-lbl { color: #94a3b8 !important; }
+body.light-mode .typo-select {
+    background-color: #fff !important;
+    border-color: #d1d5db !important;
+    color: #1e293b !important;
+}
+body.light-mode .typo-select:hover {
+    border-color: #c5a059 !important;
+    background-color: #fef9ee !important;
+    color: #1e293b !important;
+}
+body.light-mode .typo-select:focus { border-color: #c5a059 !important; }
+body.light-mode .typo-select option { background-color: #fff !important; color: #1e293b !important; }
+body.light-mode .typo-size-box { background: #fff !important; border-color: #d1d5db !important; }
+body.light-mode .typo-size-box:hover { border-color: #c5a059 !important; }
+body.light-mode .typo-size-btn { background: #f8fafc !important; border-color: #d1d5db !important; color: #64748b !important; }
+body.light-mode .typo-size-btn:hover { background: #fef3c7 !important; color: #92400e !important; }
+body.light-mode .typo-size-val { color: #1e293b !important; }
+
+/* ============================================================
+   GLOBAL STEPPER CONTROLS -- Compact Horizontal Layout
+   ============================================================ */
+
+.ribbon-stepper-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    height: 22px !important;
+    min-width: 145px !important;
+    max-width: 175px !important;
+    box-sizing: border-box !important;
+}
+
+.stepper-lbl {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    color: var(--ribbon-text, #cbd5e1) !important;
+    white-space: nowrap !important;
+    min-width: 75px !important;
+    max-width: 105px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    user-select: none !important;
+}
+
+.stepper-box {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    height: 20px !important;
+    background: rgba(255,255,255,0.04) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+    border-radius: 3px !important;
+    overflow: hidden !important;
+    transition: border-color 0.12s !important;
+    width: 60px !important;
+    flex-shrink: 0 !important;
+}
+
+.stepper-box:hover {
+    border-color: rgba(197,160,89,0.4) !important;
+}
+
+.stepper-btn {
+    width: 16px !important;
+    height: 100% !important;
+    background: rgba(255,255,255,0.05) !important;
+    border: none !important;
+    border-right: 1px solid rgba(255,255,255,0.08) !important;
+    color: #94a3b8 !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    transition: all 0.1s !important;
+    flex-shrink: 0 !important;
+    user-select: none !important;
+}
+
+.stepper-btn:last-child {
+    border-right: none !important;
+    border-left: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.stepper-btn:hover {
+    background: rgba(197,160,89,0.2) !important;
+    color: #c5a059 !important;
+}
+
+.stepper-val {
+    font-size: 9.5px !important;
+    font-weight: 600 !important;
+    color: #e2e8f0 !important;
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 0 1px !important;
+    line-height: 1 !important;
+    white-space: nowrap !important;
+}
+
+/* Light Mode support */
+body.light-mode .stepper-lbl {
+    color: #475569 !important;
+}
+body.light-mode .stepper-box {
+    background: #fff !important;
+    border-color: #d1d5db !important;
+}
+body.light-mode .stepper-box:hover {
+    border-color: #c5a059 !important;
+}
+body.light-mode .stepper-btn {
+    background: #f8fafc !important;
+    border-color: #d1d5db !important;
+    color: #64748b !important;
+}
+body.light-mode .stepper-btn:hover {
+    background: #fef3c7 !important;
+    color: #92400e !important;
+}
+body.light-mode .stepper-val {
+    color: #1e293b !important;
+}
+
+/* ============================================================
+   RIBBON NUMBER INPUT CONTROLS
+   ============================================================ */
+
+.ribbon-number-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 22px !important;
+    min-width: 145px !important;
+    max-width: 175px !important;
+    box-sizing: border-box !important;
+}
+
+.ribbon-number-item label {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    color: var(--ribbon-text, #cbd5e1) !important;
+    white-space: nowrap !important;
+    min-width: 75px !important;
+    max-width: 105px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    user-select: none !important;
+}
+
+.ribbon-number-input {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    font-size: 11px !important;
+    font-weight: 500 !important;
+    height: 20px !important;
+    width: 50px !important;
+    border-radius: 3px !important;
+    padding: 0 4px !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    transition: all 0.12s ease !important;
+}
+
+.ribbon-number-input:hover {
+    border-color: rgba(197,160,89,0.4) !important;
+}
+
+.ribbon-number-input:focus {
+    border-color: rgba(197,160,89,0.7) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Light mode overrides */
+body.light-mode .ribbon-number-item label {
+    color: #475569 !important;
+}
+body.light-mode .ribbon-number-input {
+    background-color: #fff !important;
+    border-color: #d1d5db !important;
+    color: #1e293b !important;
+}
+body.light-mode .ribbon-number-input:hover {
+    border-color: #c5a059 !important;
+}
+body.light-mode .ribbon-number-input:focus {
+    border-color: #c5a059 !important;
+}
+
+/* Hide spinners (up/down arrows) in Chrome, Safari, Edge, Opera, and Firefox */
+.ribbon-number-input::-webkit-outer-spin-button,
+.ribbon-number-input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+.ribbon-number-input {
+    -moz-appearance: textfield !important;
+}
+
+/* Compact overrides for Decorators & Borders tab to fit on standard viewports without scroll */
+#ribbon-tab-decorators {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+}
+
+#ribbon-tab-decorators .ribbon-group {
+    padding-right: 8px !important;
+    margin-right: 4px !important;
+    gap: 2px !important;
+}
+
+#ribbon-tab-decorators .ribbon-group-controls {
+    gap: 4px 8px !important;
+}
+
+#ribbon-tab-decorators .ribbon-control-item,
+#ribbon-tab-decorators .ribbon-color-item,
+#ribbon-tab-decorators .ribbon-number-item {
+    min-width: 125px !important;
+    max-width: 140px !important;
+    gap: 6px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    box-sizing: border-box !important;
+}
+
+#ribbon-tab-decorators .ribbon-control-item label,
+#ribbon-tab-decorators .ribbon-color-item label,
+#ribbon-tab-decorators .ribbon-number-item label {
+    min-width: 58px !important;
+    max-width: 80px !important;
+    font-size: 9.5px !important;
+    font-weight: 500 !important;
+    color: var(--ribbon-text, #cbd5e1) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#ribbon-tab-decorators .ribbon-select,
+#ribbon-tab-decorators .ribbon-text-input,
+#ribbon-tab-decorators .ribbon-file-input,
+#ribbon-tab-decorators .ribbon-number-input {
+    flex: 1 !important;
+    min-width: 0 !important;
+    height: 20px !important;
+    font-size: 9.5px !important;
+    box-sizing: border-box !important;
+}
+
+#ribbon-tab-decorators .ribbon-color-item input[type="color"] {
+    width: 24px !important;
+    height: 20px !important;
+    flex: none !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(255,255,255,0.15) !important;
+    padding: 1px !important;
+    cursor: pointer !important;
+    box-sizing: border-box !important;
+}
+
+/* Style overrides for the new Table Style tab panel */
+#ribbon-tab-tables .ribbon-control-item,
+#ribbon-tab-tables .ribbon-number-item {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 22px !important;
+    min-width: 145px !important;
+    max-width: 175px !important;
+    box-sizing: border-box !important;
+}
+
+#ribbon-tab-tables .ribbon-control-item label,
+#ribbon-tab-tables .ribbon-number-item label {
+    font-size: 10px !important;
+    font-weight: 500 !important;
+    color: var(--ribbon-text, #cbd5e1) !important;
+    white-space: nowrap !important;
+    min-width: 75px !important;
+    max-width: 105px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+#ribbon-tab-tables .ribbon-select,
+#ribbon-tab-tables .ribbon-text-input,
+#ribbon-tab-tables .ribbon-number-input {
+    height: 20px !important;
+    font-size: 10.5px !important;
+    padding: 0 4px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+    border-radius: 3px !important;
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    box-sizing: border-box !important;
+}
+
+body.light-mode #ribbon-tab-tables .ribbon-control-item label,
+body.light-mode #ribbon-tab-tables .ribbon-number-item label {
+    color: #475569 !important;
+}
+
+body.light-mode #ribbon-tab-tables .ribbon-select,
+body.light-mode #ribbon-tab-tables .ribbon-text-input,
+body.light-mode #ribbon-tab-tables .ribbon-number-input {
+    background-color: #fff !important;
+    border-color: #d1d5db !important;
+    color: #1e293b !important;
+}

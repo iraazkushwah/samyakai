@@ -8,7 +8,20 @@
 // ==========================================================================
 const OCR_BACKEND_URL = "https://untitled-1038614782118.asia-southeast1.run.app/api/ocr";
 
+import init, { parse_text_to_blocks_wasm } from './pkg/samyak_layout_engine.js';
+
+let wasmEngineLoaded = false;
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Initialize Rust WASM Layout Engine
+    init()
+        .then(() => {
+            wasmEngineLoaded = true;
+            console.log("Rust WASM Layout Engine initialized successfully!");
+        })
+        .catch(err => {
+            console.error("Failed to load Rust WASM Layout Engine:", err);
+        });
     // Global Stepper Button click handler for range-slider replacements
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.stepper-btn');
@@ -5623,6 +5636,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function parseTextToBlocks(text) {
+        if (wasmEngineLoaded) {
+            try {
+                return parse_text_to_blocks_wasm(text || '');
+            } catch (err) {
+                console.error("Error in Rust parseTextToBlocks WASM, falling back to JS:", err);
+            }
+        }
+
         // Preserving trailing spaces and newlines to prevent cursor jumping
         text = text || '';
         text = preProcessText(text);
@@ -7215,9 +7236,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return false;
         }
 
-        const descendants = Array.from(contentEl.querySelectorAll('*'));
         const directChildren = Array.from(contentEl.children);
-        const allElements = [...directChildren, ...descendants];
+        const allElements = [];
+        directChildren.forEach(child => {
+            allElements.push(child);
+            if (child.classList.contains('bullet-list')) {
+                allElements.push(...Array.from(child.children));
+            }
+        });
 
         // Use the safety boundary top + maxHeight for vertical overflow check
         const maxAllowedBottom = contentRect.top + maxHeight;

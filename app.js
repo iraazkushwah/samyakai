@@ -790,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTimeout = setTimeout(() => {
             renderPreview();
             saveWorkspaceToLocalStorage();
-        }, 100); // 100ms debounce for immediate action inputs (themes, sliders, toggles)
+        }, 250); // ⚡ Increased from 100ms → 250ms to ensure slider dragging runs at a smooth 60fps without layout blocking
     }
 
     // Fast path rendering: Only parses and renders the active page.
@@ -904,9 +904,9 @@ document.addEventListener('DOMContentLoaded', () => {
         typingRenderTimeout = setTimeout(() => {
             const success = renderActivePageOnly();
             if (!success) {
-                // If local render fails or overflows, do a full render immediately
-                renderPreview();
-                needsFullRender = false;
+                // If local render fails or overflows, do NOT run full render immediately.
+                // Instead, mark it as needing a full render on typing pause to prevent typing freeze!
+                needsFullRender = true;
             }
         }, 50);
 
@@ -2196,6 +2196,19 @@ document.addEventListener('DOMContentLoaded', () => {
             htmlOutput += `<p style="padding-left: ${indentPadding}px">${parseInlineHighlightsToHtml(cleanLine)}</p>`;
         }
         return htmlOutput;
+    }
+
+    function parseHeadingOrBoxText(text) {
+        try {
+            if (!text) return "";
+            // Strip **bold** markdown formatting completely from headings and notes (as they are bold by default)
+            let clean = String(text).replace(/\*\*(.*?)\*\*/g, '$1');
+            clean = clean.replace(/\*\*/g, ''); // strip any mismatched ones
+            return parseInlineHighlightsToHtml(clean);
+        } catch (e) {
+            console.error("Error in parseHeadingOrBoxText:", e);
+            return text || "";
+        }
     }
 
     function parseInlineHighlightsToHtml(text) {
@@ -4211,10 +4224,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Switch active page editor view
     function switchActivePage(index, saveState = true, preventPreviewScroll = false) {
-        // If there was a pending full render, execute it immediately before switching page
+        // If there was a pending full render, defer it to the next frame to prevent page-switching click lag!
         if (needsFullRender) {
-            renderPreview();
             needsFullRender = false;
+            setTimeout(() => {
+                renderPreview();
+            }, 0);
         }
 
         // 1. Save current active page state if requested
@@ -5265,18 +5280,23 @@ document.addEventListener('DOMContentLoaded', () => {
             suggestions.push(exactTranslit);
         }
 
-        // 3. Prefix matched completions from dictionary
-        for (const [key, val] of Object.entries(hindiDictionary)) {
-            if (key.startsWith(lower) && !suggestions.includes(val)) {
-                suggestions.push(val);
-                if (suggestions.length >= 4) break;
+        // 3. Prefix matched completions from dictionary (High performance for...in loop)
+        for (const key in hindiDictionary) {
+            if (Object.prototype.hasOwnProperty.call(hindiDictionary, key)) {
+                if (key.startsWith(lower)) {
+                    const val = hindiDictionary[key];
+                    if (!suggestions.includes(val)) {
+                        suggestions.push(val);
+                        if (suggestions.length >= 4) break;
+                    }
+                }
             }
         }
 
         // 4. Syllable vowel endings fallback variations
         const endings = ["ा", "ी", "ु", "े", "ो"];
-        let base = exactTranslit;
-        if (base.endsWith("्")) {
+        let base = exactTranslit || "";
+        if (base && base.endsWith("्")) {
             base = base.substring(0, base.length - 1);
         }
         for (const end of endings) {
@@ -6084,7 +6104,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderBlockToNode(block) {
-        const line = block.markdown.trim();
+        try {
+            const line = block.markdown.trim();
         
         if (block.type === 'chapter-header') {
             const chapterHeader = document.createElement('div');
@@ -6354,7 +6375,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (block.fontSize) {
                 sectionEl.style.fontSize = `${block.fontSize}px`;
             }
-            sectionEl.textContent = sectionTitle;
+            sectionEl.innerHTML = parseHeadingOrBoxText(sectionTitle);
             return sectionEl;
         } 
         
@@ -6411,7 +6432,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (block.fontSize) {
                 titleEl.style.fontSize = `${block.fontSize}px`;
             }
-            titleEl.innerHTML = `<span class="diamond">${icon}</span> ${topicTitle}`;
+            titleEl.innerHTML = `<span class="diamond">${icon}</span> ${parseHeadingOrBoxText(topicTitle)}`;
 
             const divider = document.createElement('div');
             divider.className = 'topic-divider';
@@ -6452,7 +6473,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const highlightText = line.substring(2).trim();
             const box = document.createElement('div');
             box.className = 'highlight-box';
-            box.textContent = highlightText;
+            box.innerHTML = parseHeadingOrBoxText(highlightText);
             return box;
         } 
 
@@ -6747,10 +6768,18 @@ document.addEventListener('DOMContentLoaded', () => {
             p.innerHTML = formattedText;
             return p;
         }
+        } catch (e) {
+            console.error("Error in renderBlockToNode:", e);
+            const fallback = document.createElement('p');
+            fallback.className = 'body-text';
+            fallback.textContent = block.markdown || '';
+            return fallback;
+        }
     }
 
     function updateNodeContent(node, type, markdown) {
-        let line = markdown.trim();
+        try {
+            let line = markdown.trim();
         if (type === 'bullet') {
             let bulletText = line.replace(/^\s*[•\-\*\u2022\u25CF\u25AA\u25AB➜⭐★]\s*/, '').trim();
             // Check if list item already has numbering format to hide the bullet icon
@@ -6764,7 +6793,53 @@ document.addEventListener('DOMContentLoaded', () => {
             node.innerHTML = formattedText;
         } else if (type === 'box') {
             let highlightText = line.replace(/^\s*>\s*/, '').trim();
-            node.textContent = highlightText;
+            node.innerHTML = parseHeadingOrBoxText(highlightText);
+        } else if (type === 'section') {
+            let sectionTitle = line.replace(/^#+\s*/, '').replace(/^[?？\s]+/, '').trim();
+            sectionTitle = sectionTitle.replace(/\[size=\d+\]/gi, '').trim();
+            node.innerHTML = parseHeadingOrBoxText(sectionTitle);
+        } else if (type === 'topic') {
+            let topicTitle = line;
+            if (topicTitle.startsWith('##')) {
+                topicTitle = topicTitle.replace(/^##+\s*/, '');
+            }
+            topicTitle = topicTitle.replace(/\[size=\d+\]/gi, '').trim();
+            
+            let icon = '🔶'; // Default icon
+            const emojiMatch = topicTitle.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|\p{Emoji_Presentation}|\p{Emoji}|\S)\s*/u);
+            if (emojiMatch) {
+                const matchedIcon = emojiMatch[1];
+                if (!/^[a-zA-Z0-9\u0900-\u097F]/.test(matchedIcon)) {
+                    icon = matchedIcon;
+                    topicTitle = topicTitle.substring(emojiMatch[0].length).trim();
+                }
+            }
+            topicTitle = topicTitle.replace(/^[🔶🔷🔸🔹♦️💎]\s*/, '').trim();
+            if (icon === '🔶') {
+                const globalIconStyle = customDesignSettings.topicIcon || 'orange-diamond';
+                if (globalIconStyle === 'blue-diamond') icon = '🔷';
+                else if (globalIconStyle === 'star') icon = '⭐';
+                else if (globalIconStyle === 'pushpin') icon = '📌';
+                else if (globalIconStyle === 'rocket') icon = '🚀';
+                else if (globalIconStyle === 'nib') icon = '✒️';
+                else if (globalIconStyle === 'pencil') icon = '📝';
+                else if (globalIconStyle === 'crown') icon = '👑';
+                else if (globalIconStyle === 'fleur-de-lis') icon = '⚜️';
+                else if (globalIconStyle === 'sparkles') icon = '✨';
+                else if (globalIconStyle === 'book') icon = '📖';
+                else if (globalIconStyle === 'jewel') icon = '💎';
+                else if (globalIconStyle === 'quill') icon = '🪶';
+                else if (globalIconStyle === 'trophy') icon = '🏆';
+                else if (globalIconStyle === 'hand-right') icon = '👉';
+                else if (globalIconStyle === 'hand-writing') icon = '✍️';
+                else if (globalIconStyle === 'hand-thumb') icon = '👍';
+                else if (globalIconStyle === 'hand-up') icon = '👆';
+                else if (globalIconStyle === 'none') icon = '';
+            }
+            const titleEl = node.querySelector('.topic-title');
+            if (titleEl) {
+                titleEl.innerHTML = `<span class="diamond">${icon}</span> ${parseHeadingOrBoxText(topicTitle)}`;
+            }
         } else if (type === 'table') {
             const tbody = document.createElement('tbody');
             const lines = markdown.split('\n');
@@ -6920,6 +6995,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             let formattedText = formatMarkdownText(line);
             node.innerHTML = formattedText;
+        }
+        } catch (e) {
+            console.error("Error in updateNodeContent:", e);
         }
     }
 
@@ -10478,16 +10556,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeIntegrityBtn = document.getElementById('close-integrity-btn');
 
     const handleAuditClick = () => {
-        // Re-render first to ensure layout measurements are fresh
-        renderPreview();
+        // 1. Instantly show visual feedback (Checking...)
+        const pdfBtnText = pdfCheckBtn ? pdfCheckBtn.querySelector('.btn-text') : null;
+        const originalText = pdfBtnText ? pdfBtnText.textContent : 'PDF Check';
         
-        // Run the audit
-        runTextVisibilityAudit();
-        
-        // Show modal
-        if (integrityModal) {
-            integrityModal.classList.add('active');
-        }
+        if (pdfCheckBtn) pdfCheckBtn.classList.add('loading');
+        if (pdfBtnText) pdfBtnText.textContent = 'Checking...';
+
+        // 2. Defer heavy processing so browser can repaint the click action
+        setTimeout(() => {
+            // Re-render first to ensure layout measurements are fresh
+            renderPreview();
+            
+            // Run the audit
+            runTextVisibilityAudit();
+            
+            // Restore button text/state
+            if (pdfCheckBtn) pdfCheckBtn.classList.remove('loading');
+            if (pdfBtnText) pdfBtnText.textContent = originalText;
+
+            // Show modal
+            if (integrityModal) {
+                integrityModal.classList.add('active');
+            }
+        }, 80);
     };
 
     if (checkVisibilityBtn) {

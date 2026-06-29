@@ -29,6 +29,10 @@ app.use((req: any, res: any, next: any) => {
   );
   res.setHeader("Access-Control-Allow-Credentials", "true");
 
+  // Allow this site to be embedded in an iframe from any origin
+  res.setHeader("X-Frame-Options", "ALLOWALL");
+  res.setHeader("Content-Security-Policy", "frame-ancestors *");
+
   // Handle preflight OPTIONS request
   if (req.method === "OPTIONS") {
     res.sendStatus(200);

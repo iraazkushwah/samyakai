@@ -40,6 +40,7 @@
                     <button type="button" class="ribbon-tab-btn" data-tab="ribbon-tab-cover">Cover Page Style</button>
                     <button type="button" class="ribbon-tab-btn" data-tab="ribbon-tab-tables">Table Style</button>
                     <button type="button" class="ribbon-tab-btn" data-tab="ribbon-tab-decorators">Decorators & Borders</button>
+                    <button type="button" class="ribbon-tab-btn ribbon-tab-links-btn" data-tab="ribbon-tab-links">🔗 Links</button>
                 </nav>
 
                 <div class="ribbon-global-actions">
@@ -807,6 +808,42 @@
                          <div class="ribbon-group-label">End Star Divider</div>
                      </div>
                 </div>
+
+                <!-- 6. Links Tab Panel -->
+                <div id="ribbon-tab-links" class="ribbon-panel">
+                    <!-- Open OCR Group -->
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-controls rl-tall-row">
+                            <button class="rl-tall-btn tool-btn" id="ocr-open-btn" title="Open Samyak OCR Tool" onclick="document.getElementById('samyak-ocr-modal').classList.add('active')">
+                                <span class="rl-tall-icon">🔍</span>
+                                <span class="rl-tall-lbl">Samyak OCR</span>
+                            </button>
+                        </div>
+                        <div class="ribbon-group-label">OCR Tool</div>
+                    </div>
+
+                    <!-- Quick Info Group -->
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-controls rl-tall-row">
+                            <button class="rl-tall-btn tool-btn" id="ocr-new-tab-btn" title="Open OCR in New Browser Tab" onclick="window.open('https://untitled-1038614782118.asia-southeast1.run.app/', '_blank')">
+                                <span class="rl-tall-icon">↗️</span>
+                                <span class="rl-tall-lbl">New Tab</span>
+                            </button>
+                        </div>
+                        <div class="ribbon-group-label">External</div>
+                    </div>
+
+                    <!-- URL Info -->
+                    <div class="ribbon-group">
+                        <div class="ribbon-group-controls" style="justify-content: center; align-items: center; padding: 4px 8px;">
+                            <div style="display:flex;flex-direction:column;gap:2px;">
+                                <span style="font-size:10px;color:var(--ui-muted,#888);font-family:'Outfit',sans-serif;">Samyak OCR Website</span>
+                                <span style="font-size:9.5px;color:var(--ui-accent,#c5a353);font-family:monospace;letter-spacing:0.3px;">asia-southeast1.run.app</span>
+                            </div>
+                        </div>
+                        <div class="ribbon-group-label">About</div>
+                    </div>
+                </div>
             </div>
         </header>
 
@@ -1492,5 +1529,230 @@
         <button id="design-back-btn"></button>
         <input type="checkbox" id="phonetic-typing-toggle">
     </div>
+
+    <!-- ===== SAMYAK OCR FLOATING MODAL ===== -->
+    <div id="samyak-ocr-modal" class="samyak-ocr-modal-overlay">
+        <div class="samyak-ocr-modal-box" id="samyak-ocr-modal-box">
+            <!-- Modal Header -->
+            <div class="samyak-ocr-modal-header" id="samyak-ocr-drag-handle">
+                <div class="samyak-ocr-modal-title">
+                    <span class="samyak-ocr-icon">🔍</span>
+                    <span>Samyak OCR Tool</span>
+                    <span class="samyak-ocr-badge">LIVE</span>
+                </div>
+                <div class="samyak-ocr-modal-controls">
+                    <button class="samyak-ocr-ctrl-btn" id="ocr-modal-size-toggle" title="Toggle Size" onclick="document.getElementById('samyak-ocr-modal-box').classList.toggle('samyak-ocr-fullscreen')">⤢</button>
+                    <button class="samyak-ocr-ctrl-btn samyak-ocr-close-btn" title="Close" onclick="document.getElementById('samyak-ocr-modal').classList.remove('active')">✕</button>
+                </div>
+            </div>
+            <!-- Iframe -->
+            <div class="samyak-ocr-iframe-wrap">
+                <iframe
+                    id="samyak-ocr-iframe"
+                    src="https://untitled-1038614782118.asia-southeast1.run.app/"
+                    class="samyak-ocr-iframe"
+                    title="Samyak OCR"
+                    allow="clipboard-read; clipboard-write"
+                    loading="lazy"
+                ></iframe>
+            </div>
+        </div>
+    </div>
+
+    <style>
+    /* ===== LINKS TAB — Special accent style ===== */
+    .ribbon-tab-links-btn {
+        color: var(--ui-accent, #c5a353) !important;
+        font-weight: 600 !important;
+    }
+    .ribbon-tab-links-btn.active {
+        background: linear-gradient(135deg, rgba(197,163,83,0.18), rgba(197,163,83,0.08)) !important;
+        border-bottom-color: var(--ui-accent, #c5a353) !important;
+    }
+
+    /* ===== OCR MODAL OVERLAY ===== */
+    .samyak-ocr-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(0, 0, 0, 0.55);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        align-items: center;
+        justify-content: center;
+        animation: ocr-fade-in 0.22s ease;
+    }
+    .samyak-ocr-modal-overlay.active {
+        display: flex;
+    }
+
+    /* ===== OCR MODAL BOX ===== */
+    .samyak-ocr-modal-box {
+        width: 88vw;
+        height: 86vh;
+        max-width: 1300px;
+        background: #141414;
+        border: 1.5px solid rgba(197,163,83,0.35);
+        border-radius: 14px;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(197,163,83,0.12) inset;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        animation: ocr-slide-up 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+        transition: width 0.3s ease, height 0.3s ease, border-radius 0.3s ease;
+    }
+    .samyak-ocr-modal-box.samyak-ocr-fullscreen {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        border-radius: 0 !important;
+        border: none !important;
+    }
+
+    /* ===== HEADER ===== */
+    .samyak-ocr-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: linear-gradient(90deg, #1a1208 0%, #1e1810 60%, #161616 100%);
+        border-bottom: 1px solid rgba(197,163,83,0.25);
+        cursor: move;
+        user-select: none;
+        flex-shrink: 0;
+    }
+    .samyak-ocr-modal-title {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family: 'Outfit', 'Poppins', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #e8d5a0;
+        letter-spacing: 0.3px;
+    }
+    .samyak-ocr-icon { font-size: 16px; }
+    .samyak-ocr-badge {
+        font-size: 9px;
+        font-weight: 800;
+        padding: 2px 6px;
+        background: linear-gradient(135deg, #c5a353, #e8c878);
+        color: #1a1208;
+        border-radius: 20px;
+        letter-spacing: 1px;
+        animation: ocr-pulse-badge 2.5s ease-in-out infinite;
+    }
+    .samyak-ocr-modal-controls {
+        display: flex;
+        gap: 6px;
+    }
+    .samyak-ocr-ctrl-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        border: 1px solid rgba(197,163,83,0.3);
+        background: rgba(197,163,83,0.08);
+        color: #c5a353;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.18s ease;
+        line-height: 1;
+    }
+    .samyak-ocr-ctrl-btn:hover {
+        background: rgba(197,163,83,0.22);
+        border-color: #c5a353;
+        transform: scale(1.08);
+    }
+    .samyak-ocr-close-btn:hover {
+        background: rgba(220,60,60,0.25) !important;
+        border-color: #e05555 !important;
+        color: #ff7070 !important;
+    }
+
+    /* ===== IFRAME AREA ===== */
+    .samyak-ocr-iframe-wrap {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+    .samyak-ocr-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+        display: block;
+        background: #fff;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes ocr-fade-in {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+    }
+    @keyframes ocr-slide-up {
+        from { opacity: 0; transform: scale(0.93) translateY(20px); }
+        to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes ocr-pulse-badge {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(197,163,83,0.5); }
+        50%       { box-shadow: 0 0 8px 3px rgba(197,163,83,0.3); }
+    }
+
+    /* ===== ESC key to close hint ===== */
+    .samyak-ocr-modal-box::after {
+        content: 'Press ESC to close';
+        position: absolute;
+        bottom: 6px;
+        right: 10px;
+        font-size: 9px;
+        color: rgba(197,163,83,0.3);
+        font-family: 'Outfit', monospace;
+        pointer-events: none;
+    }
+    </style>
+
+    <script>
+    // ===== OCR Modal: Close on ESC + backdrop click =====
+    (function() {
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('samyak-ocr-modal').classList.remove('active');
+            }
+        });
+        document.getElementById('samyak-ocr-modal').addEventListener('click', function(e) {
+            if (e.target === this) this.classList.remove('active');
+        });
+
+        // ===== Drag to move modal =====
+        const handle = document.getElementById('samyak-ocr-drag-handle');
+        const box    = document.getElementById('samyak-ocr-modal-box');
+        let dragging = false, startX, startY, origLeft, origTop;
+
+        handle.addEventListener('mousedown', function(e) {
+            if (box.classList.contains('samyak-ocr-fullscreen')) return;
+            dragging = true;
+            const rect = box.getBoundingClientRect();
+            startX = e.clientX; startY = e.clientY;
+            origLeft = rect.left; origTop = rect.top;
+            box.style.position = 'fixed';
+            box.style.margin   = '0';
+            box.style.left     = origLeft + 'px';
+            box.style.top      = origTop  + 'px';
+            document.body.style.userSelect = 'none';
+        });
+        document.addEventListener('mousemove', function(e) {
+            if (!dragging) return;
+            box.style.left = (origLeft + e.clientX - startX) + 'px';
+            box.style.top  = (origTop  + e.clientY - startY) + 'px';
+        });
+        document.addEventListener('mouseup', function() {
+            dragging = false;
+            document.body.style.userSelect = '';
+        });
+    })();
+    </script>
 </body>
 </html>

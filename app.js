@@ -457,6 +457,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let pagesData = [];      // Array of page objects: [ {type: 'cover', title: '...'}, {type: 'content', text: '...'} ]
     let currentRenderedBlocks = []; // Array of currently rendered content blocks for scroll sync
     let activePageIndex = 0; // Current active page index
+    let needsFullRender = false; // Flag to check if slow path render is needed
+    let lastFullRenderedTexts = []; // Cache of last fully rendered text per page
     let zoomLevel = 100;
     if (window.innerWidth <= 768) {
         let optimalZoom = Math.floor((window.innerWidth - 32) / 816 * 100);
@@ -788,24 +790,141 @@ document.addEventListener('DOMContentLoaded', () => {
         renderTimeout = setTimeout(() => {
             renderPreview();
             saveWorkspaceToLocalStorage();
-        }, 200); // 200ms debounce for immediate action inputs (themes, sliders, toggles)
+        }, 100); // 100ms debounce for immediate action inputs (themes, sliders, toggles)
+    }
+
+    // Fast path rendering: Only parses and renders the active page.
+    // If it overflows or contains an explicit pagebreak, returns false so caller can fall back to full renderPreview().
+    function renderActivePageOnly() {
+        if (activePageIndex <= 0 || activePageIndex >= pagesData.length) return false;
+
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+        const physicalPageNum = activePageIndex + (showCover ? 1 : 0);
+        const activePageEl = pagesContainer.querySelector(`[data-page="${physicalPageNum}"]`);
+        if (!activePageEl) return false;
+
+        const contentEl = activePageEl.querySelector('.page-content');
+        if (!contentEl) return false;
+
+        // Save scroll positions to prevent jumping
+        const canvasWrapper = document.querySelector('.canvas-wrapper');
+        const savedScrollTop = canvasWrapper ? canvasWrapper.scrollTop : 0;
+        const savedScrollLeft = canvasWrapper ? canvasWrapper.scrollLeft : 0;
+
+        const pageMarkdown = pagesData[activePageIndex].text;
+        const blocks = parseTextToBlocks(pageMarkdown);
+
+        // Check if there are explicit pagebreaks in this page's text. If yes, fast-path is not safe.
+        for (let i = 0; i < blocks.length; i++) {
+            if (blocks[i].type === 'pagebreak') return false;
+        }
+
+        // Calculate block ID offset so block selection/sync scrolling still works while typing
+        let blockIdOffset = 0;
+        for (let idx = 1; idx < activePageIndex; idx++) {
+            const prevPageMarkdown = pagesData[idx] ? pagesData[idx].text : '';
+            const prevPageBlocks = parseTextToBlocks(prevPageMarkdown);
+            blockIdOffset += prevPageBlocks.length;
+        }
+
+        // Clear only this page's content wrapper
+        contentEl.innerHTML = '';
+
+        let activeBulletListElement = null;
+        const isTwoCol = contentEl.classList.contains('layout-two-column');
+
+        for (let i = 0; i < blocks.length; i++) {
+            const block = blocks[i];
+            block.id = blockIdOffset + i;
+
+            const node = renderBlockToNode(block);
+            if (node && typeof node.setAttribute === 'function') {
+                node.setAttribute('data-block-id', block.id);
+                node.setAttribute('draggable', 'true');
+            }
+
+            if (block.type === 'bullet') {
+                if (!activeBulletListElement) {
+                    activeBulletListElement = document.createElement('div');
+                    activeBulletListElement.className = 'bullet-list';
+                    activeBulletListElement.setAttribute('data-bullet-style', customDesignSettings.bulletStyle || 'classic');
+                    contentEl.appendChild(activeBulletListElement);
+                }
+                activeBulletListElement.appendChild(node);
+            } else {
+                contentEl.appendChild(node);
+                activeBulletListElement = null;
+            }
+        }
+
+        // Re-inject watermarks or dynamic elements if any are missing
+        injectWatermark(activePageEl);
+
+        // Check if page overflows
+        const isOverflow = checkPageOverflow(contentEl, isTwoCol, MAX_CONTENT_HEIGHT);
+        if (isOverflow) {
+            return false; // Fallback to full rendering
+        }
+
+        // Restore scroll positions
+        if (canvasWrapper) {
+            canvasWrapper.scrollTop = savedScrollTop;
+            canvasWrapper.scrollLeft = savedScrollLeft;
+        }
+
+        return true;
     }
 
     let typingRenderTimeout = null;
+    let typingFullRenderTimeout = null;
     let typingSaveTimeout = null;
+
     function debouncedRenderAndSaveTyping() {
-        // 1. Snappy live preview render debounce (300ms) - Updates screen almost instantly when typing pauses
+        const oldText = lastFullRenderedTexts[activePageIndex] || '';
+        const newText = pagesData[activePageIndex] ? pagesData[activePageIndex].text : '';
+
+        // Check if there are structural changes (headings or pagebreaks)
+        const getStructure = (txt) => {
+            return (txt || '').split('\n').filter(line => {
+                const trimmed = line.trim();
+                return trimmed.startsWith('#') || trimmed.startsWith('[chapter') || trimmed.startsWith('[pagebreak');
+            }).join('\n');
+        };
+
+        const structureChanged = getStructure(oldText) !== getStructure(newText);
+        // Also trigger full reflow if a significant deletion occurred (more than 40 chars) to pull text back
+        const significantDelete = oldText.length - newText.length > 40;
+
+        if (structureChanged || significantDelete) {
+            needsFullRender = true;
+        }
+
+        // 1. FAST PATH: Snappy active-page local render (50ms)
         clearTimeout(typingRenderTimeout);
         typingRenderTimeout = setTimeout(() => {
-            renderPreview();
-        }, 300);
+            const success = renderActivePageOnly();
+            if (!success) {
+                // If local render fails or overflows, do a full render immediately
+                renderPreview();
+                needsFullRender = false;
+            }
+        }, 50);
 
-        // 2. High-performance asynchronous persistence debounce (1500ms)
-        // Avoids heavy JSON serialization and IndexedDB writes on every keystroke during active typing
+        // 2. SLOW PATH: Full layout reflow & pagination (1200ms)
+        // Only runs if needsFullRender flag is set (e.g. structure changed or significant deletion occurred)
+        clearTimeout(typingFullRenderTimeout);
+        typingFullRenderTimeout = setTimeout(() => {
+            if (needsFullRender) {
+                renderPreview();
+                needsFullRender = false;
+            }
+        }, 1200);
+
+        // 3. PERSISTENCE: Save to localStorage (2000ms)
         clearTimeout(typingSaveTimeout);
         typingSaveTimeout = setTimeout(() => {
             saveWorkspaceToLocalStorage();
-        }, 1500);
+        }, 2000);
     }
 
     let lastActiveBlockId = null;
@@ -3349,6 +3468,37 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(handleAutoZoom, 200);
     });
 
+    // Helper to run snappy local preview render and debounced save on toolbar actions
+    function handleToolbarActionUpdates() {
+        updateStats();
+
+        // Check if full reflow is needed (headings added/removed)
+        const oldText = lastFullRenderedTexts[activePageIndex] || '';
+        const newText = pagesData[activePageIndex] ? pagesData[activePageIndex].text : '';
+
+        const getStructure = (txt) => {
+            return (txt || '').split('\n').filter(line => {
+                const trimmed = line.trim();
+                return trimmed.startsWith('#') || trimmed.startsWith('[chapter') || trimmed.startsWith('[pagebreak');
+            }).join('\n');
+        };
+
+        if (getStructure(oldText) !== getStructure(newText)) {
+            needsFullRender = true;
+        }
+
+        // Try fast path rendering first (synchronously) for instant button feedback
+        const success = renderActivePageOnly();
+        if (!success) {
+            // If active page render fails or overflows, do full render immediately
+            renderPreview();
+            needsFullRender = false;
+        }
+
+        // Trigger debounced save & slow path sync
+        debouncedRenderAndSaveTyping();
+    }
+
     // Toolbar Customize Edit Mode (Option B: Clicking swaps buttons)
     let isCustomizeMode = false;
 
@@ -3391,9 +3541,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 
                 insertWrappedAtCursor(pageContentInput, prefix, suffix);
                 pagesData[activePageIndex].text = pageContentInput.value;
-                renderPreview(); // Ensure live preview is instantly updated!
-                updateStats();
-                saveWorkspaceToLocalStorage();
+                handleToolbarActionUpdates();
             }
         });
     });
@@ -3406,9 +3554,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (activePageIndex > 0) {
                 insertWrappedAtCursor(pageContentInput, `==${colorVal}|`, `==`);
                 pagesData[activePageIndex].text = pageContentInput.value;
-                renderPreview();
-                updateStats();
-                saveWorkspaceToLocalStorage();
+                handleToolbarActionUpdates();
             }
             editorColorHighlight.selectedIndex = 0; // reset
         });
@@ -3420,9 +3566,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activePageIndex > 0) {
             insertWrappedAtCursor(pageContentInput, `==${colorVal}|`, `==`);
             pagesData[activePageIndex].text = pageContentInput.value;
-            renderPreview();
-            updateStats();
-            saveWorkspaceToLocalStorage();
+            handleToolbarActionUpdates();
         }
         // Update active state on swatch buttons
         document.querySelectorAll('.rl-swatch-btn').forEach(btn => {
@@ -4067,6 +4211,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Switch active page editor view
     function switchActivePage(index, saveState = true, preventPreviewScroll = false) {
+        // If there was a pending full render, execute it immediately before switching page
+        if (needsFullRender) {
+            renderPreview();
+            needsFullRender = false;
+        }
+
         // 1. Save current active page state if requested
         if (saveState) {
             saveCurrentInputState();
@@ -7514,6 +7664,12 @@ document.addEventListener('DOMContentLoaded', () => {
             activePageLabel.textContent = activePageIndex;
         }
         updateIndividualTablesListUI();
+
+        // Update the cached texts for each page
+        lastFullRenderedTexts = [];
+        for (let idx = 0; idx < pagesData.length; idx++) {
+            lastFullRenderedTexts[idx] = pagesData[idx] ? pagesData[idx].text : '';
+        }
     }
 
     // Helper to append gold ornate corners to a page
@@ -11022,9 +11178,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const suffix = btn.getAttribute('data-suffix') || '';
                 insertWrappedAtCursor(pageContentInput, prefix, suffix);
                 pagesData[activePageIndex].text = pageContentInput.value;
-                renderPreview();
-                updateStats();
-                saveWorkspaceToLocalStorage();
+                handleToolbarActionUpdates();
             } else {
                 alert('This can only be inserted on content pages!');
             }

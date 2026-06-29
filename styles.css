@@ -1836,6 +1836,7 @@ body.light-mode .header-stats {
     overflow: hidden;
     page-break-after: always;
     transition: background-color 0.2s ease, color 0.2s ease;
+    contain: layout style;
 }
 
 .a4-page:last-child {

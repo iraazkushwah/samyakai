@@ -192,7 +192,7 @@
                                  </select>
                              </div>
 
-                             <div class="typo-field">
+                             <div class="typo-field typo-field-size">
                                  <label class="typo-lbl">Size</label>
                                  <div class="typo-size-box">
                                      <button id="font-decrease" class="typo-size-btn" title="Decrease">&#8722;</button>
@@ -201,7 +201,7 @@
                                  </div>
                              </div>
 
-                             <div class="typo-field">
+                             <div class="typo-field typo-field-weight">
                                  <label class="typo-lbl">Weight</label>
                                  <select id="global-font-weight" class="typo-select">
                                      <option value="500" selected>Normal</option>
@@ -211,7 +211,7 @@
                                  </select>
                              </div>
 
-                             <div class="typo-field">
+                             <div class="typo-field typo-field-spacing">
                                  <label class="typo-lbl">Spacing</label>
                                  <select id="global-letter-spacing" class="typo-select">
                                      <option value="-0.2px">Compact</option>
@@ -221,7 +221,7 @@
                                  </select>
                              </div>
 
-                             <div class="typo-field">
+                             <div class="typo-field typo-field-line-height">
                                  <label class="typo-lbl">Line Height</label>
                                  <select id="global-line-spacing" class="typo-select">
                                      <option value="1.3">Compact</option>
@@ -303,9 +303,17 @@
                                  <span class="rl-tall-icon">✔️</span>
                                  <span class="rl-tall-lbl">Apply All</span>
                              </button>
-                             <!-- Hidden configs to keep app.js references alive -->
-                             <input type="checkbox" id="compact-spacing-toggle" style="display: none;">
-                             <input type="checkbox" id="tight-compaction-toggle" style="display: none;">
+                             <!-- Visible config options for space optimization -->
+                             <div class="rl-checkbox-column">
+                                 <div class="ribbon-checkbox-item" title="Reduce page padding and margins slightly for a compact look">
+                                     <input type="checkbox" id="compact-spacing-toggle">
+                                     <label for="compact-spacing-toggle">Compact Spacing</label>
+                                 </div>
+                                 <div class="ribbon-checkbox-item" title="Allow elements like cards, boxes, and list items to split across columns to fill empty gaps">
+                                     <input type="checkbox" id="tight-compaction-toggle">
+                                     <label for="tight-compaction-toggle">Tight Compaction</label>
+                                 </div>
+                             </div>
                              <select id="page-template-select" class="ribbon-select" style="display: none;">
                                  <option value="standard" selected>Standard Content</option>
                                  <option value="personality">Personality Feature</option>

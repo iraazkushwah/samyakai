@@ -125,6 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const coverSubtitleSizeSlider = document.getElementById('cover-subtitle-size');
     const coverSubtitleSizeVal = document.getElementById('cover-subtitle-size-val');
     const showTocToggle = document.getElementById('show-toc-toggle');
+    const showCoverPageToggle = document.getElementById('show-cover-page-toggle');
+    const btnCoverPageToggle = document.getElementById('btn-cover-page-toggle');
 
     // Last page inputs
     const lastEditorZone = document.getElementById('last-editor-zone');
@@ -423,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
         zoomLevel = 60;
     }
     
-    let contentFontSize = 16.1; // Default body text font size is 16.1px
+    let contentFontSize = 16; // Default body text font size is 16px
     let MAX_CONTENT_HEIGHT = 910; // Measured dynamically inside renderPreview
     let cachedMaxContentHeight = null; // Cache to prevent layout thrashing
     let draggedTOCSectionName = null; // Store dragged section name for TOC reordering
@@ -860,12 +862,72 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 150);
     }
 
+    function fastPreviewActivePage() {
+        if (activePageIndex <= 0 || activePageIndex >= pagesData.length) return;
+        
+        const showCover = (pagesData[0] && pagesData[0].showCoverPage !== false);
+        const physicalPageNum = activePageIndex + (showCover ? 1 : 0);
+        
+        const pageEl = pagesContainer.querySelector(`.a4-page[data-page="${physicalPageNum}"]`);
+        if (!pageEl) return;
+        
+        const contentEl = pageEl.querySelector('.page-content');
+        if (!contentEl) return;
+        
+        const text = pageContentInput.value;
+        const blocks = parseTextToBlocks(text);
+        
+        // Clear content area
+        contentEl.innerHTML = '';
+        
+        let hasChapterHeader = false;
+        let activeBulletListElement = null;
+        
+        blocks.forEach((block, idx) => {
+            block.id = `temp_${idx}`;
+            
+            if (block.type === 'chapter-header') {
+                hasChapterHeader = true;
+            }
+            
+            const node = renderBlockToNode(block);
+            if (node && typeof node.setAttribute === 'function') {
+                node.setAttribute('data-block-id', idx);
+            }
+            
+            if (block.type === 'bullet') {
+                if (!activeBulletListElement) {
+                    activeBulletListElement = document.createElement('div');
+                    activeBulletListElement.className = 'bullet-list';
+                    activeBulletListElement.setAttribute('data-bullet-style', customDesignSettings.bulletStyle || 'classic');
+                    contentEl.appendChild(activeBulletListElement);
+                }
+                activeBulletListElement.appendChild(node);
+            } else {
+                contentEl.appendChild(node);
+                activeBulletListElement = null;
+            }
+        });
+        
+        if (hasChapterHeader) {
+            pageEl.classList.add('has-chapter-header');
+        } else {
+            pageEl.classList.remove('has-chapter-header');
+        }
+    }
+
     function debouncedRenderAndSaveTyping() {
-        // 1. Snappy live preview render debounce (constant 400ms) - Updates screen instantly when typing pauses
+        // Run the fast preview of the active page instantly to ensure 0-lag updates
+        fastPreviewActivePage();
+
+        // 1. Live preview render: Use a very long debounce (8000ms) during active editing
+        // to prevent full-document layout engine stutters/freezes from interrupting typing.
+        // The full pagination will run instantly when the editor loses focus (blur) or switches pages.
         clearTimeout(typingRenderTimeout);
         typingRenderTimeout = setTimeout(() => {
+            typingRenderTimeout = null;
             renderPreview();
-        }, 400);
+        }, 8000);
 
         // 2. High-performance asynchronous persistence debounce (1500ms)
         clearTimeout(typingSaveTimeout);
@@ -954,9 +1016,15 @@ document.addEventListener('DOMContentLoaded', () => {
             pagesData[activePageIndex].text = pageContentInput.value;
             updateStats();
             debouncedRenderAndSaveTyping();
-            
-            // Sync scroll on input with a slight timeout to wait for DOM parsing
-            debouncedSyncPreviewScroll(false);
+        }
+    });
+
+    // Force full render immediately when editor loses focus (user is done editing)
+    pageContentInput.addEventListener('blur', () => {
+        if (typingRenderTimeout) {
+            clearTimeout(typingRenderTimeout);
+            typingRenderTimeout = null;
+            renderPreview();
         }
     });
 
@@ -1049,6 +1117,28 @@ document.addEventListener('DOMContentLoaded', () => {
         showTocToggle.addEventListener('change', () => {
             if (pagesData[0]) {
                 pagesData[0].showTOC = showTocToggle.checked;
+                debouncedRenderAndSave();
+            }
+        });
+    }
+
+    if (showCoverPageToggle) {
+        showCoverPageToggle.addEventListener('change', () => {
+            if (pagesData[0]) {
+                pagesData[0].showCoverPage = showCoverPageToggle.checked;
+                
+                if (btnCoverPageToggle) {
+                    if (showCoverPageToggle.checked) {
+                        btnCoverPageToggle.classList.add('active');
+                    } else {
+                        btnCoverPageToggle.classList.remove('active');
+                    }
+                }
+                
+                if (!showCoverPageToggle.checked && activePageIndex === 0) {
+                    switchActivePage(1); // Switch to Page 1 if Cover is hidden and active
+                }
+                
                 debouncedRenderAndSave();
             }
         });
@@ -2675,7 +2765,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         pagesData = state.pagesData;
                         lastPageData = state.lastPageData || { title: 'THANK YOU', subtitle: 'Samyak', tagline: 'कोचिंग नहीं क्रांति' };
                         activePageIndex = state.activePageIndex || 0;
-                        contentFontSize = state.contentFontSize || 16.1;
+                        contentFontSize = Math.round(state.contentFontSize || 16);
                         watermarkSettings = state.watermarkSettings || watermarkSettings;
                         customDesignSettings = state.customDesignSettings || customDesignSettings;
                         if (customDesignSettings.compactMode === undefined) {
@@ -2718,6 +2808,18 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (pagesData[0].showTOC === undefined) pagesData[0].showTOC = true;
                             if (showTocToggle) {
                                 showTocToggle.checked = pagesData[0].showTOC;
+                            }
+
+                            if (pagesData[0].showCoverPage === undefined) pagesData[0].showCoverPage = true;
+                            if (showCoverPageToggle) {
+                                showCoverPageToggle.checked = pagesData[0].showCoverPage;
+                            }
+                            if (btnCoverPageToggle) {
+                                if (pagesData[0].showCoverPage) {
+                                    btnCoverPageToggle.classList.add('active');
+                                } else {
+                                    btnCoverPageToggle.classList.remove('active');
+                                }
                             }
 
                             if (docClassificationInput) {
@@ -3253,7 +3355,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Font size dynamic bindings
     fontIncreaseBtn.addEventListener('click', () => {
         if (contentFontSize < 20) {
-            contentFontSize += 0.5;
+            contentFontSize = Math.round(contentFontSize + 1);
             updateFontSize();
             saveWorkspaceToLocalStorage();
         }
@@ -3261,7 +3363,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     fontDecreaseBtn.addEventListener('click', () => {
         if (contentFontSize > 10) {
-            contentFontSize -= 0.5;
+            contentFontSize = Math.round(contentFontSize - 1);
             updateFontSize();
             saveWorkspaceToLocalStorage();
         }
@@ -6357,6 +6459,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 table.style.marginLeft = '0';
                                 table.style.marginRight = 'auto';
                             }
+                        } else if (key === 'cols') {
+                            table.setAttribute('data-col-widths', val);
                         }
                     }
                 });
@@ -6400,6 +6504,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if (cellIdx === 0 && firstColIsNo) {
                         cell.classList.add('table-col-no');
+                    }
+                    
+                    if (isHeader) {
+                        const resizer = document.createElement('div');
+                        resizer.className = 'table-resize-handle';
+                        cell.appendChild(resizer);
+                    }
+                    
+                    if (table.hasAttribute('data-col-widths')) {
+                        const colWidths = table.getAttribute('data-col-widths').split(',');
+                        if (colWidths[cellIdx]) {
+                            const w = colWidths[cellIdx].trim();
+                            cell.style.width = w;
+                            cell.style.minWidth = w;
+                            cell.style.maxWidth = w;
+                        }
                     }
                     
                     tr.appendChild(cell);
@@ -6850,11 +6970,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Helper to detect overflow in single and two-column layouts
+    let cachedZoomFactor = null;
+
     function checkPageOverflow(contentEl, isTwoCol, maxHeight) {
-        const contentRect = contentEl.getBoundingClientRect();
-        // Fallback if the element is not in DOM or hidden (rect is 0)
-        if (contentRect.width === 0 || contentRect.height === 0) {
-            // Use estimated height check as fallback
+        if (contentEl.offsetWidth === 0 || contentEl.offsetHeight === 0) {
+            // Fallback if the element is not in DOM or hidden
             if (!isTwoCol) {
                 const children = contentEl.children;
                 if (children.length > 0) {
@@ -6869,32 +6989,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const directChildren = Array.from(contentEl.children);
         if (directChildren.length === 0) return false;
 
-        // Get zoom factor to scale maxHeight (since getBoundingClientRect is scaled under CSS zoom)
-        const pagesContainerEl = document.getElementById('pages-container');
-        const zoomFactor = pagesContainerEl ? (parseFloat(pagesContainerEl.style.zoom) || 1) : 1;
-        const scaledMaxHeight = maxHeight * zoomFactor;
-
-        // Use the safety boundary top + scaledMaxHeight for vertical overflow check
-        const maxAllowedBottom = contentRect.top + scaledMaxHeight;
-
         if (isTwoCol) {
-            // In 2-column mode, check if any direct child overflows the content area's right or bottom boundaries
+            const contentRect = contentEl.getBoundingClientRect();
+            // Get zoom factor to scale maxHeight (since getBoundingClientRect is scaled under CSS zoom)
+            if (cachedZoomFactor === null) {
+                const pagesContainerEl = document.getElementById('pages-container');
+                cachedZoomFactor = pagesContainerEl ? (parseFloat(pagesContainerEl.style.zoom) || 1) : 1;
+            }
+            const scaledMaxHeight = maxHeight * cachedZoomFactor;
+            const maxAllowedBottom = contentRect.top + scaledMaxHeight;
+
             return directChildren.some(child => {
                 const childRect = child.getBoundingClientRect();
-                // Check horizontal overflow (spills into column 3).
-                // Use a 12px tolerance scaled by zoom to avoid sub-pixel rounding false-positives
-                const horizontalOverflow = childRect.right > (contentRect.right + (12 * zoomFactor));
+                const horizontalOverflow = childRect.right > (contentRect.right + (12 * cachedZoomFactor));
                 
-                // Check vertical overflow if the element is in Column 2 or has column-span: all
                 let verticalOverflow = false;
                 const style = window.getComputedStyle(child);
                 const isColumnSpanAll = style.columnSpan === 'all' || style.webkitColumnSpan === 'all' || child.classList.contains('chapter-header');
                 
-                // Only check vertical overflow if the element's left edge is in Column 2
                 const isInColumn2 = childRect.left > (contentRect.left + (contentRect.width / 2));
                 
                 if (isInColumn2 || isColumnSpanAll) {
-                    verticalOverflow = childRect.bottom > (maxAllowedBottom + (3 * zoomFactor));
+                    verticalOverflow = childRect.bottom > (maxAllowedBottom + (3 * cachedZoomFactor));
                 }
                 return horizontalOverflow || verticalOverflow;
             });
@@ -6910,6 +7026,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Render right-side actual A4 pages sequentially
     function renderPreview(forceStrictSplit = false) {
+        // Reset cached zoom factor for this render pass
+        cachedZoomFactor = null;
+
         // Save current scroll positions of the preview canvas scroll wrapper to prevent jumping
         const canvasWrapper = document.querySelector('.canvas-wrapper');
         const savedScrollTop = canvasWrapper ? canvasWrapper.scrollTop : 0;
@@ -6943,6 +7062,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const existingPage = pagesContainer.querySelector(`.a4-page:not(.cover-page)[data-page="${pageNum}"]`);
             if (existingPage) {
                 // Reuse the existing page wrapper, just clear content area
+                existingPage.classList.remove('has-chapter-header');
                 const contentEl = existingPage.querySelector('.page-content');
                 if (contentEl) {
                     contentEl.innerHTML = '';
@@ -6988,24 +7108,96 @@ document.addEventListener('DOMContentLoaded', () => {
         let cursorEnd = 0;
         let globalCursorPos = 0;
 
+        function isMergeablePrevLine(line) {
+            if (!line) return false;
+            const trimmed = line.trim();
+            if (!trimmed) return false;
+            if (trimmed.startsWith('#') || 
+                trimmed.startsWith('|') || 
+                trimmed.startsWith('<!--') ||
+                trimmed.startsWith('[') ||
+                trimmed === '---') {
+                return false;
+            }
+            return true;
+        }
+
+        function isContinuationLine(line) {
+            if (!line) return false;
+            const trimmed = line.trim();
+            if (!trimmed) return false;
+            if (trimmed.startsWith('#') || 
+                trimmed.startsWith('>') || 
+                trimmed.startsWith('|') || 
+                trimmed.startsWith('<!--') ||
+                trimmed.startsWith('[') ||
+                trimmed === '---' ||
+                /^\s*(?:[•\-\*\u2022\u25CF\u25AA\u25AB➜⭐★]|🔶|🔷|🔸|🔹|♦️|💎|\d+[\.\)]|\(\d+\)|[a-zA-Z][\.\)]|\([a-zA-Z]\)|[ivxIVX]+[\.\)]|\([ivxIVX]+\))/i.test(trimmed)) {
+                return false;
+            }
+            return true;
+        }
+
+        // 2. Distribute blocks across Content Pages dynamically
+        let fullContentMarkdown = "";
+        const pageSeparators = []; // Store the separator used between page idx and idx + 1
+
+        for (let idx = 1; idx < pagesData.length; idx++) {
+            const currentPageText = pagesData[idx].text || "";
+            
+            if (idx === 1) {
+                fullContentMarkdown = currentPageText;
+            } else {
+                const prevPageText = pagesData[idx - 1].text || "";
+                const prevLines = prevPageText.split('\n');
+                const currLines = currentPageText.split('\n');
+                
+                let lastLine1 = "";
+                for (let k = prevLines.length - 1; k >= 0; k--) {
+                    if (prevLines[k].trim()) {
+                        lastLine1 = prevLines[k];
+                        break;
+                    }
+                }
+                
+                let firstLine2 = "";
+                for (let k = 0; k < currLines.length; k++) {
+                    if (currLines[k].trim()) {
+                        firstLine2 = currLines[k];
+                        break;
+                    }
+                }
+                
+                const shouldMerge = isMergeablePrevLine(lastLine1) && isContinuationLine(firstLine2);
+                const separator = shouldMerge ? " " : "\n";
+                pageSeparators.push(separator);
+                
+                if (shouldMerge) {
+                    fullContentMarkdown = fullContentMarkdown.trimEnd() + " " + currentPageText.trimStart();
+                } else {
+                    fullContentMarkdown = fullContentMarkdown + "\n" + currentPageText;
+                }
+            }
+        }
+
         if (activePageIndex > 0 && activePageIndex < pagesData.length) {
             if (isEditorActive) {
                 cursorStart = pageContentInput.selectionStart;
                 cursorEnd = pageContentInput.selectionEnd;
             }
-            // Calculate global cursor position in unified content text
-            let accumulatedLength = 0;
+            // Calculate global cursor position in unified content text using correct separator lengths
+            let accum = 0;
             for (let idx = 1; idx < pagesData.length; idx++) {
                 if (idx === activePageIndex) {
-                    globalCursorPos = accumulatedLength + cursorStart;
+                    globalCursorPos = accum + cursorStart;
                     break;
                 }
-                accumulatedLength += pagesData[idx].text.length + 1; // +1 for newline separator
+                const pageText = pagesData[idx].text || "";
+                const separator = pageSeparators[idx - 1] || "\n";
+                accum += pageText.length + separator.length;
             }
         }
 
-        // 2. Distribute blocks across Content Pages dynamically
-        const fullContentMarkdown = pagesData.slice(1).map(p => p.text).join('\n');
         const blocks = parseTextToBlocks(fullContentMarkdown);
         currentRenderedBlocks = blocks; // Save globally for scroll sync
         
@@ -7059,6 +7251,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 currentPageStruct.contentElement.appendChild(node);
                 activeBulletListElement = null;
+            }
+
+            if (block.type === 'chapter-header') {
+                currentPageStruct.pageElement.classList.add('has-chapter-header');
             }
 
             if (block.type === 'section') {
@@ -7123,7 +7319,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         return !checkPageOverflow(currentPageStruct.contentElement, isTwoCol, MAX_CONTENT_HEIGHT);
                     };
 
-                    // Guided Search: estimate split point using height fraction to avoid layout thrashing DOM reads
+                    // Guided Binary Search: estimate split point using height fraction, then find exact fit using binary search
                     let splitIndex = 0;
                     const remainingHeight = MAX_CONTENT_HEIGHT - (currentPageHeight - estHeight);
                     const fitFraction = Math.max(0.05, Math.min(0.95, remainingHeight / estHeight));
@@ -7132,36 +7328,26 @@ document.addEventListener('DOMContentLoaded', () => {
                         estSplitIndex = Math.max(3, Math.floor(words.length * fitFraction));
                     }
 
-                    // Test our estimate first
+                    const minLimit = (block.type === 'table') ? 3 : 1;
+
+                    // Binary search boundaries around the estimate
+                    let low, high;
                     if (testFit(estSplitIndex)) {
-                        // Fits! Search upwards in steps of 3 to find maximum fit
-                        splitIndex = estSplitIndex;
-                        let testIdx = estSplitIndex + 3;
-                        while (testIdx < words.length && testFit(testIdx)) {
-                            splitIndex = testIdx;
-                            testIdx += 3;
-                        }
-                        // Refine with single steps
-                        testIdx = splitIndex + 1;
-                        while (testIdx < words.length && testIdx <= splitIndex + 3 && testFit(testIdx)) {
-                            splitIndex = testIdx;
-                            testIdx++;
-                        }
+                        splitIndex = estSplitIndex; // At least estSplitIndex fits
+                        low = estSplitIndex + 1;
+                        high = words.length - 1;
                     } else {
-                        // Overflows! Search downwards in steps of 3 to find where it fits
-                        let testIdx = estSplitIndex - 3;
-                        const minLimit = (block.type === 'table') ? 3 : 1;
-                        while (testIdx > minLimit && !testFit(testIdx)) {
-                            testIdx -= 3;
-                        }
-                        if (testIdx >= minLimit && testFit(testIdx)) {
-                            splitIndex = testIdx;
-                            // Refine upwards
-                            testIdx = splitIndex + 1;
-                            while (testIdx < estSplitIndex && testFit(testIdx)) {
-                                splitIndex = testIdx;
-                                testIdx++;
-                            }
+                        low = minLimit;
+                        high = estSplitIndex - 1;
+                    }
+
+                    while (low <= high) {
+                        const mid = Math.floor((low + high) / 2);
+                        if (testFit(mid)) {
+                            splitIndex = mid; // This mid-length fits
+                            low = mid + 1;    // Try to fit more text
+                        } else {
+                            high = mid - 1;   // Too long, search lower
                         }
                     }
 
@@ -7170,6 +7356,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         let fitSeparator = (block.type === 'table') ? '\n' : '';
                         let fitMarkdown = words.slice(0, splitIndex).join(fitSeparator);
                         let remainingMarkdown = words.slice(splitIndex).join(fitSeparator);
+                        if (block.type !== 'table') {
+                            fitMarkdown = fitMarkdown.trimEnd();
+                            remainingMarkdown = remainingMarkdown.trimStart();
+                        }
 
                         let canSplitTable = (block.type === 'table' && splitIndex >= 3);
                         let canSplitText = false;
@@ -7354,14 +7544,32 @@ document.addEventListener('DOMContentLoaded', () => {
             let found = false;
             for (let idx = 1; idx < pagesData.length; idx++) {
                 const pageLen = pagesData[idx].text.length;
-                if (globalCursorPos >= accumulatedLength && globalCursorPos <= accumulatedLength + pageLen + 1) {
+                
+                let nextSeparator = "\n";
+                if (idx < pagesData.length - 1) {
+                    const prevLines = pagesData[idx].text.split('\n');
+                    const currLines = pagesData[idx + 1].text.split('\n');
+                    let lastLine1 = "";
+                    for (let k = prevLines.length - 1; k >= 0; k--) {
+                        if (prevLines[k].trim()) { lastLine1 = prevLines[k]; break; }
+                    }
+                    let firstLine2 = "";
+                    for (let k = 0; k < currLines.length; k++) {
+                        if (currLines[k].trim()) { firstLine2 = currLines[k]; break; }
+                    }
+                    if (isMergeablePrevLine(lastLine1) && isContinuationLine(firstLine2)) {
+                        nextSeparator = " ";
+                    }
+                }
+                
+                if (globalCursorPos >= accumulatedLength && globalCursorPos <= accumulatedLength + pageLen + nextSeparator.length) {
                     activePageIndex = idx;
                     cursorStart = Math.max(0, Math.min(globalCursorPos - accumulatedLength, pageLen));
                     cursorEnd = cursorStart;
                     found = true;
                     break;
                 }
-                accumulatedLength += pageLen + 1;
+                accumulatedLength += pageLen + nextSeparator.length;
             }
             if (!found) {
                 activePageIndex = Math.max(1, Math.min(activePageIndex, pagesData.length - 1));
@@ -7436,12 +7644,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // 7. Sync the textarea value only if changed, and restore cursor if editor was active
         if (activePageIndex > 0 && activePageIndex < pagesData.length) {
+            const savedEditorScrollTop = pageContentInput.scrollTop; // Save editor scroll position to prevent jumping
+            
             if (pageContentInput.value !== pagesData[activePageIndex].text) {
                 pageContentInput.value = pagesData[activePageIndex].text;
             }
             if (isEditorActive) {
                 pageContentInput.focus();
                 pageContentInput.setSelectionRange(cursorStart, cursorEnd);
+                pageContentInput.scrollTop = savedEditorScrollTop; // Restore scroll position
+                
                 // Force trigger scroll sync immediately to highlight the active block in the preview panel without jumping
                 syncPreviewScroll(false);
             }
@@ -8353,7 +8565,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 pagesData = state.pagesData || [];
                 lastPageData = state.lastPageData || { title: 'THANK YOU', subtitle: 'Samyak', tagline: 'कोचिंग नहीं क्रांति' };
                 activePageIndex = (pagesData.length > 1) ? 1 : 0;
-                contentFontSize = state.contentFontSize || 16.1;
+                contentFontSize = Math.round(state.contentFontSize || 16);
                 watermarkSettings = state.watermarkSettings || watermarkSettings;
                 customDesignSettings = state.customDesignSettings || customDesignSettings;
                 if (customDesignSettings.compactMode === undefined) {
@@ -8444,6 +8656,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (pagesData[0].showTOC === undefined) pagesData[0].showTOC = true;
                         if (showTocToggle) {
                             showTocToggle.checked = pagesData[0].showTOC;
+                        }
+
+                        if (pagesData[0].showCoverPage === undefined) pagesData[0].showCoverPage = true;
+                        if (showCoverPageToggle) {
+                            showCoverPageToggle.checked = pagesData[0].showCoverPage;
+                        }
+                        if (btnCoverPageToggle) {
+                            if (pagesData[0].showCoverPage) {
+                                btnCoverPageToggle.classList.add('active');
+                            } else {
+                                btnCoverPageToggle.classList.remove('active');
+                            }
                         }
 
                         if (docClassificationInput) {
@@ -8811,9 +9035,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         activePageIndex = 0;
-        contentFontSize = 16.1;
-        fontSizeValSpan.textContent = `16.1px`;
-        document.documentElement.style.setProperty('--content-font-size', `16.1px`);
+        contentFontSize = 16;
+        fontSizeValSpan.textContent = `16px`;
+        document.documentElement.style.setProperty('--content-font-size', `16px`);
         // Reset dynamic spacing options
         globalFontStyleSelect.value = 'modern-sans';
         globalFontWeightSelect.value = '500';
@@ -9228,6 +9452,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('editor_panel_width', editorPanel.style.width);
             }
         });
+    }
+
+    // ==========================================================================
+    // 10.5 DRAGGABLE TABLE COLUMNS RESIZER
+    // ==========================================================================
+    document.addEventListener('mousedown', (e) => {
+        const resizer = e.target.closest('.table-resize-handle');
+        if (!resizer) return;
+
+        e.preventDefault();
+        resizer.classList.add('active');
+
+        const th = resizer.parentElement;
+        const startX = e.clientX;
+        const startWidth = th.offsetWidth;
+
+        const table = th.closest('table');
+        const ths = Array.from(table.querySelectorAll('th'));
+        
+        const blockContainer = table.closest('[data-block-id]');
+        const blockId = blockContainer ? parseInt(blockContainer.getAttribute('data-block-id'), 10) : null;
+
+        const onMouseMove = (moveEvent) => {
+            const dx = moveEvent.clientX - startX;
+            const newWidth = Math.max(30, startWidth + dx);
+            
+            th.style.width = `${newWidth}px`;
+            th.style.minWidth = `${newWidth}px`;
+            th.style.maxWidth = `${newWidth}px`;
+        };
+
+        const onMouseUp = () => {
+            resizer.classList.remove('active');
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup', onMouseUp);
+
+            if (blockId !== null && typeof currentRenderedBlocks !== 'undefined') {
+                const newWidths = ths.map(h => `${h.offsetWidth}px`).join(',');
+                updateTableColumnWidths(blockId, newWidths);
+            }
+        };
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+
+    function updateTableColumnWidths(blockId, newWidths) {
+        const block = currentRenderedBlocks[blockId];
+        if (!block || block.type !== 'table') return;
+
+        let accumLine = 0;
+        let targetPageIdx = 1;
+        let localStartLine = 0;
+        let localEndLine = 0;
+
+        for (let idx = 1; idx < pagesData.length; idx++) {
+            const pageLines = pagesData[idx].text.split('\n');
+            const pageLineCount = pageLines.length;
+
+            if (block.startLine >= accumLine && block.startLine < accumLine + pageLineCount) {
+                targetPageIdx = idx;
+                localStartLine = block.startLine - accumLine;
+                localEndLine = block.endLine - accumLine;
+                break;
+            }
+            accumLine += pageLineCount + 1;
+        }
+
+        const lines = pagesData[targetPageIdx].text.split('\n');
+        let configIndex = -1;
+        for (let l = localStartLine; l <= localEndLine; l++) {
+            if (lines[l] && lines[l].trim().startsWith('<!-- table')) {
+                configIndex = l;
+                break;
+            }
+        }
+
+        if (configIndex !== -1) {
+            let width = '100%';
+            let align = 'center';
+            const parts = lines[configIndex].replace('<!--', '').replace('-->', '').split('|');
+            parts.forEach(part => {
+                const kv = part.trim().split('=');
+                if (kv.length === 2) {
+                    const key = kv[0].trim().toLowerCase();
+                    const val = kv[1].trim();
+                    if (key === 'width') width = val;
+                    else if (key === 'align') align = val;
+                }
+            });
+            lines[configIndex] = `<!-- table|width=${width}|align=${align}|cols=${newWidths} -->`;
+        } else {
+            const newConfigStr = `<!-- table|width=100%|align=center|cols=${newWidths} -->`;
+            lines.splice(localStartLine, 0, newConfigStr);
+        }
+
+        const newText = lines.join('\n');
+        pagesData[targetPageIdx].text = newText;
+
+        if (targetPageIdx === activePageIndex) {
+            const selStart = pageContentInput.selectionStart;
+            const selEnd = pageContentInput.selectionEnd;
+            pageContentInput.value = newText;
+            pageContentInput.setSelectionRange(selStart, selEnd);
+        }
+
+        saveWorkspaceToLocalStorage();
+        renderPreview();
     }
 
     // ==========================================================================
@@ -10526,7 +10858,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mFontDecreaseBtn) {
             mFontDecreaseBtn.addEventListener('click', () => {
                 if (contentFontSize > 11) {
-                    contentFontSize = Math.max(11, Math.round((contentFontSize - 0.5) * 10) / 10);
+                    contentFontSize = Math.max(11, Math.round(contentFontSize - 1));
                     document.documentElement.style.setProperty('--content-font-size', `${contentFontSize}px`);
                     fontSizeValSpan.textContent = `${contentFontSize}px`;
                     cachedMaxContentHeight = null;

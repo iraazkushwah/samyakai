@@ -1,0 +1,15 @@
+{
+  "name": "samyak-layout-engine",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "samyak_layout_engine_bg.wasm",
+    "samyak_layout_engine.js",
+    "samyak_layout_engine.d.ts"
+  ],
+  "main": "samyak_layout_engine.js",
+  "types": "samyak_layout_engine.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
